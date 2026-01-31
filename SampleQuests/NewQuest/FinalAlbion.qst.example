@@ -1,0 +1,10 @@
+// FinalAlbion.qst registration example
+// Add this line to: data/Levels/FinalAlbion.qst
+
+AddQuest("NewQuest", TRUE);
+
+// Notes:
+// - TRUE means quest is enabled
+// - FALSE means quest is disabled
+// - Quest name must match the name in quests.lua
+// - This file is in the game's data directory, NOT the FSE directory

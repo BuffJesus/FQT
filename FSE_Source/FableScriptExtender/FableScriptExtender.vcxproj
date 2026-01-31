@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{96e45409-eef0-40e8-ac52-68a9513e8d04}</ProjectGuid>
+    <RootNamespace>FableScriptExtender</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(SolutionDir)Vendor\sol;$(SolutionDir)Vendor\lua;$(SolutionDir)Vendor;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Vendor\lua\lapi.h" />
+    <ClInclude Include="..\Vendor\lua\lauxlib.h" />
+    <ClInclude Include="..\Vendor\lua\lcode.h" />
+    <ClInclude Include="..\Vendor\lua\lctype.h" />
+    <ClInclude Include="..\Vendor\lua\ldebug.h" />
+    <ClInclude Include="..\Vendor\lua\ldo.h" />
+    <ClInclude Include="..\Vendor\lua\lfunc.h" />
+    <ClInclude Include="..\Vendor\lua\lgc.h" />
+    <ClInclude Include="..\Vendor\lua\ljumptab.h" />
+    <ClInclude Include="..\Vendor\lua\llex.h" />
+    <ClInclude Include="..\Vendor\lua\llimits.h" />
+    <ClInclude Include="..\Vendor\lua\lmem.h" />
+    <ClInclude Include="..\Vendor\lua\lobject.h" />
+    <ClInclude Include="..\Vendor\lua\lopcodes.h" />
+    <ClInclude Include="..\Vendor\lua\lopnames.h" />
+    <ClInclude Include="..\Vendor\lua\lparser.h" />
+    <ClInclude Include="..\Vendor\lua\lprefix.h" />
+    <ClInclude Include="..\Vendor\lua\lstate.h" />
+    <ClInclude Include="..\Vendor\lua\lstring.h" />
+    <ClInclude Include="..\Vendor\lua\ltable.h" />
+    <ClInclude Include="..\Vendor\lua\ltm.h" />
+    <ClInclude Include="..\Vendor\lua\lua.h" />
+    <ClInclude Include="..\Vendor\lua\lua.hpp" />
+    <ClInclude Include="..\Vendor\lua\luaconf.h" />
+    <ClInclude Include="..\Vendor\lua\lualib.h" />
+    <ClInclude Include="..\Vendor\lua\lundump.h" />
+    <ClInclude Include="..\Vendor\lua\lvm.h" />
+    <ClInclude Include="..\Vendor\lua\lzio.h" />
+    <ClInclude Include="EntityScriptingAPI.h" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="FableAPI.h" />
+    <ClInclude Include="GameInterface.h" />
+    <ClInclude Include="LuaEntityAPI.h" />
+    <ClInclude Include="LuaEntityHost.h" />
+    <ClInclude Include="LuaManager.h" />
+    <ClInclude Include="LuaQuestHost.h" />
+    <ClInclude Include="LuaQuestState.h" />
+    <ClInclude Include="MasterQuest.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Vendor\lua\lapi.c" />
+    <ClCompile Include="..\Vendor\lua\lauxlib.c" />
+    <ClCompile Include="..\Vendor\lua\lbaselib.c" />
+    <ClCompile Include="..\Vendor\lua\lcode.c" />
+    <ClCompile Include="..\Vendor\lua\lcorolib.c" />
+    <ClCompile Include="..\Vendor\lua\lctype.c" />
+    <ClCompile Include="..\Vendor\lua\ldblib.c" />
+    <ClCompile Include="..\Vendor\lua\ldebug.c" />
+    <ClCompile Include="..\Vendor\lua\ldo.c" />
+    <ClCompile Include="..\Vendor\lua\ldump.c" />
+    <ClCompile Include="..\Vendor\lua\lfunc.c" />
+    <ClCompile Include="..\Vendor\lua\lgc.c" />
+    <ClCompile Include="..\Vendor\lua\linit.c" />
+    <ClCompile Include="..\Vendor\lua\liolib.c" />
+    <ClCompile Include="..\Vendor\lua\llex.c" />
+    <ClCompile Include="..\Vendor\lua\lmathlib.c" />
+    <ClCompile Include="..\Vendor\lua\lmem.c" />
+    <ClCompile Include="..\Vendor\lua\loadlib.c" />
+    <ClCompile Include="..\Vendor\lua\lobject.c" />
+    <ClCompile Include="..\Vendor\lua\lopcodes.c" />
+    <ClCompile Include="..\Vendor\lua\loslib.c" />
+    <ClCompile Include="..\Vendor\lua\lparser.c" />
+    <ClCompile Include="..\Vendor\lua\lstate.c" />
+    <ClCompile Include="..\Vendor\lua\lstring.c" />
+    <ClCompile Include="..\Vendor\lua\lstrlib.c" />
+    <ClCompile Include="..\Vendor\lua\ltable.c" />
+    <ClCompile Include="..\Vendor\lua\ltablib.c" />
+    <ClCompile Include="..\Vendor\lua\ltm.c" />
+    <ClCompile Include="..\Vendor\lua\lundump.c" />
+    <ClCompile Include="..\Vendor\lua\lutf8lib.c" />
+    <ClCompile Include="..\Vendor\lua\lvm.c" />
+    <ClCompile Include="..\Vendor\lua\lzio.c" />
+    <ClCompile Include="dllmain.cpp">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="FableAPI.cpp" />
+    <ClCompile Include="GameInterface.cpp" />
+    <ClCompile Include="LuaEntityAPI.cpp" />
+    <ClCompile Include="LuaEntityHost.cpp" />
+    <ClCompile Include="LuaManager.cpp">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Default</CompileAs>
+    </ClCompile>
+    <ClCompile Include="LuaQuestHost.cpp" />
+    <ClCompile Include="LuaQuestState.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FableScriptExtender.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

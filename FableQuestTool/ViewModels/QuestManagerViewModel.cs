@@ -77,6 +77,42 @@ public sealed partial class QuestManagerViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleQuest()
+    {
+        if (SelectedQuest == null)
+        {
+            StatusText = "No quest selected";
+            return;
+        }
+
+        bool newState = !SelectedQuest.IsEnabled;
+        string action = newState ? "enable" : "disable";
+
+        try
+        {
+            if (deploymentService.ToggleQuest(SelectedQuest.Name, newState, out string message))
+            {
+                StatusText = $"{(newState ? "Enabled" : "Disabled")} {SelectedQuest.Name}";
+                System.Windows.MessageBox.Show(message, $"Quest {(newState ? "Enabled" : "Disabled")}",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                LoadQuests();
+            }
+            else
+            {
+                StatusText = $"Failed to {action} quest";
+                System.Windows.MessageBox.Show(message, "Toggle Failed",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Error: {ex.Message}";
+            System.Windows.MessageBox.Show($"Failed to {action} quest: {ex.Message}", "Error",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
     private void DeleteSelectedQuest()
     {
         if (SelectedQuest == null)

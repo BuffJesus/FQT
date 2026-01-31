@@ -93,6 +93,9 @@ public sealed class CodeGenerator
             sb.AppendLine($"    Quest:KickOffQuestStartScreen(\"{quest.Name}\", {isStory}, {isGold})");
         }
 
+        // Add automatic quest completion monitoring thread
+        sb.AppendLine($"    Quest:CreateThread(\"MonitorQuestCompletion\", {{ region = \"{quest.Regions.FirstOrDefault() ?? "Albion"}\" }})");
+
         foreach (QuestThread thread in quest.Threads)
         {
             sb.AppendLine($"    Quest:CreateThread(\"{thread.FunctionName}\", {{ region = \"{thread.Region}\" }})");
@@ -110,6 +113,19 @@ public sealed class CodeGenerator
             }
             sb.AppendLine(RenderPersist(state, quest.Name));
         }
+        sb.AppendLine("end");
+        sb.AppendLine();
+
+        // Generate quest completion monitoring thread
+        sb.AppendLine("function MonitorQuestCompletion(questObject)");
+        sb.AppendLine("    Quest = questObject");
+        sb.AppendLine("    while true do");
+        sb.AppendLine("        if not Quest:Wait(0) then break end");
+        sb.AppendLine("        if Quest:GetStateBool(\"QuestCompleted\") then");
+        sb.AppendLine("            CompleteQuest()");
+        sb.AppendLine("            break");
+        sb.AppendLine("        end");
+        sb.AppendLine("    end");
         sb.AppendLine("end");
         sb.AppendLine();
 

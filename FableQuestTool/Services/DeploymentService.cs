@@ -444,6 +444,201 @@ public sealed class DeploymentService
         }
     }
 
+    public bool ToggleQuest(string questName, bool enable, out string message)
+    {
+        message = string.Empty;
+
+        if (!config.EnsureFablePath())
+        {
+            message = "Fable installation path not configured.";
+            return false;
+        }
+
+        string? fseFolder = config.GetFseFolder();
+        if (string.IsNullOrWhiteSpace(fseFolder))
+        {
+            message = "Could not determine FSE folder path.";
+            return false;
+        }
+
+        try
+        {
+            bool questsLuaUpdated = false;
+            bool qstFileUpdated = false;
+            bool masterUpdated = false;
+
+            // Toggle in quests.lua
+            string questsLuaPath = Path.Combine(fseFolder, "quests.lua");
+            if (File.Exists(questsLuaPath))
+            {
+                questsLuaUpdated = ToggleQuestInLuaFile(questsLuaPath, questName, enable);
+            }
+
+            // Toggle in FinalAlbion.qst
+            if (!string.IsNullOrWhiteSpace(config.FablePath))
+            {
+                string qstPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion.qst");
+                if (File.Exists(qstPath))
+                {
+                    QstFile qstFile = QstFile.Load(qstPath);
+                    if (enable)
+                    {
+                        if (!qstFile.HasQuest(questName))
+                        {
+                            qstFile.AddQuestIfMissing(questName, true);
+                        }
+                        else
+                        {
+                            qstFile.UpdateQuestStatus(questName, true);
+                        }
+                    }
+                    else
+                    {
+                        qstFile.RemoveQuest(questName);
+                    }
+                    qstFile.Save();
+                    qstFileUpdated = true;
+                }
+            }
+
+            // Toggle in FSE_Master.lua
+            string masterLuaPath = Path.Combine(fseFolder, "Master", "FSE_Master.lua");
+            if (File.Exists(masterLuaPath))
+            {
+                masterUpdated = ToggleMasterActivation(masterLuaPath, questName, enable);
+            }
+
+            message = $"Quest '{questName}' {(enable ? "enabled" : "disabled")} successfully.\n\n" +
+                     $"quests.lua updated: {(questsLuaUpdated ? "Yes" : "Not found")}\n" +
+                     $"FinalAlbion.qst updated: {(qstFileUpdated ? "Yes" : "Not found")}\n" +
+                     $"FSE_Master.lua updated: {(masterUpdated ? "Yes" : "Not found")}";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            message = $"Toggle failed: {ex.Message}";
+            return false;
+        }
+    }
+
+    private bool ToggleQuestInLuaFile(string filePath, string questName, bool enable)
+    {
+        string content = File.ReadAllText(filePath);
+        string pattern = $@"^(\s*)(--\s*)?({Regex.Escape(questName)}\s*=\s*\{{)";
+
+        bool found = false;
+        var lines = content.Split('\n');
+        int braceDepth = 0;
+        bool inTargetQuest = false;
+        int questStartLine = -1;
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string line = lines[i];
+            string trimmed = line.Trim();
+
+            // Check if this line starts our target quest
+            var match = Regex.Match(line, pattern, RegexOptions.Multiline);
+            if (match.Success && !inTargetQuest)
+            {
+                inTargetQuest = true;
+                questStartLine = i;
+                found = true;
+
+                bool isCommented = match.Groups[2].Success && !string.IsNullOrWhiteSpace(match.Groups[2].Value);
+
+                if (enable && isCommented)
+                {
+                    // Uncomment the line
+                    lines[i] = Regex.Replace(line, @"^(\s*)--\s*", "$1");
+                }
+                else if (!enable && !isCommented)
+                {
+                    // Comment the line
+                    lines[i] = Regex.Replace(line, @"^(\s*)", "$1-- ");
+                }
+
+                braceDepth = 1;
+                continue;
+            }
+
+            if (inTargetQuest)
+            {
+                // Count braces to track quest block
+                foreach (char c in trimmed)
+                {
+                    if (c == '{') braceDepth++;
+                    else if (c == '}') braceDepth--;
+                }
+
+                // Comment/uncomment lines within the quest block
+                if (braceDepth > 0)
+                {
+                    bool isCommented = trimmed.StartsWith("--");
+                    if (enable && isCommented)
+                    {
+                        lines[i] = Regex.Replace(line, @"^(\s*)--\s*", "$1");
+                    }
+                    else if (!enable && !isCommented && !string.IsNullOrWhiteSpace(trimmed))
+                    {
+                        lines[i] = Regex.Replace(line, @"^(\s*)", "$1-- ");
+                    }
+                }
+
+                // Check if we've closed the quest block
+                if (braceDepth == 0)
+                {
+                    inTargetQuest = false;
+                }
+            }
+        }
+
+        if (found)
+        {
+            File.WriteAllText(filePath, string.Join("\n", lines));
+        }
+
+        return found;
+    }
+
+    private bool ToggleMasterActivation(string masterPath, string questName, bool enable)
+    {
+        string content = File.ReadAllText(masterPath);
+        string pattern = $@"^(\s*)(--\s*)?(Quest:ActivateQuest\(""{Regex.Escape(questName)}""\))";
+
+        bool found = false;
+        var lines = content.Split('\n');
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var match = Regex.Match(lines[i], pattern);
+            if (match.Success)
+            {
+                found = true;
+                bool isCommented = match.Groups[2].Success && !string.IsNullOrWhiteSpace(match.Groups[2].Value);
+
+                if (enable && isCommented)
+                {
+                    // Uncomment
+                    lines[i] = Regex.Replace(lines[i], @"^(\s*)--\s*", "$1");
+                }
+                else if (!enable && !isCommented)
+                {
+                    // Comment
+                    lines[i] = Regex.Replace(lines[i], @"^(\s*)", "$1-- ");
+                }
+                break;
+            }
+        }
+
+        if (found)
+        {
+            File.WriteAllText(masterPath, string.Join("\n", lines));
+        }
+
+        return found;
+    }
+
     public bool LaunchFse(out string message)
     {
         message = string.Empty;

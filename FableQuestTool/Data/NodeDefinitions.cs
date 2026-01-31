@@ -116,83 +116,83 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "text", Type = "text", Label = "Dialogue Text", DefaultValue = "Hello, hero!" }
                 },
-                CodeTemplate = "Me:SpeakAndWait(\"{text}\")" },
+                CodeTemplate = "Me:SpeakAndWait(\"{text}\")\n{CHILDREN}" },
             
             new() { Type = "speakToHero", Label = "Speak To Hero", Category = "action", Icon = "🗣️", IsAdvanced = false,
                 Description = "Entity speaks directly to the hero",
                 Properties = new() {
                     new NodeProperty { Name = "text", Type = "text", Label = "Text", DefaultValue = "Greetings!" }
                 },
-                CodeTemplate = "Me:Speak(hero, \"{text}\")" },
-            
+                CodeTemplate = "Me:Speak(hero, \"{text}\")\n{CHILDREN}" },
+
             new() { Type = "giveReward", Label = "Give Reward", Category = "action", Icon = "💰", IsAdvanced = false,
                 Description = "Give gold and/or items to hero",
                 Properties = new() {
                     new NodeProperty { Name = "gold", Type = "int", Label = "Gold", DefaultValue = "100" },
                     new NodeProperty { Name = "item", Type = "string", Label = "Item (optional)", DefaultValue = "", Options = new List<string>(GameData.Objects) }
                 },
-                CodeTemplate = "Quest:GiveHeroGold({gold})\nif \"{item}\" ~= \"\" then Quest:GiveHeroObject(\"{item}\") end" },
-            
+                CodeTemplate = "Quest:GiveHeroGold({gold})\nif \"{item}\" ~= \"\" then Quest:GiveHeroObject(\"{item}\") end\n{CHILDREN}" },
+
             new() { Type = "giveItem", Label = "Give Item", Category = "action", Icon = "🎁", IsAdvanced = false,
                 Description = "Give specific item(s) to hero",
                 Properties = new() {
                     new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_HEALTH_POTION", Options = new List<string>(GameData.Objects) },
                     new NodeProperty { Name = "amount", Type = "int", Label = "Amount", DefaultValue = "1" }
                 },
-                CodeTemplate = "Quest:GiveHeroObject(\"{item}\", {amount})" },
-            
+                CodeTemplate = "Quest:GiveHeroObject(\"{item}\", {amount})\n{CHILDREN}" },
+
             new() { Type = "takeItem", Label = "Take Item", Category = "action", Icon = "📤", IsAdvanced = false,
                 Description = "Remove item from hero's inventory",
                 Properties = new() {
                     new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
-                CodeTemplate = "Quest:TakeObjectFromHero(\"{item}\")" },
-            
+                CodeTemplate = "Quest:TakeObjectFromHero(\"{item}\")\n{CHILDREN}" },
+
             new() { Type = "setState", Label = "Set State", Category = "action", Icon = "💾", IsAdvanced = false,
                 Description = "Set a quest state variable",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "Variable Name", DefaultValue = "questStarted" },
                     new NodeProperty { Name = "value", Type = "string", Label = "Value", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:SetStateBool(\"{name}\", {value})" },
-            
+                CodeTemplate = "Quest:SetStateBool(\"{name}\", {value})\n{CHILDREN}" },
+
             new() { Type = "setGlobal", Label = "Set Global", Category = "action", Icon = "🌍", IsAdvanced = true,
                 Description = "Set a global game variable",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "Variable Name", DefaultValue = "globalEvent" },
                     new NodeProperty { Name = "value", Type = "string", Label = "Value", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:SetGlobalBool(\"{name}\", {value})" },
-            
+                CodeTemplate = "Quest:SetGlobalBool(\"{name}\", {value})\n{CHILDREN}" },
+
             new() { Type = "becomeHostile", Label = "Become Hostile", Category = "action", Icon = "😡", IsAdvanced = false,
                 Description = "Make this entity attack the hero",
                 Properties = new(),
-                CodeTemplate = "Quest:EntitySetThingAsEnemyOfThing(Me, hero)" },
-            
+                CodeTemplate = "Quest:EntitySetThingAsEnemyOfThing(Me, hero)\n{CHILDREN}" },
+
             new() { Type = "becomeAlly", Label = "Become Ally", Category = "action", Icon = "🤝", IsAdvanced = false,
                 Description = "Make this entity allied with the hero",
                 Properties = new(),
-                CodeTemplate = "Quest:EntitySetThingAsAllyOfThing(Me, hero)" },
-            
+                CodeTemplate = "Quest:EntitySetThingAsAllyOfThing(Me, hero)\n{CHILDREN}" },
+
             new() { Type = "followHero", Label = "Follow Hero", Category = "action", Icon = "👣", IsAdvanced = false,
                 Description = "Entity follows the hero",
                 Properties = new() {
                     new NodeProperty { Name = "distance", Type = "float", Label = "Follow Distance", DefaultValue = "2.0" }
                 },
-                CodeTemplate = "Me:FollowThing(hero, {distance}, true)" },
-            
+                CodeTemplate = "Me:FollowThing(hero, {distance}, true)\n{CHILDREN}" },
+
             new() { Type = "stopFollowing", Label = "Stop Following", Category = "action", Icon = "🛑", IsAdvanced = false,
                 Description = "Stop following the hero",
                 Properties = new(),
-                CodeTemplate = "Me:StopFollowingThing(hero)" },
-            
+                CodeTemplate = "Me:StopFollowingThing(hero)\n{CHILDREN}" },
+
             new() { Type = "moveToMarker", Label = "Move To Marker", Category = "action", Icon = "📍", IsAdvanced = false,
                 Description = "Move to a map marker",
                 Properties = new() {
                     new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_DESTINATION" }
                 },
-                CodeTemplate = "local marker = Quest:GetNamedThing(\"{marker}\")\nMe:MoveToThing(marker, 1.0, 1)" },
-            
+                CodeTemplate = "local marker = Quest:GetNamedThing(\"{marker}\")\nMe:MoveToThing(marker, 1.0, 1)\n{CHILDREN}" },
+
             new() { Type = "moveToPosition", Label = "Move To Position", Category = "action", Icon = "🎯", IsAdvanced = true,
                 Description = "Move to specific coordinates",
                 Properties = new() {
@@ -200,37 +200,37 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "y", Type = "float", Label = "Y", DefaultValue = "0" },
                     new NodeProperty { Name = "z", Type = "float", Label = "Z", DefaultValue = "0" }
                 },
-                CodeTemplate = "Me:MoveToPosition({{x}={x}, {y}={y}, {z}={z}}, 1.0, 1)" },
-            
+                CodeTemplate = "Me:MoveToPosition({{x}={x}, {y}={y}, {z}={z}}, 1.0, 1)\n{CHILDREN}" },
+
             new() { Type = "teleportToMarker", Label = "Teleport To Marker", Category = "action", Icon = "⚡", IsAdvanced = true,
                 Description = "Instantly teleport to a marker",
                 Properties = new() {
                     new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_SPAWN" }
                 },
-                CodeTemplate = "local marker = Quest:GetNamedThing(\"{marker}\")\nQuest:EntityTeleportToThing(Me, marker)" },
-            
+                CodeTemplate = "local marker = Quest:GetNamedThing(\"{marker}\")\nQuest:EntityTeleportToThing(Me, marker)\n{CHILDREN}" },
+
             new() { Type = "playAnimation", Label = "Play Animation", Category = "action", Icon = "🎬", IsAdvanced = true,
                 Description = "Play an animation",
                 Properties = new() {
                     new NodeProperty { Name = "anim", Type = "string", Label = "Animation", DefaultValue = "idle" },
                     new NodeProperty { Name = "wait", Type = "bool", Label = "Wait for Completion", DefaultValue = "true" }
                 },
-                CodeTemplate = "Me:PlayAnimation(\"{anim}\", {wait})" },
-            
+                CodeTemplate = "Me:PlayAnimation(\"{anim}\", {wait})\n{CHILDREN}" },
+
             new() { Type = "playLoopingAnim", Label = "Play Looping Anim", Category = "action", Icon = "🔁", IsAdvanced = true,
                 Description = "Play animation multiple times",
                 Properties = new() {
                     new NodeProperty { Name = "anim", Type = "string", Label = "Animation", DefaultValue = "idle" },
                     new NodeProperty { Name = "loops", Type = "int", Label = "Loop Count", DefaultValue = "1" }
                 },
-                CodeTemplate = "Me:PlayLoopingAnimation(\"{anim}\", {loops})" },
+                CodeTemplate = "Me:PlayLoopingAnimation(\"{anim}\", {loops})\n{CHILDREN}" },
             
             new() { Type = "completeQuest", Label = "Complete Quest", Category = "action", Icon = "✅", IsAdvanced = false,
-                Description = "Mark quest as completed and give rewards",
+                Description = "Mark quest as completed and give rewards (Note: Rewards must be configured in quest settings)",
                 Properties = new() {
                     new NodeProperty { Name = "showScreen", Type = "bool", Label = "Show Completion Screen", DefaultValue = "true" }
                 },
-                CodeTemplate = "CompleteQuest()" },
+                CodeTemplate = "Quest:SetStateBool(\"QuestCompleted\", true)" },
             
             new() { Type = "failQuest", Label = "Fail Quest", Category = "action", Icon = "❌", IsAdvanced = false,
                 Description = "Mark quest as failed",

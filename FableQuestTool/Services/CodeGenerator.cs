@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
+using FableQuestTool.Data;
 using FableQuestTool.Models;
 
 namespace FableQuestTool.Services;
@@ -155,7 +159,14 @@ public sealed class CodeGenerator
         }
         sb.AppendLine();
         sb.AppendLine("    while true do");
-        sb.AppendLine("        -- TODO: node-driven behavior goes here");
+        sb.AppendLine("        if not Quest:Wait(0) then break end");
+        sb.AppendLine();
+
+        // Generate behavior code from nodes
+        string behaviorCode = GenerateBehaviorCode(entity, quest.Name, 2);
+        sb.Append(behaviorCode);
+
+        sb.AppendLine();
         sb.AppendLine("        if Me:IsNull() then break end");
         sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
         sb.AppendLine("    end");
@@ -288,5 +299,99 @@ public sealed class CodeGenerator
         }
 
         return "false";
+    }
+
+    public string GenerateBehaviorCode(QuestEntity entity, string questName, int indent = 2)
+    {
+        if (entity.Nodes.Count == 0)
+        {
+            return GenerateIndent(indent) + "-- No behavior nodes defined\n";
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        // Find all trigger nodes (entry points)
+        var triggerNodes = entity.Nodes.Where(n => n.Category == "trigger").ToList();
+
+        if (triggerNodes.Count == 0)
+        {
+            sb.AppendLine(GenerateIndent(indent) + "-- No trigger nodes found");
+            return sb.ToString();
+        }
+
+        // Generate code for each trigger
+        foreach (var trigger in triggerNodes)
+        {
+            sb.Append(GenerateNodeCode(trigger, entity, questName, indent));
+        }
+
+        return sb.ToString();
+    }
+
+    private string GenerateNodeCode(BehaviorNode node, QuestEntity entity, string questName, int indent)
+    {
+        var nodeDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == node.Type);
+        if (nodeDef == null)
+        {
+            return GenerateIndent(indent) + $"-- Unknown node type: {node.Type}\n";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        string code = nodeDef.CodeTemplate;
+
+        // Replace placeholders with actual values
+        code = code.Replace("{QUEST_NAME}", questName);
+
+        foreach (var prop in node.Config)
+        {
+            string placeholder = "{" + prop.Key + "}";
+            string value = prop.Value?.ToString() ?? "";
+            code = code.Replace(placeholder, value);
+        }
+
+        // Handle children (connected nodes)
+        var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
+        if (connections.Count > 0)
+        {
+            StringBuilder childrenCode = new StringBuilder();
+            foreach (var conn in connections)
+            {
+                var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
+                if (childNode != null)
+                {
+                    childrenCode.Append(GenerateNodeCode(childNode, entity, questName, indent + 1));
+                }
+            }
+            code = code.Replace("{CHILDREN}", childrenCode.ToString().TrimEnd('\n'));
+        }
+        else
+        {
+            code = code.Replace("{CHILDREN}", "");
+        }
+
+        // Handle conditional branches (true/false)
+        code = code.Replace("{TRUE}", "-- true branch");
+        code = code.Replace("{FALSE}", "-- false branch");
+
+        // Apply indentation
+        string[] lines = code.Split('\n');
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(lines[i]))
+            {
+                sb.AppendLine(GenerateIndent(indent) + lines[i]);
+            }
+            else
+            {
+                sb.AppendLine();
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private static string GenerateIndent(int level)
+    {
+        return new string(' ', level * 4);
     }
 }

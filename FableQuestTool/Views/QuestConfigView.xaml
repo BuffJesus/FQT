@@ -49,15 +49,20 @@
                             </TextBox>
 
                             <TextBlock Text="Quest ID" Margin="0,12,0,0" />
-                            <TextBox>
-                                <TextBox.Text>
-                                    <Binding Path="Project.Id" UpdateSourceTrigger="PropertyChanged" ValidatesOnExceptions="True">
-                                        <Binding.ValidationRules>
-                                            <local:QuestIdRule />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </TextBox.Text>
-                            </TextBox>
+                            <DockPanel>
+                                <Button Content="Auto" DockPanel.Dock="Right" Width="60" Margin="4,0,0,0"
+                                        Command="{Binding QuestConfigViewModel.SuggestQuestIdCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ToolTip="Automatically suggest next available Quest ID" />
+                                <TextBox>
+                                    <TextBox.Text>
+                                        <Binding Path="Project.Id" UpdateSourceTrigger="PropertyChanged" ValidatesOnExceptions="True">
+                                            <Binding.ValidationRules>
+                                                <local:QuestIdRule />
+                                            </Binding.ValidationRules>
+                                        </Binding>
+                                    </TextBox.Text>
+                                </TextBox>
+                            </DockPanel>
 
                             <TextBlock Text="Display Name" Margin="0,12,0,0" />
                             <TextBox Text="{Binding Project.DisplayName, UpdateSourceTrigger=PropertyChanged}" />

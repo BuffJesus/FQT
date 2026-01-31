@@ -5,9 +5,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:nodify="clr-namespace:Nodify;assembly=Nodify"
              xmlns:local="clr-namespace:FableQuestTool.Views"
+             xmlns:converters="clr-namespace:FableQuestTool.Converters"
              mc:Ignorable="d">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibility" />
+        <converters:InvertedNullToVisibilityConverter x:Key="InvertedNullToVisibility" />
         <Style x:Key="NodeIconStyle" TargetType="Border">
             <Setter Property="Background" Value="#3498DB" />
             <Style.Triggers>
@@ -97,33 +100,300 @@
             </ScrollViewer>
         </Border>
         <Border Grid.Column="1" Background="{DynamicResource SurfaceBackground}" Margin="8">
-            <nodify:NodifyEditor ItemsSource="{Binding Nodes}" Background="Transparent">
+            <Grid>
+            <nodify:NodifyEditor ItemsSource="{Binding Nodes}"
+                                 Connections="{Binding Connections}"
+                                 PendingConnection="{Binding PendingConnection, Mode=TwoWay}"
+                                 SelectedItem="{Binding SelectedNode}"
+                                 Background="Transparent"
+                                 GridCellSize="20"
+                                 DisconnectConnectorCommand="{Binding DisconnectConnectorCommand}"
+                                 ConnectionCompletedCommand="{Binding FinishConnectionCommand}"
+                                 ConnectionStartedCommand="{Binding StartConnectionCommand}">
                 <nodify:NodifyEditor.ItemContainerStyle>
                     <Style TargetType="nodify:ItemContainer">
-                        <Setter Property="Location" Value="{Binding Location}" />
+                        <Setter Property="Location" Value="{Binding Location, Mode=TwoWay}" />
                     </Style>
                 </nodify:NodifyEditor.ItemContainerStyle>
+                <nodify:NodifyEditor.ConnectionTemplate>
+                    <DataTemplate>
+                        <nodify:Connection Source="{Binding Source.Anchor}"
+                                         Target="{Binding Target.Anchor}"
+                                         Stroke="#666666"
+                                         StrokeThickness="2" />
+                    </DataTemplate>
+                </nodify:NodifyEditor.ConnectionTemplate>
+                <nodify:NodifyEditor.PendingConnectionTemplate>
+                    <DataTemplate>
+                        <nodify:PendingConnection Source="{Binding Source.Anchor}"
+                                                Target="{Binding Target}"
+                                                Stroke="#E94560"
+                                                StrokeThickness="2"
+                                                StrokeDashArray="5 2"
+                                                AllowOnlyConnectors="True" />
+                    </DataTemplate>
+                </nodify:NodifyEditor.PendingConnectionTemplate>
                 <nodify:NodifyEditor.ItemTemplate>
                     <DataTemplate>
-                        <nodify:Node>
+                        <nodify:Node Input="{Binding Input}"
+                                   Output="{Binding Output}"
+                                   Padding="0">
+                            <nodify:Node.InputConnectorTemplate>
+                                <DataTemplate>
+                                    <nodify:Connector Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                                    IsConnected="True" />
+                                </DataTemplate>
+                            </nodify:Node.InputConnectorTemplate>
+                            <nodify:Node.OutputConnectorTemplate>
+                                <DataTemplate>
+                                    <nodify:Connector Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                                    IsConnected="True" />
+                                </DataTemplate>
+                            </nodify:Node.OutputConnectorTemplate>
+                            <nodify:Node.Style>
+                                <Style TargetType="nodify:Node" BasedOn="{StaticResource {x:Type nodify:Node}}">
+                                    <Setter Property="MinWidth" Value="160" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
+                                            <Setter Property="MinWidth" Value="0" />
+                                            <Setter Property="MinHeight" Value="0" />
+                                            <Setter Property="Padding" Value="0" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </nodify:Node.Style>
                             <nodify:Node.Header>
-                                <Border Padding="6" Background="{DynamicResource BackgroundSecondary}">
+                                <Border Padding="8,6" Background="{DynamicResource BackgroundSecondary}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="18" Height="18" CornerRadius="3" Margin="0,0,6,0"
+                                        <Border Width="20" Height="20" CornerRadius="4" Margin="0,0,8,0"
                                                 Style="{StaticResource NodeIconStyle}">
-                                            <TextBlock Text="{Binding Icon}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10" />
+                                            <TextBlock Text="{Binding Icon}"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center"
+                                                     FontSize="12" />
                                         </Border>
-                                        <TextBlock Text="{Binding Title}" />
+                                        <TextBlock Text="{Binding Title}"
+                                                 VerticalAlignment="Center"
+                                                 FontWeight="Medium" />
                                     </StackPanel>
                                 </Border>
                             </nodify:Node.Header>
+                            
+                            <!-- Content switches between regular node and dot -->
+                            <Grid>
+                                <!-- Regular Node Content -->
+                                <StackPanel Margin="8">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <TextBlock Text="{Binding Type}"
+                                             FontSize="10"
+                                             Opacity="0.7"
+                                             TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <!-- Redirection Node (Dot) -->
+                                <Ellipse Width="6" Height="8"
+                                       Fill="{DynamicResource BorderBrush}"
+                                       Stroke="#9B59B6"
+                                       StrokeThickness="2"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </Grid>
                         </nodify:Node>
                     </DataTemplate>
                 </nodify:NodifyEditor.ItemTemplate>
             </nodify:NodifyEditor>
+            
+            <!-- Node Selection Popup -->
+            <Border Background="{DynamicResource PanelBackground}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Width="300"
+                    MaxHeight="400"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Padding="8"
+                    Visibility="{Binding IsNodeMenuOpen, Converter={StaticResource BoolToVisibility}}">
+                <Border.RenderTransform>
+                    <TranslateTransform X="{Binding NodeMenuPosition.X}" Y="{Binding NodeMenuPosition.Y}" />
+                </Border.RenderTransform>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3" />
+                </Border.Effect>
+                
+                <StackPanel>
+                    <!-- Search Box -->
+                    <TextBox Text="{Binding NodeSearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Height="28"
+                             Padding="6,4"
+                             Margin="0,0,0,8">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                                <Style.Triggers>
+                                    <Trigger Property="Text" Value="">
+                                        <Setter Property="Background">
+                                            <Setter.Value>
+                                                <VisualBrush Stretch="None" AlignmentX="Left">
+                                                    <VisualBrush.Visual>
+                                                        <TextBlock Text="Search nodes..." 
+                                                                 Foreground="#888888" 
+                                                                 Margin="6,0,0,0"/>
+                                                    </VisualBrush.Visual>
+                                                </VisualBrush>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    
+                    <!-- Node List -->
+                    <ScrollViewer MaxHeight="350" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FilteredNodes}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button HorizontalContentAlignment="Left"
+                                            Padding="6,4"
+                                            Margin="0,0,0,2"
+                                            Command="{Binding DataContext.SelectNodeFromMenuCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Icon}" 
+                                                     Width="20"
+                                                     Margin="0,0,8,0"
+                                                     FontSize="12" />
+                                            <TextBlock Text="{Binding Label}" 
+                                                     VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Category, StringFormat=' ({0})'}" 
+                                                     VerticalAlignment="Center"
+                                                     Opacity="0.6"
+                                                     FontSize="10"
+                                                     Margin="4,0,0,0" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    
+                    <!-- Close button -->
+                    <Button Content="Cancel (Esc)" 
+                            Margin="0,8,0,0"
+                            Command="{Binding CloseNodeMenuCommand}" />
+                </StackPanel>
+            </Border>
+            </Grid>
         </Border>
         <Border Grid.Column="2" Background="{DynamicResource PanelBackground}">
-            <TextBlock Text="Node properties / script preview" Margin="12" />
+            <ScrollViewer>
+                <StackPanel Margin="12">
+                    <TextBlock Text="Node Properties" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                    <!-- Node Info -->
+                    <StackPanel Visibility="{Binding SelectedNode, Converter={StaticResource NullToVisibility}}">
+                        <TextBlock Text="Selected Node" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                        <Border Background="{DynamicResource SurfaceBackground}"
+                                Padding="8"
+                                CornerRadius="4"
+                                Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedNode.Title}"
+                                         FontWeight="SemiBold"
+                                         Margin="0,0,0,4" />
+                                <TextBlock Text="{Binding SelectedNode.Type}"
+                                         FontSize="10"
+                                         Opacity="0.7" />
+                                <TextBlock Text="{Binding SelectedNode.Definition.Description}"
+                                         FontSize="10"
+                                         TextWrapping="Wrap"
+                                         Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Node Properties -->
+                        <TextBlock Text="Properties" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                        <ItemsControl ItemsSource="{Binding SelectedNode.Definition.Properties}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock Text="{Binding Label}" FontSize="10" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding DefaultValue}"
+                                               Height="24"
+                                               Padding="4,2" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Flow Node Output Controls -->
+                        <StackPanel Margin="0,12,0,0">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedNode.Category}" Value="flow">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="Output Pins" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="+ Add Output" Width="100"
+                                      Command="{Binding AddOutputPinCommand}" />
+                                <Button Content="- Remove" Width="100" Margin="8,0,0,0"
+                                      Command="{Binding RemoveOutputPinCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Actions -->
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="Delete Node" Width="100"
+                                  Command="{Binding DeleteNodeCommand}" />
+                            <Button Content="Duplicate" Width="100" Margin="8,0,0,0"
+                                  Command="{Binding DuplicateNodeCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- No Selection Message -->
+                    <TextBlock Text="Select a node to edit its properties"
+                             Opacity="0.5"
+                             TextWrapping="Wrap"
+                             Visibility="{Binding SelectedNode, Converter={StaticResource InvertedNullToVisibility}}" />
+                </StackPanel>
+            </ScrollViewer>
         </Border>
     </Grid>
 </UserControl>

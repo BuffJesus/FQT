@@ -15,15 +15,17 @@
                 <MenuItem Header="_Save" Command="{Binding SaveProjectCommand}" />
                 <MenuItem Header="Save _As" Command="{Binding SaveProjectAsCommand}" />
                 <Separator />
-                <MenuItem Header="_Export" Command="{Binding ExportProjectCommand}" />
+                <MenuItem Header="_Export and Deploy" Command="{Binding ExportProjectCommand}" />
                 <Separator />
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
             </MenuItem>
-            <MenuItem Header="_Edit" />
-            <MenuItem Header="_View" />
-            <MenuItem Header="_Tools" />
-            <MenuItem Header="_Templates" />
-            <MenuItem Header="_Help" />
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Browse Entities" Command="{Binding BrowseEntitiesCommand}" />
+                <MenuItem Header="_Export Entity Catalog" Command="{Binding ExportCatalogCommand}" />
+                <Separator />
+                <MenuItem Header="Launch _FSE" Command="{Binding LaunchFseCommand}" />
+                <MenuItem Header="_Configure Fable Path" Command="{Binding ConfigureFablePathCommand}" />
+            </MenuItem>
         </Menu>
 
         <ToolBarTray DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondary}">
@@ -31,9 +33,9 @@
                 <Button Content="New" Width="70" Margin="0,0,6,0" Command="{Binding NewProjectCommand}" />
                 <Button Content="Open" Width="70" Margin="0,0,6,0" Command="{Binding OpenProjectCommand}" />
                 <Button Content="Save" Width="70" Margin="0,0,6,0" Command="{Binding SaveProjectCommand}" />
-                <Button Content="Export" Width="70" Margin="0,0,6,0" Command="{Binding ExportProjectCommand}" />
+                <Button Content="Deploy" Width="70" Margin="0,0,6,0" Command="{Binding ExportProjectCommand}" />
                 <Separator />
-                <Button Content="Test" Width="70" />
+                <Button Content="Launch FSE" Width="90" Margin="0,0,6,0" Command="{Binding LaunchFseCommand}" />
                 <Separator />
                 <CheckBox Content="Advanced Mode" IsChecked="{Binding IsAdvancedMode}" />
             </ToolBar>

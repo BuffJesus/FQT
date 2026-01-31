@@ -61,7 +61,7 @@ public static class NodeDefinitions
             new() { Type = "onItemPresented", Label = "When Item Given", Category = "trigger", Icon = "🎁", IsAdvanced = false,
                 Description = "Triggered when hero presents an item to this entity",
                 Properties = new() {
-                    new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = GameData.Objects }
+                    new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
                 CodeTemplate = "if Me:MsgIsPresentedWithItem() then\n{CHILDREN}\nend" },
             
@@ -93,7 +93,7 @@ public static class NodeDefinitions
             new() { Type = "onRegionLoaded", Label = "When Region Loads", Category = "trigger", Icon = "🗺️", IsAdvanced = true,
                 Description = "Triggered when specified region loads",
                 Properties = new() {
-                    new NodeProperty { Name = "region", Type = "string", Label = "Region", DefaultValue = "Oakvale", Options = GameData.Regions }
+                    new NodeProperty { Name = "region", Type = "string", Label = "Region", DefaultValue = "Oakvale", Options = new List<string>(GameData.Regions) }
                 },
                 CodeTemplate = "if Quest:IsRegionLoaded(\"{region}\") then\n{CHILDREN}\nend" },
             
@@ -129,14 +129,14 @@ public static class NodeDefinitions
                 Description = "Give gold and/or items to hero",
                 Properties = new() {
                     new NodeProperty { Name = "gold", Type = "int", Label = "Gold", DefaultValue = "100" },
-                    new NodeProperty { Name = "item", Type = "string", Label = "Item (optional)", DefaultValue = "", Options = GameData.Objects }
+                    new NodeProperty { Name = "item", Type = "string", Label = "Item (optional)", DefaultValue = "", Options = new List<string>(GameData.Objects) }
                 },
                 CodeTemplate = "Quest:GiveHeroGold({gold})\nif \"{item}\" ~= \"\" then Quest:GiveHeroObject(\"{item}\") end" },
             
             new() { Type = "giveItem", Label = "Give Item", Category = "action", Icon = "🎁", IsAdvanced = false,
                 Description = "Give specific item(s) to hero",
                 Properties = new() {
-                    new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_HEALTH_POTION", Options = GameData.Objects },
+                    new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_HEALTH_POTION", Options = new List<string>(GameData.Objects) },
                     new NodeProperty { Name = "amount", Type = "int", Label = "Amount", DefaultValue = "1" }
                 },
                 CodeTemplate = "Quest:GiveHeroObject(\"{item}\", {amount})" },
@@ -144,7 +144,7 @@ public static class NodeDefinitions
             new() { Type = "takeItem", Label = "Take Item", Category = "action", Icon = "📤", IsAdvanced = false,
                 Description = "Remove item from hero's inventory",
                 Properties = new() {
-                    new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = GameData.Objects }
+                    new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
                 CodeTemplate = "Quest:TakeObjectFromHero(\"{item}\")" },
             
@@ -325,7 +325,7 @@ public static class NodeDefinitions
             new() { Type = "giveAbility", Label = "Give Ability", Category = "action", Icon = "✨", IsAdvanced = false,
                 Description = "Grant hero a combat ability",
                 Properties = new() {
-                    new NodeProperty { Name = "abilityId", Type = "int", Label = "Ability ID", DefaultValue = "1", Options = GameData.Abilities }
+                    new NodeProperty { Name = "abilityId", Type = "int", Label = "Ability ID", DefaultValue = "1", Options = new List<string>(GameData.Abilities) }
                 },
                 CodeTemplate = "Quest:GiveHeroAbility({abilityId}, true)" },
             
@@ -453,7 +453,7 @@ public static class NodeDefinitions
             new() { Type = "checkHasItem", Label = "Has Item", Category = "condition", Icon = "?", IsAdvanced = false,
                 Description = "Check if hero has specific item",
                 Properties = new() {
-                    new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = GameData.Objects }
+                    new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
                 CodeTemplate = "if Quest:DoesHeroHaveObject(\"{item}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
             
@@ -473,7 +473,7 @@ public static class NodeDefinitions
             new() { Type = "checkRegionLoaded", Label = "Region Loaded", Category = "condition", Icon = "?", IsAdvanced = true,
                 Description = "Check if region is currently loaded",
                 Properties = new() {
-                    new NodeProperty { Name = "region", Type = "string", Label = "Region", DefaultValue = "Oakvale", Options = GameData.Regions }
+                    new NodeProperty { Name = "region", Type = "string", Label = "Region", DefaultValue = "Oakvale", Options = new List<string>(GameData.Regions) }
                 },
                 CodeTemplate = "if Quest:IsRegionLoaded(\"{region}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
             

@@ -14,6 +14,8 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
     private readonly CodeGenerator codeGenerator = new();
     private bool isInitializing = true;
 
+    public QuestConfigViewModel QuestConfigViewModel { get; } = new();
+
     public QuestConfigView()
     {
         InitializeComponent();

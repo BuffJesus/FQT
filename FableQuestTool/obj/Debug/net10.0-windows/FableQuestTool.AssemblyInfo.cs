@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FableQuestTool")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4f53db6b4a919f2c1df3ed3e9eefd192b47792f4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5acc3a9f304aefcc6bd7f5bd06b536bc578b6300")]
 [assembly: System.Reflection.AssemblyProductAttribute("FableQuestTool")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FableQuestTool")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

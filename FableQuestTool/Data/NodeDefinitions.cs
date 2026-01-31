@@ -455,7 +455,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
-                CodeTemplate = "if Quest:DoesHeroHaveObject(\"{item}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
+                CodeTemplate = "if Quest:IsPlayerCarryingItemOfType(\"{item}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
 
             new() { Type = "checkIsAlive", Label = "Is Alive", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
                 Description = "Check if entity is alive",

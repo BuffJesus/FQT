@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FableQuestTool.Models;
@@ -21,14 +22,22 @@ public sealed partial class TemplatesViewModel : ObservableObject
     {
         "All",
         "Dialogue",
+        "Cinematic",
         "Combat",
         "Collection",
         "Escort",
-        "Travel"
+        "Travel",
+        "Mystery"
     };
 
     public ObservableCollection<QuestTemplate> FilteredTemplates { get; } = new();
     private List<QuestTemplate> allTemplates = new();
+
+    /// <summary>
+    /// Event raised when a template is selected for use.
+    /// The MainViewModel subscribes to this to load the template.
+    /// </summary>
+    public event Action<QuestProject>? TemplateSelected;
 
     public TemplatesViewModel()
     {
@@ -61,15 +70,40 @@ public sealed partial class TemplatesViewModel : ObservableObject
     [RelayCommand]
     private void UseTemplate()
     {
-        if (SelectedTemplate == null) return;
+        if (SelectedTemplate?.Template == null) return;
 
-        // This will be implemented to create a new project from the template
-        // For now, we just notify that it would create a new project
-        System.Windows.MessageBox.Show(
-            $"This would create a new quest project based on:\n\n{SelectedTemplate.Name}\n\n{SelectedTemplate.Description}",
+        var result = System.Windows.MessageBox.Show(
+            $"Create a new quest project based on:\n\n" +
+            $"{SelectedTemplate.Name}\n\n" +
+            $"{SelectedTemplate.Description}\n\n" +
+            "This will replace your current project. Continue?",
             "Use Template",
-            System.Windows.MessageBoxButton.OK,
-            System.Windows.MessageBoxImage.Information);
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+
+        if (result != System.Windows.MessageBoxResult.Yes)
+            return;
+
+        // Deep clone the template project so edits don't affect the original
+        var clonedProject = CloneProject(SelectedTemplate.Template);
+
+        // Raise event for MainViewModel to handle
+        TemplateSelected?.Invoke(clonedProject);
+    }
+
+    /// <summary>
+    /// Deep clones a QuestProject by serializing and deserializing it.
+    /// </summary>
+    private static QuestProject CloneProject(QuestProject original)
+    {
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        string json = JsonSerializer.Serialize(original, options);
+        return JsonSerializer.Deserialize<QuestProject>(json, options) ?? new QuestProject();
     }
 }
 

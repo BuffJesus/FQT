@@ -33,3 +33,4 @@ D:\Documents\JetBrains\FQT\FQT\FableQuestTool\obj\Debug\net10.0-windows\refint\F
 D:\Documents\JetBrains\FQT\FQT\FableQuestTool\obj\Debug\net10.0-windows\FableQuestTool.pdb
 D:\Documents\JetBrains\FQT\FQT\FableQuestTool\obj\Debug\net10.0-windows\FableQuestTool.genruntimeconfig.cache
 D:\Documents\JetBrains\FQT\FQT\FableQuestTool\obj\Debug\net10.0-windows\ref\FableQuestTool.dll
+D:\Documents\JetBrains\FQT\FQT\FableQuestTool\obj\Debug\net10.0-windows\FableQuestTool.sourcelink.json

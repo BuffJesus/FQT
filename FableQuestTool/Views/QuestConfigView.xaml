@@ -10,26 +10,26 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="340" />
         </Grid.ColumnDefinitions>
         <Border Grid.Column="0" Background="{DynamicResource PanelBackground}">
             <StackPanel Margin="12">
                 <TextBlock Text="Quest Setup" FontWeight="SemiBold" Margin="0,0,0,8" />
-                <ListBox>
-                    <ListBoxItem Content="Basic Info" IsSelected="True" />
+                <ListBox x:Name="SectionList" SelectionChanged="OnSectionChanged" SelectedIndex="0">
+                    <ListBoxItem Content="Basic Info" />
                     <ListBoxItem Content="Quest Card" />
                     <ListBoxItem Content="Regions" />
                     <ListBoxItem Content="Rewards" />
-                    <ListBoxItem Content="Boasts" />
+                    <ListBoxItem Content="Optional Challenges" />
                     <ListBoxItem Content="States" />
-                    <ListBoxItem Content="Threads" />
+                    <ListBoxItem Content="Background Tasks" />
                 </ListBox>
             </StackPanel>
         </Border>
         <Border Grid.Column="1" Background="{DynamicResource SurfaceBackground}" Margin="8">
             <ScrollViewer>
                 <StackPanel Margin="16" Orientation="Vertical">
-                    <GroupBox Header="Basic Info" Margin="0,0,0,12">
+                    <GroupBox x:Name="BasicInfoGroup" Header="Basic Info" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <TextBlock Text="Quest Name" />
                             <TextBox>
@@ -61,7 +61,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Header="Quest Card" Margin="0,0,0,12">
+                    <GroupBox x:Name="QuestCardGroup" Header="Quest Card" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <TextBlock Text="Quest Card Object" />
                             <TextBox Text="{Binding Project.QuestCardObject, UpdateSourceTrigger=PropertyChanged}" />
@@ -80,7 +80,7 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <StackPanel x:Name="MapOffsetsPanel" Orientation="Horizontal" Margin="0,12,0,0">
                                 <StackPanel Width="140">
                                     <TextBlock Text="World Map X" />
                                     <TextBox Text="{Binding Project.WorldMapOffsetX, UpdateSourceTrigger=PropertyChanged}" />
@@ -100,7 +100,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Header="Regions" Margin="0,0,0,12">
+                    <GroupBox x:Name="RegionsGroup" Header="Regions" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <StackPanel Orientation="Horizontal">
                                 <TextBox x:Name="RegionInput" Width="200" Margin="0,0,8,0" />
@@ -111,7 +111,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Header="Rewards" Margin="0,0,0,12">
+                    <GroupBox x:Name="RewardsGroup" Header="Rewards" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <UniformGrid Columns="4">
                                 <StackPanel>
@@ -136,21 +136,23 @@
                             <StackPanel Orientation="Horizontal">
                                 <TextBox x:Name="RewardItemInput" Width="200" Margin="0,0,8,0" />
                                 <Button Content="Add" Width="80" Click="OnAddRewardItem" />
+                                <Button Content="Update" Width="80" Margin="8,0,0,0" Click="OnUpdateRewardItem" />
                                 <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRewardItem" />
                             </StackPanel>
-                            <ListBox x:Name="RewardItemsList" ItemsSource="{Binding Project.Rewards.Items}" Height="80" Margin="0,8,0,0" />
+                            <ListBox x:Name="RewardItemsList" ItemsSource="{Binding Project.Rewards.Items}" Height="80" Margin="0,8,0,0" SelectionChanged="OnRewardItemSelected" />
 
                             <TextBlock Text="Reward Abilities" Margin="0,12,0,0" />
                             <StackPanel Orientation="Horizontal">
                                 <TextBox x:Name="RewardAbilityInput" Width="200" Margin="0,0,8,0" />
                                 <Button Content="Add" Width="80" Click="OnAddRewardAbility" />
+                                <Button Content="Update" Width="80" Margin="8,0,0,0" Click="OnUpdateRewardAbility" />
                                 <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRewardAbility" />
                             </StackPanel>
-                            <ListBox x:Name="RewardAbilitiesList" ItemsSource="{Binding Project.Rewards.Abilities}" Height="80" Margin="0,8,0,0" />
+                            <ListBox x:Name="RewardAbilitiesList" ItemsSource="{Binding Project.Rewards.Abilities}" Height="80" Margin="0,8,0,0" SelectionChanged="OnRewardAbilitySelected" />
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Header="Boasts" Margin="0,0,0,12">
+                    <GroupBox x:Name="BoastsGroup" Header="Optional Challenges" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <WrapPanel>
                                 <StackPanel Width="120" Margin="0,0,8,0">
@@ -178,11 +180,12 @@
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
                                     <Button Content="Add" Width="70" Click="OnAddBoast" />
+                                    <Button Content="Update" Width="80" Margin="8,0,0,0" Click="OnUpdateBoast" />
                                     <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveBoast" />
                                 </StackPanel>
                             </WrapPanel>
 
-                            <ListBox x:Name="BoastsList" ItemsSource="{Binding Project.Boasts}" Height="120" Margin="0,8,0,0">
+                            <ListBox x:Name="BoastsList" ItemsSource="{Binding Project.Boasts}" Height="120" Margin="0,8,0,0" SelectionChanged="OnBoastSelected">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -198,7 +201,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Header="State Variables" Margin="0,0,0,12">
+                    <GroupBox x:Name="StatesGroup" Header="States" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <StackPanel Width="160">
@@ -238,7 +241,7 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Header="Threads">
+                    <GroupBox x:Name="ThreadsGroup" Header="Background Tasks">
                         <StackPanel Margin="12">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <StackPanel Width="160">
@@ -254,10 +257,11 @@
                                     <TextBox x:Name="ThreadDescriptionInput" />
                                 </StackPanel>
                                 <Button Content="Add" Width="70" Margin="8,18,0,0" Click="OnAddThread" />
+                                <Button Content="Update" Width="80" Margin="8,18,0,0" Click="OnUpdateThread" />
                                 <Button Content="Remove" Width="80" Margin="8,18,0,0" Click="OnRemoveThread" />
                             </StackPanel>
 
-                            <ListBox x:Name="ThreadsList" ItemsSource="{Binding Project.Threads}" Height="120">
+                            <ListBox x:Name="ThreadsList" ItemsSource="{Binding Project.Threads}" Height="120" SelectionChanged="OnThreadSelected">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -274,7 +278,16 @@
             </ScrollViewer>
         </Border>
         <Border Grid.Column="2" Background="{DynamicResource PanelBackground}">
-            <TextBlock Text="Quest script preview" Margin="12" />
+            <StackPanel Margin="12">
+                <TextBlock Text="Quest Script Preview" FontWeight="SemiBold" Margin="0,0,0,8" />
+                <TextBox x:Name="PreviewText"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         Height="700" />
+            </StackPanel>
         </Border>
     </Grid>
 </UserControl>

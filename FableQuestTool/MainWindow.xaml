@@ -34,6 +34,8 @@
                 <Button Content="Export" Width="70" Margin="0,0,6,0" Command="{Binding ExportProjectCommand}" />
                 <Separator />
                 <Button Content="Test" Width="70" />
+                <Separator />
+                <CheckBox Content="Advanced Mode" IsChecked="{Binding IsAdvancedMode}" />
             </ToolBar>
         </ToolBarTray>
 

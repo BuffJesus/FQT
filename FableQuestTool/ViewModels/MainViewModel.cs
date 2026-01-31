@@ -24,6 +24,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string? projectPath;
 
+    [ObservableProperty]
+    private bool isAdvancedMode;
+
     public string Title => "FSE Quest Creator Pro";
 
     [RelayCommand]

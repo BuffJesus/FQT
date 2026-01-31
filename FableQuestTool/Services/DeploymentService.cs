@@ -564,25 +564,24 @@ public sealed class DeploymentService
 
             if (inTargetQuest)
             {
-                // Count braces to track quest block
-                foreach (char c in trimmed)
+                // Comment/uncomment lines within the quest block FIRST (before counting braces)
+                bool isCommented = trimmed.StartsWith("--");
+                if (enable && isCommented)
+                {
+                    lines[i] = Regex.Replace(line, @"^(\s*)--\s*", "$1");
+                    trimmed = lines[i].Trim(); // Update trimmed after uncommenting
+                }
+                else if (!enable && !isCommented && !string.IsNullOrWhiteSpace(trimmed))
+                {
+                    lines[i] = Regex.Replace(line, @"^(\s*)", "$1-- ");
+                }
+
+                // Count braces to track quest block (use the original trimmed for counting)
+                string lineForCounting = trimmed.StartsWith("--") ? trimmed.Substring(2).Trim() : trimmed;
+                foreach (char c in lineForCounting)
                 {
                     if (c == '{') braceDepth++;
                     else if (c == '}') braceDepth--;
-                }
-
-                // Comment/uncomment lines within the quest block
-                if (braceDepth > 0)
-                {
-                    bool isCommented = trimmed.StartsWith("--");
-                    if (enable && isCommented)
-                    {
-                        lines[i] = Regex.Replace(line, @"^(\s*)--\s*", "$1");
-                    }
-                    else if (!enable && !isCommented && !string.IsNullOrWhiteSpace(trimmed))
-                    {
-                        lines[i] = Regex.Replace(line, @"^(\s*)", "$1-- ");
-                    }
                 }
 
                 // Check if we've closed the quest block

@@ -64,9 +64,14 @@ public sealed class CodeGenerator
                 // Guild quests need to be added to the quest table
                 sb.AppendLine($"    Quest:AddGuildQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\")");
             }
+            else if (quest.GiveCardDirectly)
+            {
+                // Give quest card directly to hero
+                sb.AppendLine($"    Quest:GiveQuestCardDirectly(\"{quest.QuestCardObject}\", \"{quest.Name}\", true)");
+            }
             else
             {
-                // Non-guild quests are given directly
+                // Non-guild quests are added to quest log
                 sb.AppendLine($"    Quest:AddQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\", false, false)");
             }
         }
@@ -120,11 +125,11 @@ public sealed class CodeGenerator
         sb.AppendLine("function MonitorQuestCompletion(questObject)");
         sb.AppendLine("    Quest = questObject");
         sb.AppendLine("    while true do");
-        sb.AppendLine("        if not Quest:Wait(0) then break end");
         sb.AppendLine("        if Quest:GetStateBool(\"QuestCompleted\") then");
         sb.AppendLine("            CompleteQuest()");
         sb.AppendLine("            break");
         sb.AppendLine("        end");
+        sb.AppendLine("        if not Quest:NewScriptFrame() then break end");
         sb.AppendLine("    end");
         sb.AppendLine("end");
         sb.AppendLine();
@@ -140,8 +145,9 @@ public sealed class CodeGenerator
 
         sb.AppendLine("function CompleteQuest()");
         sb.Append(RenderRewards(quest));
-        sb.AppendLine($"    Quest:SetQuestAsCompleted(\"{quest.Name}\", true, false, false)");
-        sb.AppendLine($"    Quest:DeactivateQuest(\"{quest.Name}\", 60)");
+        // Don't show completion screen (first param false) since custom quest cards may not display rewards correctly
+        sb.AppendLine($"    Quest:SetQuestAsCompleted(\"{quest.Name}\", false, false, false)");
+        sb.AppendLine($"    Quest:DeactivateQuestLater(\"{quest.Name}\", 1.0)");
         sb.AppendLine("end");
 
         return sb.ToString();

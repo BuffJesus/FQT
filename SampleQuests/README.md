@@ -17,6 +17,8 @@ A complete, working example quest that demonstrates:
 - ✅ Quest completion and rewards
 - ✅ Proper entity control lifecycle
 
+**⚠️ IMPORTANT:** This quest uses "StartOakVale" which is ONLY available at the start of a NEW GAME (during the childhood section). If you're testing on an existing save game that's past the childhood section, this quest will NEVER activate because StartOakVale never loads. For mid-game testing, modify the quest to use a different region like "BarrowFields" or "HeroGuild".
+
 ### Files
 
 **NewQuest.lua** - Main quest script

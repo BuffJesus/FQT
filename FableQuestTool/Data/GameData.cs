@@ -5,10 +5,17 @@ namespace FableQuestTool.Data;
 
 public static class GameData
 {
+    /// <summary>
+    /// Region names used by the game. IMPORTANT: Region names must match exactly what the game loads.
+    /// For childhood Oakvale at game start, use "StartOakVale" (NOT "Oakvale").
+    /// </summary>
     public static ObservableCollection<string> Regions { get; } = new()
     {
+        // Childhood regions (game start)
+        "StartOakVale",           // Childhood Oakvale (has East, West, MemorialGarden sections)
+
+        // Main game regions
         "BarrowFields",
-        "Oakvale",
         "LookoutPoint",
         "HeroGuild",
         "GuildWoods",
@@ -17,17 +24,41 @@ public static class GameData
         "BowerstoneSouth",
         "BowerstoneQuay",
         "Darkwood",
+        "DarkwoodMarshes",
+        "DarkwoodLake",
+        "DarkwoodCamp",
         "Witchwood",
+        "WitchwoodCullis",
+        "WitchwoodStones",
+        "WitchwoodLake",
         "Greatwood",
+        "GreatwoodEntrance",
+        "GreatwoodGorge",
         "GreatwoodLake",
+        "GreatwoodCaves",
         "Knothole",
+        "KnotholeGlade",
         "HookCoast",
         "TwinbladeCamp",
+        "TwinbladeElite",
         "LychfieldGraveyard",
         "HeadsmansHill",
+        "HeadsmansHollows",
+        "HeadsmansWall",
         "PrisonPath",
         "Snowspire",
-        "NorthernWastes"
+        "SnowspireVillage",
+        "NorthernWastes",
+        "NorthernWastesFoothill",
+        "Archons",
+        "ArchonsShrine",
+        "NecropS",
+        "CliffTop",
+        "Orchard",
+        "Gibbet",
+        "Grey",
+        "Temple",
+        "Chamber"
     };
 
     public static ObservableCollection<string> QuestCards { get; } = new()

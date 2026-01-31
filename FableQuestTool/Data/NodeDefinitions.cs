@@ -399,7 +399,240 @@ public static class NodeDefinitions
             new() { Type = "openDoor", Label = "Open Door", Category = "action", Icon = "🚪", IsAdvanced = true,
                 Description = "Open a door object",
                 Properties = new(),
-                CodeTemplate = "Quest:OpenDoor(Me)\n{CHILDREN}" }
+                CodeTemplate = "Quest:OpenDoor(Me)\n{CHILDREN}" },
+
+            // ===== CONVERSATION SYSTEM =====
+            new() { Type = "startConversation", Label = "Start Conversation", Category = "action", Icon = "🎭", IsAdvanced = false,
+                Description = "Begin a multi-line conversation (stores conversation ID for adding lines)",
+                Properties = new() {
+                    new NodeProperty { Name = "use2DSound", Type = "bool", Label = "Use 2D Sound (no spatial)", DefaultValue = "true" },
+                    new NodeProperty { Name = "playInCutscene", Type = "bool", Label = "Play During Cutscene", DefaultValue = "false" }
+                },
+                CodeTemplate = "local convoId = Quest:StartAmbientConversation(Me, hero, {use2DSound}, {playInCutscene})\n{CHILDREN}" },
+
+            new() { Type = "addConversationLine", Label = "Add Conversation Line", Category = "action", Icon = "💭", IsAdvanced = false,
+                Description = "Add a dialogue line to current conversation (use after Start Conversation)",
+                Properties = new() {
+                    new NodeProperty { Name = "textKey", Type = "string", Label = "Text/Voice Key", DefaultValue = "DIALOGUE_LINE_001" },
+                    new NodeProperty { Name = "showSubtitle", Type = "bool", Label = "Show Subtitle", DefaultValue = "true" }
+                },
+                CodeTemplate = "Quest:AddLineToConversation(convoId, \"{textKey}\", Me, hero, {showSubtitle})\n{CHILDREN}" },
+
+            new() { Type = "endConversation", Label = "End Conversation", Category = "action", Icon = "🔚", IsAdvanced = false,
+                Description = "End the current conversation",
+                Properties = new() {
+                    new NodeProperty { Name = "immediate", Type = "bool", Label = "End Immediately", DefaultValue = "false" }
+                },
+                CodeTemplate = "Quest:RemoveConversation(convoId, {immediate})\n{CHILDREN}" },
+
+            new() { Type = "speakWithOptions", Label = "Speak (Advanced)", Category = "action", Icon = "🎤", IsAdvanced = true,
+                Description = "Entity speaks with full audio and display options",
+                Properties = new() {
+                    new NodeProperty { Name = "text", Type = "text", Label = "Text/Voice Key", DefaultValue = "Hello, hero!" },
+                    new NodeProperty { Name = "use2DSound", Type = "bool", Label = "Use 2D Sound", DefaultValue = "false" },
+                    new NodeProperty { Name = "fadeScreen", Type = "bool", Label = "Fade Screen", DefaultValue = "false" },
+                    new NodeProperty { Name = "blocking", Type = "bool", Label = "Wait for Completion", DefaultValue = "true" }
+                },
+                CodeTemplate = "Me:Speak(hero, \"{text}\", {use2DSound}, {fadeScreen}, {blocking})\n{CHILDREN}" },
+
+            new() { Type = "narratorSpeak", Label = "Narrator Speaks", Category = "action", Icon = "📢", IsAdvanced = true,
+                Description = "Play narration voice (entity marked as narrator)",
+                Properties = new() {
+                    new NodeProperty { Name = "textKey", Type = "string", Label = "Narration Key", DefaultValue = "NARRATION_001" }
+                },
+                CodeTemplate = "Quest:EntitySetWillBeUsingNarrator(Me, true)\nMe:SpeakAndWait(\"{textKey}\")\n{CHILDREN}" },
+
+            // ===== AUDIO SYSTEM =====
+            new() { Type = "play2DSound", Label = "Play 2D Sound", Category = "action", Icon = "🔈", IsAdvanced = false,
+                Description = "Play non-spatial (2D) sound effect",
+                Properties = new() {
+                    new NodeProperty { Name = "sound", Type = "string", Label = "Sound Name", DefaultValue = "SOUND_UI_CLICK" }
+                },
+                CodeTemplate = "local soundId = Quest:Play2DSound(\"{sound}\")\n{CHILDREN}" },
+
+            new() { Type = "playSoundAtPosition", Label = "Play Sound At Position", Category = "action", Icon = "📍🔊", IsAdvanced = true,
+                Description = "Play sound at specific world coordinates",
+                Properties = new() {
+                    new NodeProperty { Name = "sound", Type = "string", Label = "Sound Name", DefaultValue = "SOUND_EXPLOSION" },
+                    new NodeProperty { Name = "x", Type = "float", Label = "X", DefaultValue = "0" },
+                    new NodeProperty { Name = "y", Type = "float", Label = "Y", DefaultValue = "0" },
+                    new NodeProperty { Name = "z", Type = "float", Label = "Z", DefaultValue = "0" }
+                },
+                CodeTemplate = "local soundId = Quest:PlaySoundAtPos(\"{sound}\", {x={x}, y={y}, z={z}})\n{CHILDREN}" },
+
+            new() { Type = "playSoundOnEntity", Label = "Play Sound On Entity", Category = "action", Icon = "🔊", IsAdvanced = false,
+                Description = "Play spatial sound attached to this entity",
+                Properties = new() {
+                    new NodeProperty { Name = "sound", Type = "string", Label = "Sound Name", DefaultValue = "SOUND_FOOTSTEP" }
+                },
+                CodeTemplate = "local soundId = Quest:PlaySoundOnThing(\"{sound}\", Me)\n{CHILDREN}" },
+
+            new() { Type = "stopSound", Label = "Stop Sound", Category = "action", Icon = "🔇", IsAdvanced = true,
+                Description = "Stop a playing sound by ID (use after Play Sound nodes)",
+                Properties = new(),
+                CodeTemplate = "if soundId then Quest:StopSound(soundId) end\n{CHILDREN}" },
+
+            new() { Type = "muteAllSounds", Label = "Mute All Sounds", Category = "action", Icon = "🔕", IsAdvanced = true,
+                Description = "Mute or unmute all game sounds",
+                Properties = new() {
+                    new NodeProperty { Name = "muted", Type = "bool", Label = "Muted", DefaultValue = "true" }
+                },
+                CodeTemplate = "Quest:SetAllSoundsAsMuted({muted})\n{CHILDREN}" },
+
+            // ===== MUSIC SYSTEM =====
+            new() { Type = "overrideMusic", Label = "Override Music", Category = "action", Icon = "🎵", IsAdvanced = false,
+                Description = "Override background music with specified track",
+                Properties = new() {
+                    new NodeProperty { Name = "musicSet", Type = "string", Label = "Music Set", DefaultValue = "MUSIC_COMBAT" }
+                },
+                CodeTemplate = "Quest:OverrideMusic(\"{musicSet}\")\n{CHILDREN}" },
+
+            new() { Type = "stopMusicOverride", Label = "Stop Music Override", Category = "action", Icon = "⏹️🎵", IsAdvanced = false,
+                Description = "Stop music override and return to normal",
+                Properties = new(),
+                CodeTemplate = "Quest:StopOverrideMusic()\n{CHILDREN}" },
+
+            new() { Type = "transitionMusic", Label = "Transition Music", Category = "action", Icon = "🎼", IsAdvanced = true,
+                Description = "Smoothly transition to different music theme",
+                Properties = new() {
+                    new NodeProperty { Name = "theme", Type = "string", Label = "Theme Name", DefaultValue = "THEME_PEACEFUL" }
+                },
+                CodeTemplate = "Quest:TransitionToTheme(\"{theme}\")\n{CHILDREN}" },
+
+            new() { Type = "enableDangerMusic", Label = "Danger Music", Category = "action", Icon = "⚠️🎵", IsAdvanced = true,
+                Description = "Enable or disable combat/danger music",
+                Properties = new() {
+                    new NodeProperty { Name = "enabled", Type = "bool", Label = "Enabled", DefaultValue = "true" }
+                },
+                CodeTemplate = "Quest:EnableDangerMusic({enabled})\n{CHILDREN}" },
+
+            // ===== CAMERA SYSTEM =====
+            new() { Type = "cameraOrbitEntity", Label = "Camera Orbit Entity", Category = "action", Icon = "🎥", IsAdvanced = false,
+                Description = "Orbit camera around an entity",
+                Properties = new() {
+                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "5.0" },
+                    new NodeProperty { Name = "height", Type = "float", Label = "Height", DefaultValue = "2.0" },
+                    new NodeProperty { Name = "speed", Type = "float", Label = "Speed", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "3.0" }
+                },
+                CodeTemplate = "Quest:CameraCircleAroundThing(Me, {distance}, {height}, {speed}, {duration})\n{CHILDREN}" },
+
+            new() { Type = "cameraOrbitPosition", Label = "Camera Orbit Position", Category = "action", Icon = "🎥📍", IsAdvanced = true,
+                Description = "Orbit camera around world position",
+                Properties = new() {
+                    new NodeProperty { Name = "x", Type = "float", Label = "X", DefaultValue = "0" },
+                    new NodeProperty { Name = "y", Type = "float", Label = "Y", DefaultValue = "0" },
+                    new NodeProperty { Name = "z", Type = "float", Label = "Z", DefaultValue = "0" },
+                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "5.0" },
+                    new NodeProperty { Name = "height", Type = "float", Label = "Height", DefaultValue = "2.0" },
+                    new NodeProperty { Name = "speed", Type = "float", Label = "Speed", DefaultValue = "1.0" }
+                },
+                CodeTemplate = "Quest:CameraCircleAroundPos({x={x}, y={y}, z={z}}, {distance}, {height}, {speed})\n{CHILDREN}" },
+
+            new() { Type = "cameraLookAtEntity", Label = "Camera Look At Entity", Category = "action", Icon = "👁️🎥", IsAdvanced = false,
+                Description = "Move camera to look at entity",
+                Properties = new() {
+                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "3.0" },
+                    new NodeProperty { Name = "height", Type = "float", Label = "Height", DefaultValue = "1.5" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
+                },
+                CodeTemplate = "Quest:CameraMoveToPosAndLookAtThing(Me:GetPos(), Me, {distance}, {height}, {duration})\n{CHILDREN}" },
+
+            new() { Type = "cameraLookAtPosition", Label = "Camera Look At Position", Category = "action", Icon = "👁️📍", IsAdvanced = true,
+                Description = "Move camera to look at world position",
+                Properties = new() {
+                    new NodeProperty { Name = "lookX", Type = "float", Label = "Look At X", DefaultValue = "0" },
+                    new NodeProperty { Name = "lookY", Type = "float", Label = "Look At Y", DefaultValue = "0" },
+                    new NodeProperty { Name = "lookZ", Type = "float", Label = "Look At Z", DefaultValue = "0" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
+                },
+                CodeTemplate = "Quest:CameraMoveToPosAndLookAtPos(Me:GetPos(), {x={lookX}, y={lookY}, z={lookZ}}, {duration})\n{CHILDREN}" },
+
+            new() { Type = "cameraResetToHero", Label = "Reset Camera To Hero", Category = "action", Icon = "🔄🎥", IsAdvanced = false,
+                Description = "Return camera to default third-person view behind hero",
+                Properties = new(),
+                CodeTemplate = "Quest:CameraResetToViewBehindHero()\n{CHILDREN}" },
+
+            new() { Type = "cameraUseCameraPoint", Label = "Use Camera Point", Category = "action", Icon = "📷", IsAdvanced = true,
+                Description = "Use a predefined camera point from the level",
+                Properties = new() {
+                    new NodeProperty { Name = "cameraPoint", Type = "string", Label = "Camera Point Name", DefaultValue = "CAMERA_POINT_1" }
+                },
+                CodeTemplate = "local camPoint = Quest:GetNamedThing(\"{cameraPoint}\")\nQuest:CameraUseCameraPoint(camPoint)\n{CHILDREN}" },
+
+            new() { Type = "cameraConversation", Label = "Conversation Camera", Category = "action", Icon = "🎬💬", IsAdvanced = true,
+                Description = "Set up camera for dialogue scene",
+                Properties = new() {
+                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "2.0" }
+                },
+                CodeTemplate = "Quest:CameraDoConversation(Me, hero, {distance})\n{CHILDREN}" },
+
+            // ===== SCREEN EFFECTS =====
+            new() { Type = "screenFadeOut", Label = "Screen Fade Out", Category = "action", Icon = "⬛", IsAdvanced = false,
+                Description = "Fade screen to black",
+                Properties = new() {
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
+                },
+                CodeTemplate = "Quest:FadeScreenOutUntilNextCallToFadeScreenIn({duration})\n{CHILDREN}" },
+
+            new() { Type = "screenFadeIn", Label = "Screen Fade In", Category = "action", Icon = "⬜", IsAdvanced = false,
+                Description = "Fade screen back in from black",
+                Properties = new() {
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
+                },
+                CodeTemplate = "Quest:EndCutFade({duration})\n{CHILDREN}" },
+
+            new() { Type = "radialBlur", Label = "Radial Blur", Category = "action", Icon = "🌀", IsAdvanced = true,
+                Description = "Apply radial blur effect from center",
+                Properties = new() {
+                    new NodeProperty { Name = "intensity", Type = "float", Label = "Intensity (0-1)", DefaultValue = "0.5" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Fade Duration", DefaultValue = "0.5" }
+                },
+                CodeTemplate = "Quest:RadialBlurFadeTo({intensity}, {duration})\n{CHILDREN}" },
+
+            new() { Type = "radialBlurOff", Label = "Radial Blur Off", Category = "action", Icon = "🔲", IsAdvanced = true,
+                Description = "Fade out radial blur effect",
+                Properties = new() {
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Fade Duration", DefaultValue = "0.5" }
+                },
+                CodeTemplate = "Quest:RadialBlurFadeOut({duration})\n{CHILDREN}" },
+
+            new() { Type = "colorFilter", Label = "Color Filter", Category = "action", Icon = "🎨", IsAdvanced = true,
+                Description = "Apply color filter overlay to screen",
+                Properties = new() {
+                    new NodeProperty { Name = "r", Type = "float", Label = "Red (0-1)", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "g", Type = "float", Label = "Green (0-1)", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "b", Type = "float", Label = "Blue (0-1)", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "a", Type = "float", Label = "Alpha (0-1)", DefaultValue = "0.3" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Fade Duration", DefaultValue = "0.5" }
+                },
+                CodeTemplate = "Quest:ScreenFilterFadeTo({r}, {g}, {b}, {a}, {duration})\n{CHILDREN}" },
+
+            new() { Type = "colorFilterOff", Label = "Color Filter Off", Category = "action", Icon = "🔲🎨", IsAdvanced = true,
+                Description = "Remove color filter from screen",
+                Properties = new() {
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Fade Duration", DefaultValue = "0.5" }
+                },
+                CodeTemplate = "Quest:ScreenFilterFadeOut({duration})\n{CHILDREN}" },
+
+            new() { Type = "letterbox", Label = "Letterbox On", Category = "action", Icon = "🎬", IsAdvanced = true,
+                Description = "Enable cinematic letterbox bars",
+                Properties = new() {
+                    new NodeProperty { Name = "fadeIn", Type = "bool", Label = "Fade In", DefaultValue = "true" }
+                },
+                CodeTemplate = "Quest:StartLetterBox({fadeIn})\n{CHILDREN}" },
+
+            new() { Type = "letterboxOff", Label = "Letterbox Off", Category = "action", Icon = "📺", IsAdvanced = true,
+                Description = "Remove cinematic letterbox bars",
+                Properties = new(),
+                CodeTemplate = "Quest:EndLetterBox()\n{CHILDREN}" },
+
+            new() { Type = "playMovie", Label = "Play Movie", Category = "action", Icon = "🎞️", IsAdvanced = true,
+                Description = "Play an AVI movie file",
+                Properties = new() {
+                    new NodeProperty { Name = "movieName", Type = "string", Label = "Movie Name", DefaultValue = "intro" }
+                },
+                CodeTemplate = "Quest:PlayAVIMovie(\"{movieName}\")\n{CHILDREN}" }
         };
     }
 
@@ -487,7 +720,47 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "boastId", Type = "int", Label = "Boast ID", DefaultValue = "1" }
                 },
-                CodeTemplate = "if Quest:IsBoastTaken({boastId}, \"{QUEST_NAME}\") then\n{TRUE}\nelse\n{FALSE}\nend" }
+                CodeTemplate = "if Quest:IsBoastTaken({boastId}, \"{QUEST_NAME}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            // ===== AUDIO/CONVERSATION CONDITIONS =====
+            new() { Type = "checkSoundPlaying", Label = "Sound Playing", Category = "condition", Icon = "?🔊", IsAdvanced = true, HasBranching = true,
+                Description = "Check if a sound is currently playing (requires soundId from Play Sound nodes)",
+                Properties = new(),
+                CodeTemplate = "if soundId and Quest:IsSoundPlaying(soundId) then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkConversationActive", Label = "Conversation Active", Category = "condition", Icon = "?💬", IsAdvanced = true, HasBranching = true,
+                Description = "Check if conversation is still active",
+                Properties = new(),
+                CodeTemplate = "if convoId and Quest:IsConversationActive(convoId) then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkDangerMusicEnabled", Label = "Danger Music Enabled", Category = "condition", Icon = "?🎵", IsAdvanced = true, HasBranching = true,
+                Description = "Check if danger/combat music is enabled",
+                Properties = new(),
+                CodeTemplate = "if Quest:IsDangerMusicEnabled() then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkCameraScripted", Label = "Camera Scripted", Category = "condition", Icon = "?🎥", IsAdvanced = true, HasBranching = true,
+                Description = "Check if camera is currently in scripted mode",
+                Properties = new(),
+                CodeTemplate = "if Quest:IsCameraInScriptedMode() then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkEntityInCombat", Label = "Entity In Combat", Category = "condition", Icon = "?⚔️", IsAdvanced = false, HasBranching = true,
+                Description = "Check if this entity is in combat",
+                Properties = new(),
+                CodeTemplate = "if Me:IsInCombat() then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkHeroInCombat", Label = "Hero In Combat", Category = "condition", Icon = "?🗡️", IsAdvanced = false, HasBranching = true,
+                Description = "Check if hero is in combat",
+                Properties = new(),
+                CodeTemplate = "if hero:IsInCombat() then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkDistanceToHero", Label = "Distance To Hero", Category = "condition", Icon = "?📏", IsAdvanced = false, HasBranching = true,
+                Description = "Check distance between entity and hero",
+                Properties = new() {
+                    new NodeProperty { Name = "operator", Type = "select", Label = "Operator", DefaultValue = "<",
+                        Options = new List<string> { "<", "<=", ">", ">=" } },
+                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "5.0" }
+                },
+                CodeTemplate = "if Quest:GetDistanceBetweenThings(Me, hero) {operator} {distance} then\n{TRUE}\nelse\n{FALSE}\nend" }
         };
     }
 

@@ -20,6 +20,7 @@
                     <ListBoxItem Content="Quest Card" />
                     <ListBoxItem Content="Regions" />
                     <ListBoxItem Content="Rewards" />
+                    <ListBoxItem Content="Boasts" />
                     <ListBoxItem Content="States" />
                     <ListBoxItem Content="Threads" />
                 </ListBox>
@@ -68,11 +69,27 @@
                             <TextBlock Text="Objective Text" Margin="0,12,0,0" />
                             <TextBox Text="{Binding Project.ObjectiveText, UpdateSourceTrigger=PropertyChanged}" />
 
-                            <TextBlock Text="Objective Region 1" Margin="0,12,0,0" />
-                            <TextBox Text="{Binding Project.ObjectiveRegion1, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <StackPanel Width="180">
+                                    <TextBlock Text="Objective Region 1" />
+                                    <TextBox Text="{Binding Project.ObjectiveRegion1, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel Width="180" Margin="8,0,0,0">
+                                    <TextBlock Text="Objective Region 2" />
+                                    <TextBox Text="{Binding Project.ObjectiveRegion2, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </StackPanel>
 
-                            <TextBlock Text="Objective Region 2" Margin="0,12,0,0" />
-                            <TextBox Text="{Binding Project.ObjectiveRegion2, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <StackPanel Width="140">
+                                    <TextBlock Text="World Map X" />
+                                    <TextBox Text="{Binding Project.WorldMapOffsetX, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel Width="140" Margin="8,0,0,0">
+                                    <TextBlock Text="World Map Y" />
+                                    <TextBox Text="{Binding Project.WorldMapOffsetY, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                 <CheckBox Content="Use Start Screen" IsChecked="{Binding Project.UseQuestStartScreen}" Margin="0,0,12,0" />
@@ -95,27 +112,93 @@
                     </GroupBox>
 
                     <GroupBox Header="Rewards" Margin="0,0,0,12">
-                        <UniformGrid Columns="4" Margin="12">
-                            <StackPanel>
-                                <TextBlock Text="Gold" />
-                                <TextBox Text="{Binding Project.Rewards.Gold, UpdateSourceTrigger=PropertyChanged}" />
+                        <StackPanel Margin="12">
+                            <UniformGrid Columns="4">
+                                <StackPanel>
+                                    <TextBlock Text="Gold" />
+                                    <TextBox Text="{Binding Project.Rewards.Gold, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Experience" />
+                                    <TextBox Text="{Binding Project.Rewards.Experience, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Renown" />
+                                    <TextBox Text="{Binding Project.Rewards.Renown, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Morality" />
+                                    <TextBox Text="{Binding Project.Rewards.Morality, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </UniformGrid>
+
+                            <TextBlock Text="Reward Items" Margin="0,12,0,0" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox x:Name="RewardItemInput" Width="200" Margin="0,0,8,0" />
+                                <Button Content="Add" Width="80" Click="OnAddRewardItem" />
+                                <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRewardItem" />
                             </StackPanel>
-                            <StackPanel>
-                                <TextBlock Text="Experience" />
-                                <TextBox Text="{Binding Project.Rewards.Experience, UpdateSourceTrigger=PropertyChanged}" />
+                            <ListBox x:Name="RewardItemsList" ItemsSource="{Binding Project.Rewards.Items}" Height="80" Margin="0,8,0,0" />
+
+                            <TextBlock Text="Reward Abilities" Margin="0,12,0,0" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox x:Name="RewardAbilityInput" Width="200" Margin="0,0,8,0" />
+                                <Button Content="Add" Width="80" Click="OnAddRewardAbility" />
+                                <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRewardAbility" />
                             </StackPanel>
-                            <StackPanel>
-                                <TextBlock Text="Renown" />
-                                <TextBox Text="{Binding Project.Rewards.Renown, UpdateSourceTrigger=PropertyChanged}" />
-                            </StackPanel>
-                            <StackPanel>
-                                <TextBlock Text="Morality" />
-                                <TextBox Text="{Binding Project.Rewards.Morality, UpdateSourceTrigger=PropertyChanged}" />
-                            </StackPanel>
-                        </UniformGrid>
+                            <ListBox x:Name="RewardAbilitiesList" ItemsSource="{Binding Project.Rewards.Abilities}" Height="80" Margin="0,8,0,0" />
+                        </StackPanel>
                     </GroupBox>
 
-                    <GroupBox Header="State Variables">
+                    <GroupBox Header="Boasts" Margin="0,0,0,12">
+                        <StackPanel Margin="12">
+                            <WrapPanel>
+                                <StackPanel Width="120" Margin="0,0,8,0">
+                                    <TextBlock Text="Boast ID" />
+                                    <TextBox x:Name="BoastIdInput" />
+                                </StackPanel>
+                                <StackPanel Width="220" Margin="0,0,8,0">
+                                    <TextBlock Text="Text" />
+                                    <TextBox x:Name="BoastTextInput" />
+                                </StackPanel>
+                                <StackPanel Width="100" Margin="0,0,8,0">
+                                    <TextBlock Text="Renown" />
+                                    <TextBox x:Name="BoastRenownInput" />
+                                </StackPanel>
+                                <StackPanel Width="100" Margin="0,0,8,0">
+                                    <TextBlock Text="Gold" />
+                                    <TextBox x:Name="BoastGoldInput" />
+                                </StackPanel>
+                                <StackPanel Width="100" Margin="0,0,8,0">
+                                    <TextBlock Text="Text ID" />
+                                    <TextBox x:Name="BoastTextIdInput" />
+                                </StackPanel>
+                                <StackPanel Width="110" Margin="0,18,8,0">
+                                    <CheckBox x:Name="BoastIsBoastInput" Content="Is Boast" IsChecked="True" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                                    <Button Content="Add" Width="70" Click="OnAddBoast" />
+                                    <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveBoast" />
+                                </StackPanel>
+                            </WrapPanel>
+
+                            <ListBox x:Name="BoastsList" ItemsSource="{Binding Project.Boasts}" Height="120" Margin="0,8,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding BoastId}" Width="80" />
+                                            <TextBlock Text="{Binding Text}" Width="220" />
+                                            <TextBlock Text="{Binding RenownReward}" Width="80" />
+                                            <TextBlock Text="{Binding GoldReward}" Width="80" />
+                                            <TextBlock Text="{Binding IsBoast}" Width="60" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="State Variables" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <StackPanel Width="160">
@@ -148,6 +231,39 @@
                                             <TextBlock Text="{Binding Name}" Width="160" />
                                             <TextBlock Text="{Binding Type}" Width="80" />
                                             <TextBlock Text="{Binding Persist}" Width="60" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Threads">
+                        <StackPanel Margin="12">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <StackPanel Width="160">
+                                    <TextBlock Text="Function" />
+                                    <TextBox x:Name="ThreadFunctionInput" />
+                                </StackPanel>
+                                <StackPanel Width="160" Margin="8,0,0,0">
+                                    <TextBlock Text="Region" />
+                                    <TextBox x:Name="ThreadRegionInput" />
+                                </StackPanel>
+                                <StackPanel Width="220" Margin="8,0,0,0">
+                                    <TextBlock Text="Description" />
+                                    <TextBox x:Name="ThreadDescriptionInput" />
+                                </StackPanel>
+                                <Button Content="Add" Width="70" Margin="8,18,0,0" Click="OnAddThread" />
+                                <Button Content="Remove" Width="80" Margin="8,18,0,0" Click="OnRemoveThread" />
+                            </StackPanel>
+
+                            <ListBox x:Name="ThreadsList" ItemsSource="{Binding Project.Threads}" Height="120">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding FunctionName}" Width="160" />
+                                            <TextBlock Text="{Binding Region}" Width="160" />
+                                            <TextBlock Text="{Binding Description}" Width="220" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>

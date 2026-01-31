@@ -1,0 +1,164 @@
+<UserControl x:Class="FableQuestTool.Views.QuestConfigView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FableQuestTool.Views"
+             mc:Ignorable="d"
+             DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+    <Grid Background="{DynamicResource BackgroundPrimary}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="320" />
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Background="{DynamicResource PanelBackground}">
+            <StackPanel Margin="12">
+                <TextBlock Text="Quest Setup" FontWeight="SemiBold" Margin="0,0,0,8" />
+                <ListBox>
+                    <ListBoxItem Content="Basic Info" IsSelected="True" />
+                    <ListBoxItem Content="Quest Card" />
+                    <ListBoxItem Content="Regions" />
+                    <ListBoxItem Content="Rewards" />
+                    <ListBoxItem Content="States" />
+                    <ListBoxItem Content="Threads" />
+                </ListBox>
+            </StackPanel>
+        </Border>
+        <Border Grid.Column="1" Background="{DynamicResource SurfaceBackground}" Margin="8">
+            <ScrollViewer>
+                <StackPanel Margin="16" Orientation="Vertical">
+                    <GroupBox Header="Basic Info" Margin="0,0,0,12">
+                        <StackPanel Margin="12">
+                            <TextBlock Text="Quest Name" />
+                            <TextBox>
+                                <TextBox.Text>
+                                    <Binding Path="Project.Name" UpdateSourceTrigger="PropertyChanged" ValidatesOnExceptions="True">
+                                        <Binding.ValidationRules>
+                                            <local:QuestNameRule />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+
+                            <TextBlock Text="Quest ID" Margin="0,12,0,0" />
+                            <TextBox>
+                                <TextBox.Text>
+                                    <Binding Path="Project.Id" UpdateSourceTrigger="PropertyChanged" ValidatesOnExceptions="True">
+                                        <Binding.ValidationRules>
+                                            <local:QuestIdRule />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+
+                            <TextBlock Text="Display Name" Margin="0,12,0,0" />
+                            <TextBox Text="{Binding Project.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="Description" Margin="0,12,0,0" />
+                            <TextBox Text="{Binding Project.Description, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="60" />
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Quest Card" Margin="0,0,0,12">
+                        <StackPanel Margin="12">
+                            <TextBlock Text="Quest Card Object" />
+                            <TextBox Text="{Binding Project.QuestCardObject, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="Objective Text" Margin="0,12,0,0" />
+                            <TextBox Text="{Binding Project.ObjectiveText, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="Objective Region 1" Margin="0,12,0,0" />
+                            <TextBox Text="{Binding Project.ObjectiveRegion1, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="Objective Region 2" Margin="0,12,0,0" />
+                            <TextBox Text="{Binding Project.ObjectiveRegion2, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <CheckBox Content="Use Start Screen" IsChecked="{Binding Project.UseQuestStartScreen}" Margin="0,0,12,0" />
+                                <CheckBox Content="Story Quest" IsChecked="{Binding Project.IsStoryQuest}" Margin="0,0,12,0" />
+                                <CheckBox Content="Gold Quest" IsChecked="{Binding Project.IsGoldQuest}" />
+                            </StackPanel>
+                            <CheckBox Content="Give Quest Card Directly" IsChecked="{Binding Project.GiveCardDirectly}" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Regions" Margin="0,0,0,12">
+                        <StackPanel Margin="12">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox x:Name="RegionInput" Width="200" Margin="0,0,8,0" />
+                                <Button Content="Add" Width="80" Click="OnAddRegion" />
+                                <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRegion" />
+                            </StackPanel>
+                            <ListBox x:Name="RegionsList" ItemsSource="{Binding Project.Regions}" Height="120" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Rewards" Margin="0,0,0,12">
+                        <UniformGrid Columns="4" Margin="12">
+                            <StackPanel>
+                                <TextBlock Text="Gold" />
+                                <TextBox Text="{Binding Project.Rewards.Gold, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Experience" />
+                                <TextBox Text="{Binding Project.Rewards.Experience, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Renown" />
+                                <TextBox Text="{Binding Project.Rewards.Renown, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Morality" />
+                                <TextBox Text="{Binding Project.Rewards.Morality, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </UniformGrid>
+                    </GroupBox>
+
+                    <GroupBox Header="State Variables">
+                        <StackPanel Margin="12">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <StackPanel Width="160">
+                                    <TextBlock Text="Name" />
+                                    <TextBox x:Name="StateNameInput" />
+                                </StackPanel>
+                                <StackPanel Width="110" Margin="8,0,0,0">
+                                    <TextBlock Text="Type" />
+                                    <ComboBox x:Name="StateTypeInput" SelectedIndex="0">
+                                        <ComboBoxItem Content="bool" />
+                                        <ComboBoxItem Content="int" />
+                                        <ComboBoxItem Content="string" />
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Width="140" Margin="8,0,0,0">
+                                    <TextBlock Text="Default" />
+                                    <TextBox x:Name="StateDefaultInput" />
+                                </StackPanel>
+                                <StackPanel Margin="8,18,0,0">
+                                    <CheckBox x:Name="StatePersistInput" Content="Persist" IsChecked="True" />
+                                </StackPanel>
+                                <Button Content="Add" Width="70" Margin="8,18,0,0" Click="OnAddState" />
+                                <Button Content="Remove" Width="80" Margin="8,18,0,0" Click="OnRemoveState" />
+                            </StackPanel>
+
+                            <ListBox x:Name="StatesList" ItemsSource="{Binding Project.States}" Height="140">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" Width="160" />
+                                            <TextBlock Text="{Binding Type}" Width="80" />
+                                            <TextBlock Text="{Binding Persist}" Width="60" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+        <Border Grid.Column="2" Background="{DynamicResource PanelBackground}">
+            <TextBlock Text="Quest script preview" Margin="12" />
+        </Border>
+    </Grid>
+</UserControl>

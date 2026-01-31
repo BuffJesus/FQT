@@ -1,0 +1,73 @@
+<Window x:Class="FableQuestTool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:FableQuestTool.Views"
+        mc:Ignorable="d"
+        Title="{Binding Title}" Height="900" Width="1400"
+        MinHeight="700" MinWidth="1100">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondary}">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New" Command="{Binding NewProjectCommand}" />
+                <MenuItem Header="_Open" Command="{Binding OpenProjectCommand}" />
+                <MenuItem Header="_Save" Command="{Binding SaveProjectCommand}" />
+                <MenuItem Header="Save _As" Command="{Binding SaveProjectAsCommand}" />
+                <Separator />
+                <MenuItem Header="_Export" Command="{Binding ExportProjectCommand}" />
+                <Separator />
+                <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Edit" />
+            <MenuItem Header="_View" />
+            <MenuItem Header="_Tools" />
+            <MenuItem Header="_Templates" />
+            <MenuItem Header="_Help" />
+        </Menu>
+
+        <ToolBarTray DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondary}">
+            <ToolBar>
+                <Button Content="New" Width="70" Margin="0,0,6,0" Command="{Binding NewProjectCommand}" />
+                <Button Content="Open" Width="70" Margin="0,0,6,0" Command="{Binding OpenProjectCommand}" />
+                <Button Content="Save" Width="70" Margin="0,0,6,0" Command="{Binding SaveProjectCommand}" />
+                <Button Content="Export" Width="70" Margin="0,0,6,0" Command="{Binding ExportProjectCommand}" />
+                <Separator />
+                <Button Content="Test" Width="70" />
+            </ToolBar>
+        </ToolBarTray>
+
+        <StatusBar DockPanel.Dock="Bottom" Background="{StaticResource BackgroundSecondary}">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusText}" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Project: " />
+                    <Run Text="{Binding Project.Name}" />
+                </TextBlock>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Modified: " />
+                    <Run Text="{Binding IsModified}" />
+                </TextBlock>
+            </StatusBarItem>
+        </StatusBar>
+
+        <TabControl Background="{StaticResource BackgroundPrimary}">
+            <TabItem Header="Quest Setup">
+                <views:QuestConfigView Background="{StaticResource BackgroundPrimary}" />
+            </TabItem>
+            <TabItem Header="Entities">
+                <views:EntityEditorView Background="{StaticResource BackgroundPrimary}" />
+            </TabItem>
+            <TabItem Header="API Reference">
+                <views:ApiReferenceView Background="{StaticResource BackgroundPrimary}" />
+            </TabItem>
+            <TabItem Header="Templates">
+                <views:TemplatesView Background="{StaticResource BackgroundPrimary}" />
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

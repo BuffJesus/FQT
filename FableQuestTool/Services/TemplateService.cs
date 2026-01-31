@@ -11,10 +11,13 @@ public class TemplateService
         return new List<QuestTemplate>
         {
             CreateTalkTemplate(),
+            CreateCinematicDialogueTemplate(),
             CreateKillTemplate(),
+            CreateBossFightTemplate(),
             CreateFetchTemplate(),
             CreateEscortTemplate(),
-            CreateDeliveryTemplate()
+            CreateDeliveryTemplate(),
+            CreateInvestigationTemplate()
         };
     }
 
@@ -54,58 +57,129 @@ public class TemplateService
 
         // Create node IDs for connections
         string talkNodeId = Guid.NewGuid().ToString();
-        string dialogueNodeId = Guid.NewGuid().ToString();
+        string cameraNodeId = Guid.NewGuid().ToString();
+        string startConvoNodeId = Guid.NewGuid().ToString();
+        string line1NodeId = Guid.NewGuid().ToString();
+        string line2NodeId = Guid.NewGuid().ToString();
+        string endConvoNodeId = Guid.NewGuid().ToString();
+        string resetCameraNodeId = Guid.NewGuid().ToString();
         string completeNodeId = Guid.NewGuid().ToString();
 
         // Create nodes with proper Config values
-        var talkBehaviorNode = new BehaviorNode
+        var nodes = new List<BehaviorNode>
         {
-            Id = talkNodeId,
-            Type = "onHeroTalks",
-            Category = "trigger",
-            Label = "When Hero Talks",
-            Icon = "💬",
-            X = 100,
-            Y = 100
-        };
-
-        var dialogueBehaviorNode = new BehaviorNode
-        {
-            Id = dialogueNodeId,
-            Type = "showDialogue",
-            Category = "action",
-            Label = "Show Dialogue",
-            Icon = "💬",
-            X = 400,
-            Y = 100,
-            Config = new Dictionary<string, object>
+            new BehaviorNode
             {
-                { "text", "Hello, hero! Thank you for speaking with me." }
+                Id = talkNodeId,
+                Type = "onHeroTalks",
+                Category = "trigger",
+                Label = "When Hero Talks",
+                Icon = "💬",
+                X = 100,
+                Y = 150
+            },
+            new BehaviorNode
+            {
+                Id = cameraNodeId,
+                Type = "cameraConversation",
+                Category = "action",
+                Label = "Conversation Camera",
+                Icon = "🎬💬",
+                X = 300,
+                Y = 150,
+                Config = new Dictionary<string, object> { { "distance", "2.0" } }
+            },
+            new BehaviorNode
+            {
+                Id = startConvoNodeId,
+                Type = "startConversation",
+                Category = "action",
+                Label = "Start Conversation",
+                Icon = "🎭",
+                X = 500,
+                Y = 150,
+                Config = new Dictionary<string, object>
+                {
+                    { "use2DSound", "true" },
+                    { "playInCutscene", "false" }
+                }
+            },
+            new BehaviorNode
+            {
+                Id = line1NodeId,
+                Type = "addConversationLine",
+                Category = "action",
+                Label = "Add Line 1",
+                Icon = "💭",
+                X = 700,
+                Y = 100,
+                Config = new Dictionary<string, object>
+                {
+                    { "textKey", "Hello there, hero! I've been waiting for you." },
+                    { "showSubtitle", "true" }
+                }
+            },
+            new BehaviorNode
+            {
+                Id = line2NodeId,
+                Type = "addConversationLine",
+                Category = "action",
+                Label = "Add Line 2",
+                Icon = "💭",
+                X = 700,
+                Y = 200,
+                Config = new Dictionary<string, object>
+                {
+                    { "textKey", "Thank you for coming. Your help means a lot to me." },
+                    { "showSubtitle", "true" }
+                }
+            },
+            new BehaviorNode
+            {
+                Id = endConvoNodeId,
+                Type = "endConversation",
+                Category = "action",
+                Label = "End Conversation",
+                Icon = "🔚",
+                X = 900,
+                Y = 150,
+                Config = new Dictionary<string, object> { { "immediate", "false" } }
+            },
+            new BehaviorNode
+            {
+                Id = resetCameraNodeId,
+                Type = "cameraResetToHero",
+                Category = "action",
+                Label = "Reset Camera",
+                Icon = "🔄🎥",
+                X = 1100,
+                Y = 150
+            },
+            new BehaviorNode
+            {
+                Id = completeNodeId,
+                Type = "completeQuest",
+                Category = "action",
+                Label = "Complete Quest",
+                Icon = "✅",
+                X = 1300,
+                Y = 150,
+                Config = new Dictionary<string, object> { { "showScreen", "true" } }
             }
         };
 
-        var completeBehaviorNode = new BehaviorNode
-        {
-            Id = completeNodeId,
-            Type = "completeQuest",
-            Category = "action",
-            Label = "Complete Quest",
-            Icon = "✅",
-            X = 700,
-            Y = 100,
-            Config = new Dictionary<string, object>
-            {
-                { "showScreen", "true" }
-            }
-        };
-
-        npc.Nodes = new List<BehaviorNode> { talkBehaviorNode, dialogueBehaviorNode, completeBehaviorNode };
+        npc.Nodes = nodes;
 
         // Add connections between nodes
         npc.Connections = new List<NodeConnection>
         {
-            new NodeConnection { FromNodeId = talkNodeId, FromPort = "output", ToNodeId = dialogueNodeId, ToPort = "input" },
-            new NodeConnection { FromNodeId = dialogueNodeId, FromPort = "output", ToNodeId = completeNodeId, ToPort = "input" }
+            new NodeConnection { FromNodeId = talkNodeId, FromPort = "output", ToNodeId = cameraNodeId, ToPort = "input" },
+            new NodeConnection { FromNodeId = cameraNodeId, FromPort = "output", ToNodeId = startConvoNodeId, ToPort = "input" },
+            new NodeConnection { FromNodeId = startConvoNodeId, FromPort = "output", ToNodeId = line1NodeId, ToPort = "input" },
+            new NodeConnection { FromNodeId = line1NodeId, FromPort = "output", ToNodeId = line2NodeId, ToPort = "input" },
+            new NodeConnection { FromNodeId = line2NodeId, FromPort = "output", ToNodeId = endConvoNodeId, ToPort = "input" },
+            new NodeConnection { FromNodeId = endConvoNodeId, FromPort = "output", ToNodeId = resetCameraNodeId, ToPort = "input" },
+            new NodeConnection { FromNodeId = resetCameraNodeId, FromPort = "output", ToNodeId = completeNodeId, ToPort = "input" }
         };
 
         project.Entities.Add(npc);
@@ -262,6 +336,354 @@ public class TemplateService
             Name = "Delivery Quest",
             Description = "Travel to multiple locations making deliveries.",
             Category = "Travel",
+            Difficulty = "Intermediate",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateCinematicDialogueTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "MyCinematicQuest",
+            Id = 50005,
+            DisplayName = "A Mysterious Stranger",
+            Description = "A cinematic dialogue quest with camera work and effects",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Speak with the mysterious stranger",
+            ObjectiveRegion1 = "Oakvale",
+            UseQuestStartScreen = true,
+            IsStoryQuest = true
+        };
+
+        project.Rewards = new QuestRewards
+        {
+            Gold = 1000,
+            Renown = 100,
+            Experience = 200
+        };
+
+        var stranger = new QuestEntity
+        {
+            Id = "mysterious_stranger",
+            ScriptName = "MysteriousStranger",
+            DefName = "VILLAGER_MALE",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true,
+            IsQuestTarget = true
+        };
+
+        // Create cinematic dialogue flow with letterbox, camera orbit, conversation, and effects
+        string triggerId = Guid.NewGuid().ToString();
+        string letterboxOnId = Guid.NewGuid().ToString();
+        string fadeOutId = Guid.NewGuid().ToString();
+        string musicId = Guid.NewGuid().ToString();
+        string fadeInId = Guid.NewGuid().ToString();
+        string cameraOrbitId = Guid.NewGuid().ToString();
+        string startConvoId = Guid.NewGuid().ToString();
+        string line1Id = Guid.NewGuid().ToString();
+        string line2Id = Guid.NewGuid().ToString();
+        string line3Id = Guid.NewGuid().ToString();
+        string endConvoId = Guid.NewGuid().ToString();
+        string stopMusicId = Guid.NewGuid().ToString();
+        string letterboxOffId = Guid.NewGuid().ToString();
+        string cameraResetId = Guid.NewGuid().ToString();
+        string completeId = Guid.NewGuid().ToString();
+
+        var nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = triggerId, Type = "onHeroTalks", Category = "trigger", Label = "When Hero Talks", Icon = "💬", X = 50, Y = 200 },
+            new BehaviorNode { Id = letterboxOnId, Type = "letterbox", Category = "action", Label = "Letterbox On", Icon = "🎬", X = 200, Y = 200,
+                Config = new Dictionary<string, object> { { "fadeIn", "true" } } },
+            new BehaviorNode { Id = fadeOutId, Type = "screenFadeOut", Category = "action", Label = "Fade Out", Icon = "⬛", X = 350, Y = 200,
+                Config = new Dictionary<string, object> { { "duration", "0.5" } } },
+            new BehaviorNode { Id = musicId, Type = "overrideMusic", Category = "action", Label = "Mystery Music", Icon = "🎵", X = 500, Y = 200,
+                Config = new Dictionary<string, object> { { "musicSet", "MUSIC_MYSTERIOUS" } } },
+            new BehaviorNode { Id = fadeInId, Type = "screenFadeIn", Category = "action", Label = "Fade In", Icon = "⬜", X = 650, Y = 200,
+                Config = new Dictionary<string, object> { { "duration", "1.0" } } },
+            new BehaviorNode { Id = cameraOrbitId, Type = "cameraOrbitEntity", Category = "action", Label = "Camera Orbit", Icon = "🎥", X = 800, Y = 200,
+                Config = new Dictionary<string, object> { { "distance", "4.0" }, { "height", "1.5" }, { "speed", "0.3" }, { "duration", "3.0" } } },
+            new BehaviorNode { Id = startConvoId, Type = "startConversation", Category = "action", Label = "Start Conversation", Icon = "🎭", X = 950, Y = 200,
+                Config = new Dictionary<string, object> { { "use2DSound", "true" }, { "playInCutscene", "true" } } },
+            new BehaviorNode { Id = line1Id, Type = "addConversationLine", Category = "action", Label = "Line 1", Icon = "💭", X = 1100, Y = 100,
+                Config = new Dictionary<string, object> { { "textKey", "Ah... you've finally arrived. I've been expecting you." }, { "showSubtitle", "true" } } },
+            new BehaviorNode { Id = line2Id, Type = "addConversationLine", Category = "action", Label = "Line 2", Icon = "💭", X = 1100, Y = 200,
+                Config = new Dictionary<string, object> { { "textKey", "There are forces at work here... forces you cannot yet comprehend." }, { "showSubtitle", "true" } } },
+            new BehaviorNode { Id = line3Id, Type = "addConversationLine", Category = "action", Label = "Line 3", Icon = "💭", X = 1100, Y = 300,
+                Config = new Dictionary<string, object> { { "textKey", "But in time, hero, you will understand. In time..." }, { "showSubtitle", "true" } } },
+            new BehaviorNode { Id = endConvoId, Type = "endConversation", Category = "action", Label = "End Conversation", Icon = "🔚", X = 1250, Y = 200,
+                Config = new Dictionary<string, object> { { "immediate", "false" } } },
+            new BehaviorNode { Id = stopMusicId, Type = "stopMusicOverride", Category = "action", Label = "Stop Music", Icon = "⏹️🎵", X = 1400, Y = 200 },
+            new BehaviorNode { Id = letterboxOffId, Type = "letterboxOff", Category = "action", Label = "Letterbox Off", Icon = "📺", X = 1550, Y = 200 },
+            new BehaviorNode { Id = cameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1700, Y = 200 },
+            new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete", Icon = "✅", X = 1850, Y = 200,
+                Config = new Dictionary<string, object> { { "showScreen", "true" } } }
+        };
+
+        stranger.Nodes = nodes;
+        stranger.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = triggerId, FromPort = "output", ToNodeId = letterboxOnId, ToPort = "input" },
+            new NodeConnection { FromNodeId = letterboxOnId, FromPort = "output", ToNodeId = fadeOutId, ToPort = "input" },
+            new NodeConnection { FromNodeId = fadeOutId, FromPort = "output", ToNodeId = musicId, ToPort = "input" },
+            new NodeConnection { FromNodeId = musicId, FromPort = "output", ToNodeId = fadeInId, ToPort = "input" },
+            new NodeConnection { FromNodeId = fadeInId, FromPort = "output", ToNodeId = cameraOrbitId, ToPort = "input" },
+            new NodeConnection { FromNodeId = cameraOrbitId, FromPort = "output", ToNodeId = startConvoId, ToPort = "input" },
+            new NodeConnection { FromNodeId = startConvoId, FromPort = "output", ToNodeId = line1Id, ToPort = "input" },
+            new NodeConnection { FromNodeId = line1Id, FromPort = "output", ToNodeId = line2Id, ToPort = "input" },
+            new NodeConnection { FromNodeId = line2Id, FromPort = "output", ToNodeId = line3Id, ToPort = "input" },
+            new NodeConnection { FromNodeId = line3Id, FromPort = "output", ToNodeId = endConvoId, ToPort = "input" },
+            new NodeConnection { FromNodeId = endConvoId, FromPort = "output", ToNodeId = stopMusicId, ToPort = "input" },
+            new NodeConnection { FromNodeId = stopMusicId, FromPort = "output", ToNodeId = letterboxOffId, ToPort = "input" },
+            new NodeConnection { FromNodeId = letterboxOffId, FromPort = "output", ToNodeId = cameraResetId, ToPort = "input" },
+            new NodeConnection { FromNodeId = cameraResetId, FromPort = "output", ToNodeId = completeId, ToPort = "input" }
+        };
+
+        project.Entities.Add(stranger);
+
+        return new QuestTemplate
+        {
+            Name = "Cinematic Dialogue",
+            Description = "A dramatic dialogue with letterbox, camera work, music, and screen effects. Perfect for story moments.",
+            Category = "Cinematic",
+            Difficulty = "Intermediate",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateBossFightTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "MyBossQuest",
+            Id = 50006,
+            DisplayName = "Defeat the Champion",
+            Description = "Face a powerful boss enemy with cinematic intro",
+            Regions = new ObservableCollection<string> { "Arena" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Defeat the Arena Champion",
+            ObjectiveRegion1 = "Arena",
+            UseQuestStartScreen = true
+        };
+
+        project.Rewards = new QuestRewards
+        {
+            Gold = 5000,
+            Renown = 500,
+            Experience = 1000
+        };
+
+        project.States.Add(new QuestState
+        {
+            Id = "bossDefeated",
+            Name = "Boss Defeated",
+            Type = "bool",
+            Persist = true,
+            DefaultValue = false
+        });
+
+        var boss = new QuestEntity
+        {
+            Id = "arena_champion",
+            ScriptName = "ArenaChampion",
+            DefName = "BANDIT_LEADER",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true,
+            IsQuestTarget = true,
+            ShowOnMinimap = true
+        };
+
+        // Intro sequence: hero approaches -> cinematic intro -> fight -> victory
+        string proximityId = Guid.NewGuid().ToString();
+        string letterboxId = Guid.NewGuid().ToString();
+        string dangerMusicId = Guid.NewGuid().ToString();
+        string cameraLookId = Guid.NewGuid().ToString();
+        string blurId = Guid.NewGuid().ToString();
+        string dialogueId = Guid.NewGuid().ToString();
+        string blurOffId = Guid.NewGuid().ToString();
+        string letterboxOffId = Guid.NewGuid().ToString();
+        string cameraResetId = Guid.NewGuid().ToString();
+        string hostileId = Guid.NewGuid().ToString();
+
+        // Death trigger branch
+        string deathTriggerId = Guid.NewGuid().ToString();
+        string colorFilterId = Guid.NewGuid().ToString();
+        string victoryMusicId = Guid.NewGuid().ToString();
+        string victoryMsgId = Guid.NewGuid().ToString();
+        string filterOffId = Guid.NewGuid().ToString();
+        string stopMusicId = Guid.NewGuid().ToString();
+        string completeId = Guid.NewGuid().ToString();
+
+        var nodes = new List<BehaviorNode>
+        {
+            // Intro sequence
+            new BehaviorNode { Id = proximityId, Type = "onProximity", Category = "trigger", Label = "Hero Nearby", Icon = "📍", X = 50, Y = 100,
+                Config = new Dictionary<string, object> { { "distance", "10.0" } } },
+            new BehaviorNode { Id = letterboxId, Type = "letterbox", Category = "action", Label = "Letterbox", Icon = "🎬", X = 200, Y = 100,
+                Config = new Dictionary<string, object> { { "fadeIn", "true" } } },
+            new BehaviorNode { Id = dangerMusicId, Type = "enableDangerMusic", Category = "action", Label = "Danger Music", Icon = "⚠️🎵", X = 350, Y = 100,
+                Config = new Dictionary<string, object> { { "enabled", "true" } } },
+            new BehaviorNode { Id = cameraLookId, Type = "cameraLookAtEntity", Category = "action", Label = "Camera Look", Icon = "👁️🎥", X = 500, Y = 100,
+                Config = new Dictionary<string, object> { { "distance", "5.0" }, { "height", "2.0" }, { "duration", "1.5" } } },
+            new BehaviorNode { Id = blurId, Type = "radialBlur", Category = "action", Label = "Radial Blur", Icon = "🌀", X = 650, Y = 100,
+                Config = new Dictionary<string, object> { { "intensity", "0.3" }, { "duration", "0.5" } } },
+            new BehaviorNode { Id = dialogueId, Type = "showDialogue", Category = "action", Label = "Boss Taunt", Icon = "💬", X = 800, Y = 100,
+                Config = new Dictionary<string, object> { { "text", "So... another challenger approaches! Prepare to meet your end!" } } },
+            new BehaviorNode { Id = blurOffId, Type = "radialBlurOff", Category = "action", Label = "Blur Off", Icon = "🔲", X = 950, Y = 100,
+                Config = new Dictionary<string, object> { { "duration", "0.3" } } },
+            new BehaviorNode { Id = letterboxOffId, Type = "letterboxOff", Category = "action", Label = "Letterbox Off", Icon = "📺", X = 1100, Y = 100 },
+            new BehaviorNode { Id = cameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1250, Y = 100 },
+            new BehaviorNode { Id = hostileId, Type = "becomeHostile", Category = "action", Label = "Attack!", Icon = "😡", X = 1400, Y = 100 },
+
+            // Death/Victory sequence
+            new BehaviorNode { Id = deathTriggerId, Type = "onKilledByHero", Category = "trigger", Label = "When Killed", Icon = "⚰️", X = 50, Y = 300 },
+            new BehaviorNode { Id = colorFilterId, Type = "colorFilter", Category = "action", Label = "Gold Filter", Icon = "🎨", X = 200, Y = 300,
+                Config = new Dictionary<string, object> { { "r", "1.0" }, { "g", "0.9" }, { "b", "0.5" }, { "a", "0.3" }, { "duration", "0.5" } } },
+            new BehaviorNode { Id = victoryMusicId, Type = "overrideMusic", Category = "action", Label = "Victory Music", Icon = "🎵", X = 350, Y = 300,
+                Config = new Dictionary<string, object> { { "musicSet", "MUSIC_VICTORY" } } },
+            new BehaviorNode { Id = victoryMsgId, Type = "showTitleMessage", Category = "action", Label = "Victory!", Icon = "📢", X = 500, Y = 300,
+                Config = new Dictionary<string, object> { { "text", "VICTORY!" }, { "duration", "3.0" } } },
+            new BehaviorNode { Id = filterOffId, Type = "colorFilterOff", Category = "action", Label = "Filter Off", Icon = "🔲🎨", X = 650, Y = 300,
+                Config = new Dictionary<string, object> { { "duration", "1.0" } } },
+            new BehaviorNode { Id = stopMusicId, Type = "stopMusicOverride", Category = "action", Label = "Stop Music", Icon = "⏹️🎵", X = 800, Y = 300 },
+            new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete", Icon = "✅", X = 950, Y = 300,
+                Config = new Dictionary<string, object> { { "showScreen", "true" } } }
+        };
+
+        boss.Nodes = nodes;
+        boss.Connections = new List<NodeConnection>
+        {
+            // Intro chain
+            new NodeConnection { FromNodeId = proximityId, FromPort = "output", ToNodeId = letterboxId, ToPort = "input" },
+            new NodeConnection { FromNodeId = letterboxId, FromPort = "output", ToNodeId = dangerMusicId, ToPort = "input" },
+            new NodeConnection { FromNodeId = dangerMusicId, FromPort = "output", ToNodeId = cameraLookId, ToPort = "input" },
+            new NodeConnection { FromNodeId = cameraLookId, FromPort = "output", ToNodeId = blurId, ToPort = "input" },
+            new NodeConnection { FromNodeId = blurId, FromPort = "output", ToNodeId = dialogueId, ToPort = "input" },
+            new NodeConnection { FromNodeId = dialogueId, FromPort = "output", ToNodeId = blurOffId, ToPort = "input" },
+            new NodeConnection { FromNodeId = blurOffId, FromPort = "output", ToNodeId = letterboxOffId, ToPort = "input" },
+            new NodeConnection { FromNodeId = letterboxOffId, FromPort = "output", ToNodeId = cameraResetId, ToPort = "input" },
+            new NodeConnection { FromNodeId = cameraResetId, FromPort = "output", ToNodeId = hostileId, ToPort = "input" },
+
+            // Victory chain
+            new NodeConnection { FromNodeId = deathTriggerId, FromPort = "output", ToNodeId = colorFilterId, ToPort = "input" },
+            new NodeConnection { FromNodeId = colorFilterId, FromPort = "output", ToNodeId = victoryMusicId, ToPort = "input" },
+            new NodeConnection { FromNodeId = victoryMusicId, FromPort = "output", ToNodeId = victoryMsgId, ToPort = "input" },
+            new NodeConnection { FromNodeId = victoryMsgId, FromPort = "output", ToNodeId = filterOffId, ToPort = "input" },
+            new NodeConnection { FromNodeId = filterOffId, FromPort = "output", ToNodeId = stopMusicId, ToPort = "input" },
+            new NodeConnection { FromNodeId = stopMusicId, FromPort = "output", ToNodeId = completeId, ToPort = "input" }
+        };
+
+        project.Entities.Add(boss);
+
+        return new QuestTemplate
+        {
+            Name = "Boss Fight",
+            Description = "A dramatic boss encounter with cinematic intro, danger music, visual effects, and victory celebration.",
+            Category = "Combat",
+            Difficulty = "Advanced",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateInvestigationTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "MyInvestigationQuest",
+            Id = 50007,
+            DisplayName = "The Missing Artifact",
+            Description = "Investigate clues and question witnesses",
+            Regions = new ObservableCollection<string> { "Bowerstone" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Investigate the missing artifact",
+            ObjectiveRegion1 = "Bowerstone",
+            UseQuestStartScreen = true
+        };
+
+        project.Rewards = new QuestRewards
+        {
+            Gold = 1500,
+            Renown = 150,
+            Experience = 350
+        };
+
+        project.States.Add(new QuestState { Id = "cluesFound", Name = "Clues Found", Type = "int", Persist = true, DefaultValue = 0 });
+        project.States.Add(new QuestState { Id = "witness1Talked", Name = "Talked to Witness 1", Type = "bool", Persist = true, DefaultValue = false });
+        project.States.Add(new QuestState { Id = "witness2Talked", Name = "Talked to Witness 2", Type = "bool", Persist = true, DefaultValue = false });
+
+        // First witness with yes/no question
+        var witness1 = new QuestEntity
+        {
+            Id = "witness_1",
+            ScriptName = "Witness1",
+            DefName = "VILLAGER_FEMALE",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true,
+            IsQuestTarget = true
+        };
+
+        string w1TalkId = Guid.NewGuid().ToString();
+        string w1CameraId = Guid.NewGuid().ToString();
+        string w1ConvoId = Guid.NewGuid().ToString();
+        string w1Line1Id = Guid.NewGuid().ToString();
+        string w1QuestionId = Guid.NewGuid().ToString();
+        string w1CheckId = Guid.NewGuid().ToString();
+        string w1YesLineId = Guid.NewGuid().ToString();
+        string w1NoLineId = Guid.NewGuid().ToString();
+        string w1EndConvoId = Guid.NewGuid().ToString();
+        string w1SetStateId = Guid.NewGuid().ToString();
+        string w1CameraResetId = Guid.NewGuid().ToString();
+
+        witness1.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = w1TalkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "💬", X = 50, Y = 150 },
+            new BehaviorNode { Id = w1CameraId, Type = "cameraConversation", Category = "action", Label = "Camera", Icon = "🎬💬", X = 200, Y = 150,
+                Config = new Dictionary<string, object> { { "distance", "2.0" } } },
+            new BehaviorNode { Id = w1ConvoId, Type = "startConversation", Category = "action", Label = "Start Convo", Icon = "🎭", X = 350, Y = 150,
+                Config = new Dictionary<string, object> { { "use2DSound", "true" }, { "playInCutscene", "false" } } },
+            new BehaviorNode { Id = w1Line1Id, Type = "addConversationLine", Category = "action", Label = "Intro", Icon = "💭", X = 500, Y = 150,
+                Config = new Dictionary<string, object> { { "textKey", "Oh, you're investigating the missing artifact? I might have seen something..." }, { "showSubtitle", "true" } } },
+            new BehaviorNode { Id = w1QuestionId, Type = "yesNoQuestion", Category = "action", Label = "Ask Question", Icon = "❓", X = 650, Y = 150,
+                Config = new Dictionary<string, object> { { "question", "Will you tell me what you saw?" }, { "yes", "Yes, I'll help" }, { "no", "No, leave me alone" }, { "unsure", "I'm not sure..." } } },
+            new BehaviorNode { Id = w1CheckId, Type = "checkYesNoAnswer", Category = "condition", Label = "Check Answer", Icon = "?", X = 800, Y = 150 },
+            new BehaviorNode { Id = w1YesLineId, Type = "addConversationLine", Category = "action", Label = "Yes Response", Icon = "💭", X = 950, Y = 50,
+                Config = new Dictionary<string, object> { { "textKey", "I saw a hooded figure near the museum last night. Very suspicious!" }, { "showSubtitle", "true" } } },
+            new BehaviorNode { Id = w1NoLineId, Type = "addConversationLine", Category = "action", Label = "No Response", Icon = "💭", X = 950, Y = 250,
+                Config = new Dictionary<string, object> { { "textKey", "Fine, fine! I saw someone suspicious near the museum. Happy now?" }, { "showSubtitle", "true" } } },
+            new BehaviorNode { Id = w1EndConvoId, Type = "endConversation", Category = "action", Label = "End Convo", Icon = "🔚", X = 1100, Y = 150,
+                Config = new Dictionary<string, object> { { "immediate", "false" } } },
+            new BehaviorNode { Id = w1SetStateId, Type = "setState", Category = "action", Label = "Mark Talked", Icon = "💾", X = 1250, Y = 150,
+                Config = new Dictionary<string, object> { { "name", "witness1Talked" }, { "value", "true" } } },
+            new BehaviorNode { Id = w1CameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1400, Y = 150 }
+        };
+
+        witness1.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = w1TalkId, FromPort = "output", ToNodeId = w1CameraId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1CameraId, FromPort = "output", ToNodeId = w1ConvoId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1ConvoId, FromPort = "output", ToNodeId = w1Line1Id, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1Line1Id, FromPort = "output", ToNodeId = w1QuestionId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1QuestionId, FromPort = "output", ToNodeId = w1CheckId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1CheckId, FromPort = "Yes", ToNodeId = w1YesLineId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1CheckId, FromPort = "No", ToNodeId = w1NoLineId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1CheckId, FromPort = "Unsure", ToNodeId = w1NoLineId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1YesLineId, FromPort = "output", ToNodeId = w1EndConvoId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1NoLineId, FromPort = "output", ToNodeId = w1EndConvoId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1EndConvoId, FromPort = "output", ToNodeId = w1SetStateId, ToPort = "input" },
+            new NodeConnection { FromNodeId = w1SetStateId, FromPort = "output", ToNodeId = w1CameraResetId, ToPort = "input" }
+        };
+
+        project.Entities.Add(witness1);
+
+        return new QuestTemplate
+        {
+            Name = "Investigation Quest",
+            Description = "Question witnesses with branching dialogue choices. Features yes/no questions and state tracking.",
+            Category = "Mystery",
             Difficulty = "Intermediate",
             Template = project
         };

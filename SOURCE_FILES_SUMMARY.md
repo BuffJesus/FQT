@@ -128,10 +128,11 @@ Key insights:
 ## Critical Discoveries from Source Analysis
 
 ### 1. Region Names
-- **Childhood Oakvale** uses region name `"StartOakVale"` NOT `"Oakvale"`
-- StartOakVale is made up of three sections: StartOakValeEast, StartOakValeWest, StartOakValeMemorialGarden
-- Region name is NOT always the geographical location name
-- **Always verify region names** by checking level files (*.lev) in `data/Levels/` and working quest examples
+- **Use `Quest:GetRegionName()`** to find the actual region name at runtime
+- Check FSE log for the output when debugging region issues
+- Common regions: "Oakvale", "BarrowFields", "HeroGuild", "Bowerstone", etc.
+- Region names should match TemplateService.cs and RegionTngMapping.cs patterns
+- **Always verify region names** by using GetRegionName() and checking working quest examples
 
 ### 2. Thread Execution
 - Threads with `{region="RegionName"}` parameter auto-wait for region load

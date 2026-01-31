@@ -6,15 +6,13 @@ namespace FableQuestTool.Data;
 public static class GameData
 {
     /// <summary>
-    /// Region names used by the game. IMPORTANT: Region names must match exactly what the game loads.
-    /// For childhood Oakvale at game start, use "StartOakVale" (NOT "Oakvale").
+    /// Region names used by the game. Use Quest:GetRegionName() in Lua to verify
+    /// the actual region name at runtime. Check FSE log for output.
     /// </summary>
     public static ObservableCollection<string> Regions { get; } = new()
     {
-        // Childhood regions (game start)
-        "StartOakVale",           // Childhood Oakvale (has East, West, MemorialGarden sections)
-
-        // Main game regions
+        // Common regions (matching TemplateService and RegionTngMapping)
+        "Oakvale",
         "BarrowFields",
         "LookoutPoint",
         "HeroGuild",

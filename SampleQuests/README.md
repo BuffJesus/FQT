@@ -8,7 +8,7 @@ This directory contains working quest examples from FSE that demonstrate various
 Custom example created for this tool
 
 A complete, working example quest that demonstrates:
-- ✅ Correct region management (uses "StartOakVale" for childhood start)
+- ✅ Correct region management (uses "Oakvale")
 - ✅ Non-blocking Main() function
 - ✅ Region-bound threads without manual region checks
 - ✅ Entity spawning with fallback logic
@@ -16,8 +16,9 @@ A complete, working example quest that demonstrates:
 - ✅ Quest card and start screen setup
 - ✅ Quest completion and rewards
 - ✅ Proper entity control lifecycle
+- ✅ GetRegionName() for debugging region names
 
-**⚠️ IMPORTANT:** This quest uses "StartOakVale" which is ONLY available at the start of a NEW GAME (during the childhood section). If you're testing on an existing save game that's past the childhood section, this quest will NEVER activate because StartOakVale never loads. For mid-game testing, modify the quest to use a different region like "BarrowFields" or "HeroGuild".
+**TIP:** Use `Quest:GetRegionName()` to verify the actual region name the game uses. Check the FSE log for the output.
 
 ### Files
 
@@ -65,13 +66,13 @@ A complete, working example quest that demonstrates:
 
 ### 1. Region Management
 ```lua
--- Init: Register region
-Quest:AddQuestRegion("NewQuest", "StartOakVale")  -- For childhood Oakvale
+-- Init: Register region (use GetRegionName() to verify actual name)
+Quest:AddQuestRegion("NewQuest", "Oakvale")
 
 -- Main: Create region-bound thread
-Quest:CreateThread("EntitySpawner", {region="StartOakVale"})
+Quest:CreateThread("EntitySpawner", {region="Oakvale"})
 
--- Thread: No manual region check needed!
+-- Thread: No manual region check needed! FSE handles it.
 function EntitySpawner(questObject)
     -- Executes automatically when region loads
     Quest:Log("Region is loaded, spawning entities...")
@@ -86,8 +87,8 @@ function Main(questObject)
     Quest:GiveQuestCardDirectly(...)
     Quest:KickOffQuestStartScreen(...)
 
-    -- Create threads
-    Quest:CreateThread("EntitySpawner", {region="StartOakVale"})
+    -- Create threads (FSE delays until region loads)
+    Quest:CreateThread("EntitySpawner", {region="Oakvale"})
 
     -- Return quickly - don't block!
 end
@@ -117,16 +118,7 @@ end
 
 ## Common Mistakes to Avoid
 
-❌ **Wrong:** Using "Oakvale" region at game start
-```lua
-Quest:AddQuestRegion("Quest", "Oakvale")  -- Won't work - doesn't exist!
-```
-
-✅ **Correct:** Using "StartOakVale" for childhood Oakvale
-```lua
-Quest:AddQuestRegion("Quest", "StartOakVale")  -- Correct for childhood start
--- Note: Verify region names by checking level files in data/Levels/
-```
+**TIP:** Use `Quest:GetRegionName()` to verify the actual region name the game uses!
 
 ---
 
@@ -137,7 +129,7 @@ function Main(questObject)
         Quest:Pause(0.1)
         if not Quest:NewScriptFrame() then return end
     end
-    -- Setup here - but region never loads!
+    -- This blocks forever and prevents quest setup!
 end
 ```
 
@@ -145,11 +137,11 @@ end
 ```lua
 function Main(questObject)
     Quest:AddEntityBinding(...)
-    Quest:CreateThread("Spawner", {region="StartOakVale"})
+    Quest:CreateThread("Spawner", {region="Oakvale"})  -- FSE delays until region loads
 end
 
 function Spawner(questObject)
-    -- Automatically waits for region
+    -- Automatically executes when region is loaded
 end
 ```
 

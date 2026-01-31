@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using FableQuestTool.Models;
@@ -17,6 +18,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
@@ -28,9 +30,30 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         AddHandler(System.Windows.Controls.CheckBox.CheckedEvent, new System.Windows.RoutedEventHandler(OnAnyFieldChanged));
         AddHandler(System.Windows.Controls.CheckBox.UncheckedEvent, new System.Windows.RoutedEventHandler(OnAnyFieldChanged));
 
+        if (ViewModel != null)
+        {
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+
         isInitializing = false;
         UpdatePreview();
         SetSectionVisibility();
+    }
+
+    private void OnUnloaded(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (ViewModel != null)
+        {
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.IsAdvancedMode))
+        {
+            SetSectionVisibility();
+        }
     }
 
     private void OnAnyFieldChanged(object? sender, System.Windows.RoutedEventArgs e)
@@ -121,13 +144,13 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         {
             if (string.Equals(existing, region, StringComparison.OrdinalIgnoreCase))
             {
-                RegionInput.Clear();
+                RegionInput.Text = string.Empty;
                 return;
             }
         }
 
         ViewModel.Project.Regions.Add(region);
-        RegionInput.Clear();
+        RegionInput.Text = string.Empty;
         ViewModel.IsModified = true;
         ViewModel.StatusText = "Region added.";
         UpdatePreview();
@@ -171,7 +194,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
 
         ViewModel.Project.Rewards.Items.Add(item);
-        RewardItemInput.Clear();
+        RewardItemInput.Text = string.Empty;
         ViewModel.IsModified = true;
         ViewModel.StatusText = "Reward item added.";
         UpdatePreview();
@@ -239,7 +262,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
 
         ViewModel.Project.Rewards.Abilities.Add(ability);
-        RewardAbilityInput.Clear();
+        RewardAbilityInput.Text = string.Empty;
         ViewModel.IsModified = true;
         ViewModel.StatusText = "Reward ability added.";
         UpdatePreview();

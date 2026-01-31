@@ -61,14 +61,14 @@
             <ScrollViewer>
                 <StackPanel Margin="12">
                     <TextBlock Text="Quick Start" FontWeight="SemiBold" Margin="0,0,0,8" />
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <Button Content="Talk" Width="70" Margin="0,0,6,0"
+                    <UniformGrid Columns="3" Margin="0,0,0,12">
+                        <Button Content="Talk" Margin="0,0,4,0"
                                 Command="{Binding ApplyTemplateCommand}" CommandParameter="Talk" />
-                        <Button Content="Kill" Width="70" Margin="0,0,6,0"
+                        <Button Content="Kill" Margin="0,0,4,0"
                                 Command="{Binding ApplyTemplateCommand}" CommandParameter="Kill" />
-                        <Button Content="Fetch" Width="70"
+                        <Button Content="Fetch"
                                 Command="{Binding ApplyTemplateCommand}" CommandParameter="Fetch" />
-                    </StackPanel>
+                    </UniformGrid>
 
                     <TextBlock Text="Quick Nodes" FontWeight="SemiBold" Margin="0,0,0,8" />
                     <ItemsControl ItemsSource="{Binding SimpleNodes}">

@@ -17,6 +17,14 @@
     <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}" />
     <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="{StaticResource BackgroundSecondaryColor}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{StaticResource BackgroundSecondaryColor}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}" Color="{StaticResource BackgroundSecondaryColor}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuTextBrushKey}" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{StaticResource SurfaceBackgroundColor}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{StaticResource TextPrimaryColor}" />
 
     <Style TargetType="Window">
         <Setter Property="Background" Value="{StaticResource BackgroundPrimary}" />
@@ -45,6 +53,18 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="6,4" />
         <Setter Property="CaretBrush" Value="{StaticResource TextPrimary}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource SurfaceBackground}" />
+        <Setter Property="SelectionTextBrush" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <Style x:Key="ComboBoxEditableTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource BackgroundSecondary}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="CaretBrush" Value="{StaticResource TextPrimary}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource SurfaceBackground}" />
+        <Setter Property="SelectionTextBrush" Value="{StaticResource TextPrimary}" />
     </Style>
 
     <Style TargetType="ComboBox">
@@ -53,11 +73,105 @@
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="4,2" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Border x:Name="ComboBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="24" />
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter x:Name="ContentSite"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" />
+                                <TextBox x:Name="PART_EditableTextBox"
+                                         Grid.Column="0"
+                                         Style="{StaticResource ComboBoxEditableTextBoxStyle}"
+                                         Visibility="Hidden"
+                                         IsReadOnly="{TemplateBinding IsReadOnly}"
+                                         Background="{TemplateBinding Background}"
+                                         Foreground="{TemplateBinding Foreground}" />
+                                <ToggleButton x:Name="DropDownToggle"
+                                              Grid.Column="1"
+                                              Background="{TemplateBinding Background}"
+                                              BorderThickness="0"
+                                              IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                              Focusable="False"
+                                              ClickMode="Press">
+                                    <Path Width="10" Height="6"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Fill="{StaticResource TextSecondary}"
+                                          Data="M 0 0 L 10 0 L 5 6 Z" />
+                                </ToggleButton>
+                            </Grid>
+                        </Border>
+                        <Popup x:Name="Popup"
+                               Placement="Bottom"
+                               PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="Fade"
+                               MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Border Background="{StaticResource BackgroundSecondary}"
+                                    BorderBrush="{StaticResource BorderBrush}"
+                                    BorderThickness="1"
+                                    SnapsToDevicePixels="True">
+                                <ScrollViewer Background="{StaticResource BackgroundSecondary}"
+                                              CanContentScroll="True">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ComboBorder" Property="Background" Value="{StaticResource PanelBackground}" />
+                            <Setter TargetName="DropDownToggle" Property="Background" Value="{StaticResource PanelBackground}" />
+                        </Trigger>
+                        <Trigger Property="IsDropDownOpen" Value="True">
+                            <Setter TargetName="ComboBorder" Property="Background" Value="{StaticResource PanelBackground}" />
+                            <Setter TargetName="DropDownToggle" Property="Background" Value="{StaticResource PanelBackground}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style TargetType="ComboBoxItem">
         <Setter Property="Background" Value="{StaticResource BackgroundSecondary}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="Padding" Value="6,4" />
+        <Style.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+                <Setter Property="Background" Value="{StaticResource SurfaceBackground}" />
+                <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource AccentPrimary}" />
+                <Setter Property="Foreground" Value="White" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="ListBox">
@@ -76,6 +190,10 @@
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="{StaticResource AccentPrimary}" />
                 <Setter Property="Foreground" Value="White" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource SurfaceBackground}" />
+                <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
             </Trigger>
         </Style.Triggers>
     </Style>

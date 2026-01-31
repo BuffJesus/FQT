@@ -4,8 +4,12 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:FableQuestTool.Views"
+             xmlns:data="clr-namespace:FableQuestTool.Data"
              mc:Ignorable="d"
              DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
     <Grid Background="{DynamicResource BackgroundPrimary}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220" />
@@ -20,9 +24,11 @@
                     <ListBoxItem Content="Quest Card" />
                     <ListBoxItem Content="Regions" />
                     <ListBoxItem Content="Rewards" />
-                    <ListBoxItem Content="Optional Challenges" />
+                    <ListBoxItem Content="Optional Challenges"
+                                 Visibility="{Binding DataContext.IsAdvancedMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
                     <ListBoxItem Content="States" />
-                    <ListBoxItem Content="Background Tasks" />
+                    <ListBoxItem Content="Background Tasks"
+                                 Visibility="{Binding DataContext.IsAdvancedMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
                 </ListBox>
             </StackPanel>
         </Border>
@@ -64,7 +70,9 @@
                     <GroupBox x:Name="QuestCardGroup" Header="Quest Card" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <TextBlock Text="Quest Card Object" />
-                            <TextBox Text="{Binding Project.QuestCardObject, UpdateSourceTrigger=PropertyChanged}" />
+                            <ComboBox IsEditable="True" IsTextSearchEnabled="True"
+                                      ItemsSource="{x:Static data:GameData.QuestCards}"
+                                      Text="{Binding Project.QuestCardObject, UpdateSourceTrigger=PropertyChanged}" />
 
                             <TextBlock Text="Objective Text" Margin="0,12,0,0" />
                             <TextBox Text="{Binding Project.ObjectiveText, UpdateSourceTrigger=PropertyChanged}" />
@@ -72,11 +80,15 @@
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                 <StackPanel Width="180">
                                     <TextBlock Text="Objective Region 1" />
-                                    <TextBox Text="{Binding Project.ObjectiveRegion1, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ComboBox IsEditable="True" IsTextSearchEnabled="True"
+                                              ItemsSource="{x:Static data:GameData.Regions}"
+                                              Text="{Binding Project.ObjectiveRegion1, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                                 <StackPanel Width="180" Margin="8,0,0,0">
                                     <TextBlock Text="Objective Region 2" />
-                                    <TextBox Text="{Binding Project.ObjectiveRegion2, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ComboBox IsEditable="True" IsTextSearchEnabled="True"
+                                              ItemsSource="{x:Static data:GameData.Regions}"
+                                              Text="{Binding Project.ObjectiveRegion2, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -103,7 +115,8 @@
                     <GroupBox x:Name="RegionsGroup" Header="Regions" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <StackPanel Orientation="Horizontal">
-                                <TextBox x:Name="RegionInput" Width="200" Margin="0,0,8,0" />
+                                <ComboBox x:Name="RegionInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
+                                          ItemsSource="{x:Static data:GameData.Regions}" />
                                 <Button Content="Add" Width="80" Click="OnAddRegion" />
                                 <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRegion" />
                             </StackPanel>
@@ -134,7 +147,8 @@
 
                             <TextBlock Text="Reward Items" Margin="0,12,0,0" />
                             <StackPanel Orientation="Horizontal">
-                                <TextBox x:Name="RewardItemInput" Width="200" Margin="0,0,8,0" />
+                                <ComboBox x:Name="RewardItemInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
+                                          ItemsSource="{x:Static data:GameData.Objects}" />
                                 <Button Content="Add" Width="80" Click="OnAddRewardItem" />
                                 <Button Content="Update" Width="80" Margin="8,0,0,0" Click="OnUpdateRewardItem" />
                                 <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRewardItem" />
@@ -143,7 +157,8 @@
 
                             <TextBlock Text="Reward Abilities" Margin="0,12,0,0" />
                             <StackPanel Orientation="Horizontal">
-                                <TextBox x:Name="RewardAbilityInput" Width="200" Margin="0,0,8,0" />
+                                <ComboBox x:Name="RewardAbilityInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
+                                          ItemsSource="{x:Static data:GameData.Abilities}" />
                                 <Button Content="Add" Width="80" Click="OnAddRewardAbility" />
                                 <Button Content="Update" Width="80" Margin="8,0,0,0" Click="OnUpdateRewardAbility" />
                                 <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRewardAbility" />

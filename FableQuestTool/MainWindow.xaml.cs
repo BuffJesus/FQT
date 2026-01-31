@@ -40,7 +40,7 @@ public partial class MainWindow : Window
             {
                 mainViewModel.Project = project;
                 mainViewModel.EntityEditorViewModel?.RefreshFromProject();
-                MessageBox.Show(
+                System.Windows.MessageBox.Show(
                     $"Template loaded successfully!\n\n" +
                     $"Quest: {project.Name}\n" +
                     $"Entities: {project.Entities.Count}\n\n" +

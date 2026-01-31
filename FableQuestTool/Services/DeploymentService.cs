@@ -290,7 +290,7 @@ public sealed class DeploymentService
                 return true;
             }
 
-            qstFile.AddQuestIfMissing(questName, false);
+            qstFile.AddQuestIfMissing(questName, true);
             qstFile.Save();
 
             return true;

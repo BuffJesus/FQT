@@ -465,11 +465,30 @@ public sealed class CodeGenerator
     {
         return entity.SpawnMethod switch
         {
-            SpawnMethod.BindExisting => $"    Quest:BindScriptToEntity(\"{entity.ScriptName}\", \"{entity.DefName}\")",
-            SpawnMethod.AtMarker => $"    Quest:SpawnEntityAtMarker(\"{entity.ScriptName}\", \"{entity.DefName}\", \"{entity.SpawnMarker}\")",
-            SpawnMethod.AtPosition => $"    Quest:SpawnEntityAtPosition(\"{entity.ScriptName}\", \"{entity.DefName}\", {entity.SpawnX}, {entity.SpawnY}, {entity.SpawnZ})",
-            SpawnMethod.CreateCreature => $"    Quest:CreateCreatureAtMarker(\"{entity.ScriptName}\", \"{entity.DefName}\", \"{entity.SpawnMarker}\")",
+            SpawnMethod.BindExisting => $"    -- Entity '{entity.ScriptName}' will bind to existing '{entity.DefName}' in the level",
+            SpawnMethod.AtMarker => GenerateCreateCreatureAtMarker(entity),
+            SpawnMethod.AtPosition => GenerateCreateCreatureAtPosition(entity),
+            SpawnMethod.CreateCreature => GenerateCreateCreatureAtMarker(entity),
             _ => ""
         };
+    }
+
+    private string GenerateCreateCreatureAtMarker(QuestEntity entity)
+    {
+        return $@"    local marker_{entity.ScriptName} = Quest:GetThingWithScriptName(""{entity.SpawnMarker}"")
+    if marker_{entity.ScriptName} ~= nil then
+        local pos_{entity.ScriptName} = marker_{entity.ScriptName}:GetPos()
+        Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
+        Quest:Log(""Spawned {entity.ScriptName} at marker {entity.SpawnMarker}"")
+    else
+        Quest:Log(""ERROR: Marker {entity.SpawnMarker} not found for {entity.ScriptName}"")
+    end";
+    }
+
+    private string GenerateCreateCreatureAtPosition(QuestEntity entity)
+    {
+        return $@"    local pos_{entity.ScriptName} = {{{entity.SpawnX}, {entity.SpawnY}, {entity.SpawnZ}}}
+    Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
+    Quest:Log(""Spawned {entity.ScriptName} at position [{entity.SpawnX}, {entity.SpawnY}, {entity.SpawnZ}]"")";
     }
 }

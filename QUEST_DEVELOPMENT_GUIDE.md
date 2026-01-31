@@ -8,16 +8,21 @@ This guide documents critical patterns and lessons learned from developing custo
 
 ### 1. Region Management
 
-**CRITICAL:** The region name used must match what the game loads, not the geographical location name.
+**CRITICAL:** The region name used must match what the game loads.
 
-- **Childhood Oakvale**: Use `"StartOakVale"` (NOT "Oakvale") - Made up of three sections: StartOakValeEast, StartOakValeWest, StartOakValeMemorialGarden
-- **Always verify region names** by checking working example quests and level files (*.lev)
+- **Use `Quest:GetRegionName()`** to find the actual region name at runtime - check FSE log for output
+- Common regions: "Oakvale", "BarrowFields", "HeroGuild", "Bowerstone", etc.
+- Region names should match what's used in TemplateService.cs and RegionTngMapping.cs
 
 ```lua
 function Init(questObject)
     Quest = questObject
-    Quest:AddQuestRegion("QuestName", "StartOakVale")  -- Correct for childhood!
-    -- Quest:AddQuestRegion("QuestName", "Oakvale")    -- WRONG - doesn't exist!
+
+    -- Debug: Log the current region name to verify
+    local currentRegion = Quest:GetRegionName()
+    Quest:Log("Current region: " .. (currentRegion or "nil"))
+
+    Quest:AddQuestRegion("QuestName", "Oakvale")
 end
 ```
 
@@ -41,8 +46,8 @@ function Main(questObject)
     Quest:KickOffQuestStartScreen("QuestName", true, true)
 
     -- Create region-bound threads (they auto-wait for region)
-    Quest:CreateThread("EntitySpawner", {region="StartOakVale"})
-    Quest:CreateThread("MonitorCompletion", {region="StartOakVale"})
+    Quest:CreateThread("EntitySpawner", {region="Oakvale"})
+    Quest:CreateThread("MonitorCompletion", {region="Oakvale"})
 
     Quest:Log("Main() completed.")
 end
@@ -70,11 +75,11 @@ end
 
 **CORRECT Pattern:**
 ```lua
-Quest:CreateThread("EntitySpawner", {region="StartOakVale"})
+Quest:CreateThread("EntitySpawner", {region="Oakvale"})
 
 function EntitySpawner(questObject)
     Quest = questObject
-    Quest:Log("EntitySpawner executing - StartOakVale is loaded!")
+    Quest:Log("EntitySpawner executing - Oakvale is loaded!")
 
     -- Start spawning immediately - no region check needed
     local marker = Quest:GetThingWithScriptName("MK_MARKER_NAME")
@@ -88,7 +93,7 @@ function EntitySpawner(questObject)
     Quest = questObject
 
     -- DON'T DO THIS - thread already waits for region automatically:
-    while not Quest:IsRegionLoaded("StartOakVale") do
+    while not Quest:IsRegionLoaded("Oakvale") do
         Quest:Pause(0.1)
         if not Quest:NewScriptFrame() then return end
     end
@@ -195,7 +200,7 @@ AddQuest("QuestName", TRUE);
 -- Called once at game load
 function Init(questObject)
     Quest = questObject
-    Quest:AddQuestRegion("QuestName", "StartOakVale")  -- Use correct region for childhood
+    Quest:AddQuestRegion("QuestName", "Oakvale")  -- Use correct region for childhood
     Quest:SetStateBool("StateVar", false)
 end
 
@@ -279,7 +284,7 @@ if not Quest:NewScriptFrame(Me) then break end -- For entity scripts
 
 ### Mistake 1: Wrong Region Name
 **Problem:** Quest never activates, EntitySpawner never runs
-**Solution:** Use correct region names like "StartOakVale" for childhood Oakvale. Verify region names by checking level files (*.lev) in `data/Levels/` directory and working quest examples
+**Solution:** Use correct region names like "Oakvale" for childhood Oakvale. Verify region names by checking level files (*.lev) in `data/Levels/` directory and working quest examples
 
 ### Mistake 2: Blocking Main()
 **Problem:** Quest start screen doesn't show, game freezes during load

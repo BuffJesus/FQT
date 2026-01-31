@@ -107,6 +107,7 @@ public sealed class CodeGenerator
 
         if (entity.Nodes.Count > 0)
         {
+            sb.AppendLine("    -- Main behavior loop");
             sb.AppendLine("    while true do");
 
             // Generate code from node graph using old implementation style
@@ -114,6 +115,17 @@ public sealed class CodeGenerator
             sb.Append(behaviorCode);
 
             sb.AppendLine();
+            sb.AppendLine("        if Me:IsNull() then break end");
+            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
+            sb.AppendLine("    end");
+        }
+        else if (entity.AcquireControl || entity.ExclusiveControl)
+        {
+            // Entity has control but no behavior nodes - add minimal loop to keep entity active
+            // and allow it to respond to game events (can be customized by user)
+            sb.AppendLine("    -- Minimal behavior loop (add behavior nodes for triggers and actions)");
+            sb.AppendLine("    while true do");
+            sb.AppendLine("        -- Add trigger nodes in the visual editor to respond to hero interactions");
             sb.AppendLine("        if Me:IsNull() then break end");
             sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
             sb.AppendLine("    end");
@@ -234,18 +246,19 @@ public sealed class CodeGenerator
         string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
         
         // Create EntitySpawner thread if we have entities to spawn
-        if (quest.Entities.Any(e => e.SpawnMethod != SpawnMethod.BindExisting) || 
+        // Note: Region-bound threads auto-wait for their region to load
+        if (quest.Entities.Any(e => e.SpawnMethod != SpawnMethod.BindExisting) ||
             quest.Entities.Any(e => e.IsQuestTarget || e.ShowOnMinimap))
         {
-            sb.AppendLine($"    Quest:CreateThread(\"EntitySpawner\", {{ region = \"{primaryRegion}\" }})");
+            sb.AppendLine($"    Quest:CreateThread(\"EntitySpawner\", {{region=\"{primaryRegion}\"}})");
         }
-        
-        sb.AppendLine($"    Quest:CreateThread(\"MonitorQuestCompletion\", {{ region = \"{primaryRegion}\" }})");
+
+        sb.AppendLine($"    Quest:CreateThread(\"MonitorQuestCompletion\", {{region=\"{primaryRegion}\"}})");
 
         // Start user-defined threads
         foreach (QuestThread thread in quest.Threads)
         {
-            sb.AppendLine($"    Quest:CreateThread(\"{thread.FunctionName}\", {{ region = \"{thread.Region}\" }})");
+            sb.AppendLine($"    Quest:CreateThread(\"{thread.FunctionName}\", {{region=\"{thread.Region}\"}})");
         }
 
         sb.AppendLine("end");
@@ -274,8 +287,10 @@ public sealed class CodeGenerator
     }
 
     /// <summary>
-    /// Generates the EntitySpawner thread that waits for region load and spawns entities.
-    /// Thread is region-bound so it only executes when the region is loaded.
+    /// Generates the EntitySpawner thread that spawns entities when the region is loaded.
+    /// Thread is region-bound via CreateThread({region="..."}) so FSE automatically delays
+    /// execution until the region loads. Do NOT add manual region-waiting loops here -
+    /// they are redundant and can cause the thread to hang.
     /// </summary>
     private void GenerateEntitySpawnerThread(StringBuilder sb, QuestProject quest)
     {
@@ -283,20 +298,12 @@ public sealed class CodeGenerator
 
         sb.AppendLine("function EntitySpawner(questObject)");
         sb.AppendLine("    Quest = questObject");
-        sb.AppendLine($"    Quest:Log(\"{quest.Name}: EntitySpawner thread started.\")");
+        sb.AppendLine($"    -- Thread is region-bound to {primaryRegion} - FSE auto-waits for region load");
+        sb.AppendLine($"    Quest:Log(\"{quest.Name}: EntitySpawner executing (region is loaded).\")");
         sb.AppendLine();
 
-        // Wait for region to load
-        sb.AppendLine("    -- Wait for region to load");
-        sb.AppendLine($"    while not Quest:IsRegionLoaded(\"{primaryRegion}\") do");
-        sb.AppendLine("        Quest:Pause(0.1)");
-        sb.AppendLine("        if not Quest:NewScriptFrame() then return end");
-        sb.AppendLine("    end");
-        sb.AppendLine($"    Quest:Log(\"{quest.Name}: Region {primaryRegion} loaded.\")");
-        sb.AppendLine();
-
-        // Brief pause to let game settle
-        sb.AppendLine("    -- Brief pause to let game settle");
+        // Brief pause to let game settle after region load
+        sb.AppendLine("    -- Brief pause to let game settle after region load");
         sb.AppendLine("    Quest:Pause(0.5)");
         sb.AppendLine("    if not Quest:NewScriptFrame() then return end");
         sb.AppendLine();

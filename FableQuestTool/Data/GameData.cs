@@ -5,10 +5,15 @@ namespace FableQuestTool.Data;
 
 public static class GameData
 {
+    /// <summary>
+    /// Region names used by the game. Use Quest:GetRegionName() in Lua to verify
+    /// the actual region name at runtime. Check FSE log for output.
+    /// </summary>
     public static ObservableCollection<string> Regions { get; } = new()
     {
-        "BarrowFields",
+        // Common regions (matching TemplateService and RegionTngMapping)
         "Oakvale",
+        "BarrowFields",
         "LookoutPoint",
         "HeroGuild",
         "GuildWoods",
@@ -17,17 +22,41 @@ public static class GameData
         "BowerstoneSouth",
         "BowerstoneQuay",
         "Darkwood",
+        "DarkwoodMarshes",
+        "DarkwoodLake",
+        "DarkwoodCamp",
         "Witchwood",
+        "WitchwoodCullis",
+        "WitchwoodStones",
+        "WitchwoodLake",
         "Greatwood",
+        "GreatwoodEntrance",
+        "GreatwoodGorge",
         "GreatwoodLake",
+        "GreatwoodCaves",
         "Knothole",
+        "KnotholeGlade",
         "HookCoast",
         "TwinbladeCamp",
+        "TwinbladeElite",
         "LychfieldGraveyard",
         "HeadsmansHill",
+        "HeadsmansHollows",
+        "HeadsmansWall",
         "PrisonPath",
         "Snowspire",
-        "NorthernWastes"
+        "SnowspireVillage",
+        "NorthernWastes",
+        "NorthernWastesFoothill",
+        "Archons",
+        "ArchonsShrine",
+        "NecropS",
+        "CliffTop",
+        "Orchard",
+        "Gibbet",
+        "Grey",
+        "Temple",
+        "Chamber"
     };
 
     public static ObservableCollection<string> QuestCards { get; } = new()

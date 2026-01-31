@@ -715,6 +715,13 @@ public sealed class DeploymentService
             File.Copy(sourceLauncher, launcherPath, overwrite: true);
             File.Copy(sourceDll, dllPath, overwrite: true);
 
+            // Create Mods.ini to enable FSE
+            string modsIniPath = Path.Combine(config.FablePath, "Mods.ini");
+            if (!File.Exists(modsIniPath))
+            {
+                File.WriteAllText(modsIniPath, "[Mods]\nFableScriptExtender.dll=1\n");
+            }
+
             // Create FSE folder if it doesn't exist
             string fseFolder = Path.Combine(config.FablePath, "FSE");
             Directory.CreateDirectory(fseFolder);
@@ -749,6 +756,43 @@ function OnPersist(quest, context)
 end
 ";
                 File.WriteAllText(masterLuaPath, masterLuaContent);
+            }
+
+            // Ensure FSE_Master is registered in quests.lua
+            string questsLuaPath = Path.Combine(fseFolder, "quests.lua");
+            if (!File.Exists(questsLuaPath))
+            {
+                string questsLuaContent = @"Quests = {
+    FSE_Master = {
+        name = ""FSE_Master"",
+        file = ""Master/FSE_Master"",
+        id = 1,
+        master = true,
+        entity_scripts = {}
+    },
+}
+";
+                File.WriteAllText(questsLuaPath, questsLuaContent);
+            }
+            else
+            {
+                // Check if FSE_Master is already registered
+                string questsContent = File.ReadAllText(questsLuaPath);
+                if (!questsContent.Contains("FSE_Master"))
+                {
+                    // Add FSE_Master to existing quests.lua
+                    int insertPos = questsContent.IndexOf("Quests = {") + "Quests = {".Length;
+                    string fseMasterEntry = @"
+    FSE_Master = {
+        name = ""FSE_Master"",
+        file = ""Master/FSE_Master"",
+        id = 1,
+        master = true,
+        entity_scripts = {}
+    },";
+                    questsContent = questsContent.Insert(insertPos, fseMasterEntry);
+                    File.WriteAllText(questsLuaPath, questsContent);
+                }
             }
 
             return true;

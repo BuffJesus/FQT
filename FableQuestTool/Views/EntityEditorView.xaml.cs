@@ -171,6 +171,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
             // Get the element that was clicked
             var position = e.GetPosition(editor);
+            var graphPosition = GetGraphPosition(editor, position);
             var hitElement = editor.InputHitTest(position) as DependencyObject;
 
             bool clickedOnConnector = false;
@@ -192,9 +193,9 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             if (currentTab.PendingConnection != null && !clickedOnConnector && !_redirectNodeCreated)
             {
                 // Show node menu to create and connect to a new node
-                if (currentTab.OpenNodeMenuCommand.CanExecute(position))
+                if (currentTab.OpenNodeMenuCommand.CanExecute((position, graphPosition)))
                 {
-                    currentTab.OpenNodeMenuCommand.Execute(position);
+                    currentTab.OpenNodeMenuCommand.Execute((position, graphPosition));
                 }
                 return;
             }
@@ -247,17 +248,37 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             }
 
             var position = e.GetPosition(editor);
+            var graphPosition = GetGraphPosition(editor, position);
 
             // Open node menu at right-click position
-            if (currentTab.OpenNodeMenuCommand.CanExecute(position))
+            if (currentTab.OpenNodeMenuCommand.CanExecute((position, graphPosition)))
             {
-                currentTab.OpenNodeMenuCommand.Execute(position);
+                currentTab.OpenNodeMenuCommand.Execute((position, graphPosition));
                 e.Handled = true;
             }
         }
         catch
         {
             // Silently handle any errors
+        }
+    }
+
+    private static System.Windows.Point GetGraphPosition(Nodify.NodifyEditor editor, System.Windows.Point viewPosition)
+    {
+        try
+        {
+            double zoom = editor.ViewportZoom;
+            var location = editor.ViewportLocation;
+            if (zoom <= 0)
+            {
+                return viewPosition;
+            }
+
+            return new System.Windows.Point((viewPosition.X / zoom) + location.X, (viewPosition.Y / zoom) + location.Y);
+        }
+        catch
+        {
+            return viewPosition;
         }
     }
 

@@ -50,6 +50,22 @@ public sealed partial class QuestEntity : ObservableObject
     [property: JsonPropertyName("KillOnLevelUnload")]
     private bool killOnLevelUnload;
 
+    /// <summary>
+    /// When true, entity will glow green when targeted (like quest NPCs in base game).
+    /// Uses Quest:SetThingHasInformation() API.
+    /// </summary>
+    [ObservableProperty]
+    [property: JsonPropertyName("IsQuestTarget")]
+    private bool isQuestTarget;
+
+    /// <summary>
+    /// When true and IsQuestTarget is true, a minimap marker will be added for this entity.
+    /// Uses Quest:MiniMapAddMarker() API.
+    /// </summary>
+    [ObservableProperty]
+    [property: JsonPropertyName("ShowOnMinimap")]
+    private bool showOnMinimap;
+
     [ObservableProperty]
     [property: JsonPropertyName("SpawnMethod")]
     private SpawnMethod spawnMethod = SpawnMethod.BindExisting;

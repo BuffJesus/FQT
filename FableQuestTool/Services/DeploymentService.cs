@@ -527,7 +527,8 @@ public sealed class DeploymentService
         string pattern = $@"^(\s*)(--\s*)?({Regex.Escape(questName)}\s*=\s*\{{)";
 
         bool found = false;
-        var lines = content.Split('\n');
+        // FIX: Split by any newline type to handle both \n and \r\n properly
+        var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
         int braceDepth = 0;
         bool inTargetQuest = false;
         int questStartLine = -1;
@@ -594,23 +595,30 @@ public sealed class DeploymentService
 
         if (found)
         {
-            File.WriteAllText(filePath, string.Join("\n", lines));
+            // Preserve original line ending style
+            string lineEnding = content.Contains("\r\n") ? "\r\n" : "\n";
+            File.WriteAllText(filePath, string.Join(lineEnding, lines));
         }
 
         return found;
     }
 
-    private bool ToggleMasterActivation(string masterPath, string questName, bool enable)
+   private bool ToggleMasterActivation(string masterPath, string questName, bool enable)
     {
         string content = File.ReadAllText(masterPath);
-        string pattern = $@"^(\s*)(--\s*)?(Quest:ActivateQuest\(""{Regex.Escape(questName)}""\))";
+        
+        // FIX: Use case-insensitive pattern to match both 'Quest' and 'quest'
+        // The actual FSE_Master.lua uses lowercase 'quest'
+        string pattern = $@"^(\s*)(--\s*)?(quest:ActivateQuest\(""{Regex.Escape(questName)}""\))";
 
         bool found = false;
-        var lines = content.Split('\n');
+        // FIX: Split by any newline type to handle both \n and \r\n properly
+        var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
         for (int i = 0; i < lines.Length; i++)
         {
-            var match = Regex.Match(lines[i], pattern);
+            // FIX: Add RegexOptions.IgnoreCase for extra safety
+            var match = Regex.Match(lines[i], pattern, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 found = true;
@@ -618,21 +626,44 @@ public sealed class DeploymentService
 
                 if (enable && isCommented)
                 {
-                    // Uncomment
+                    // Uncomment - remove the "-- " prefix
                     lines[i] = Regex.Replace(lines[i], @"^(\s*)--\s*", "$1");
                 }
                 else if (!enable && !isCommented)
                 {
-                    // Comment
+                    // Comment - add "-- " prefix
                     lines[i] = Regex.Replace(lines[i], @"^(\s*)", "$1-- ");
                 }
+                
+                // Also handle the associated Log line on the next line
+                if (i + 1 < lines.Length)
+                {
+                    string logPattern = $@"^(\s*)(--\s*)?(quest:Log\(""FSE_Master: Activated {Regex.Escape(questName)}""\))";
+                    var logMatch = Regex.Match(lines[i + 1], logPattern, RegexOptions.IgnoreCase);
+                    if (logMatch.Success)
+                    {
+                        bool logIsCommented = logMatch.Groups[2].Success && !string.IsNullOrWhiteSpace(logMatch.Groups[2].Value);
+                        
+                        if (enable && logIsCommented)
+                        {
+                            lines[i + 1] = Regex.Replace(lines[i + 1], @"^(\s*)--\s*", "$1");
+                        }
+                        else if (!enable && !logIsCommented)
+                        {
+                            lines[i + 1] = Regex.Replace(lines[i + 1], @"^(\s*)", "$1-- ");
+                        }
+                    }
+                }
+                
                 break;
             }
         }
 
         if (found)
         {
-            File.WriteAllText(masterPath, string.Join("\n", lines));
+            // Preserve original line ending style
+            string lineEnding = content.Contains("\r\n") ? "\r\n" : "\n";
+            File.WriteAllText(masterPath, string.Join(lineEnding, lines));
         }
 
         return found;

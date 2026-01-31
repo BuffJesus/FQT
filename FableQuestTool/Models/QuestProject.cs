@@ -22,8 +22,14 @@ public sealed partial class QuestProject : ObservableObject
     public string ObjectiveText { get; set; } = string.Empty;
     public string ObjectiveRegion1 { get; set; } = string.Empty;
     public string ObjectiveRegion2 { get; set; } = string.Empty;
-    public int WorldMapOffsetX { get; set; }
-    public int WorldMapOffsetY { get; set; }
+    
+    [ObservableProperty]
+    [property: JsonPropertyName("WorldMapOffsetX")]
+    private int worldMapOffsetX;
+    
+    [ObservableProperty]
+    [property: JsonPropertyName("WorldMapOffsetY")]
+    private int worldMapOffsetY;
 
     public bool UseQuestStartScreen { get; set; }
     public bool IsStoryQuest { get; set; }

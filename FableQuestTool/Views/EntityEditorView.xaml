@@ -181,21 +181,36 @@
                                                       IsTextSearchEnabled="True"
                                                       Margin="0,0,0,8" />
 
-                                            <TextBlock Text="Spawn Marker" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                            <TextBlock Text="Spawn Marker / Target" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
                                             <ComboBox Text="{Binding Entity.SpawnMarker, UpdateSourceTrigger=PropertyChanged}"
                                                       ItemsSource="{Binding AvailableMarkers}"
                                                       IsEditable="True"
                                                       IsTextSearchEnabled="True"
                                                       Margin="0,0,0,8" />
 
-                                            <TextBlock Text="Entity Flags" FontSize="10" Opacity="0.7" Margin="0,8,0,4" />
-                                            <CheckBox Content="Invulnerable" IsChecked="{Binding Entity.Invulnerable}" Margin="0,0,0,4" />
-                                            <CheckBox Content="Unkillable" IsChecked="{Binding Entity.Unkillable}" Margin="0,0,0,4" />
-                                            <CheckBox Content="Persistent" IsChecked="{Binding Entity.Persistent}" Margin="0,0,0,4" />
+                                            <Separator Margin="0,8,0,8" Background="{DynamicResource BorderBrush}" />
+
                                             <CheckBox Content="Exclusive Control" IsChecked="{Binding Entity.ExclusiveControl}" Margin="0,0,0,4" />
                                             <CheckBox Content="Acquire Control" IsChecked="{Binding Entity.AcquireControl}" Margin="0,0,0,4" />
                                             <CheckBox Content="Make Behavioral" IsChecked="{Binding Entity.MakeBehavioral}" Margin="0,0,0,4" />
+                                            <CheckBox Content="Invulnerable" IsChecked="{Binding Entity.Invulnerable}" Margin="0,0,0,4" />
+                                            <CheckBox Content="Unkillable" IsChecked="{Binding Entity.Unkillable}" Margin="0,0,0,4" />
+                                            <CheckBox Content="Persistent" IsChecked="{Binding Entity.Persistent}" Margin="0,0,0,4" />
                                             <CheckBox Content="Kill On Level Unload" IsChecked="{Binding Entity.KillOnLevelUnload}" Margin="0,0,0,4" />
+
+                                            <!-- NEW: Quest Target Options -->
+                                            <Separator Margin="0,8,0,8" Background="{DynamicResource BorderBrush}" />
+                                            <TextBlock Text="Quest Target Options" FontWeight="SemiBold" Margin="0,0,0,8" />
+
+                                            <CheckBox Content="Quest Target (Green Highlight)" 
+                                                      IsChecked="{Binding Entity.IsQuestTarget}"
+                                                      Margin="0,0,0,4"
+                                                      ToolTip="Entity glows green when looked at by the player, like quest NPCs in the base game. Uses SetThingHasInformation() API." />
+
+                                            <CheckBox Content="Show on Minimap" 
+                                                      IsChecked="{Binding Entity.ShowOnMinimap}"
+                                                      Margin="0,0,0,8"
+                                                      ToolTip="Adds a marker for this entity on the minimap. Uses MiniMapAddMarker() API." />
 
                                             <Button Content="Browse Entities..."
                                                     Command="{Binding BrowseEntitiesCommand}"
@@ -220,7 +235,7 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Button Content="{Binding Label}" Margin="0,0,0,6"
-                                                        Command="{Binding DataContext.AddNodeCommand, RelativeSource={RelativeSource AncestorType=local:EntityEditorView}}"
+                                                        Command="{Binding DataContext.AddNodeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                         CommandParameter="{Binding}" />
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -232,7 +247,7 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Button Content="{Binding Label}" Margin="0,0,0,6"
-                                                            Command="{Binding DataContext.AddNodeCommand, RelativeSource={RelativeSource AncestorType=local:EntityEditorView}}"
+                                                            Command="{Binding DataContext.AddNodeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                             CommandParameter="{Binding}" />
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -374,65 +389,37 @@
                                     </nodify:NodifyEditor.ItemTemplate>
                                 </nodify:NodifyEditor>
 
-                                <!-- Node Selection Popup -->
+                                <!-- Node Creation Menu -->
                                 <Border Background="{DynamicResource PanelBackground}"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="4"
-                                        Width="300"
+                                        Padding="8"
+                                        Width="280"
                                         MaxHeight="400"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Top"
-                                        Padding="8"
+                                        Margin="{Binding NodeMenuPosition}"
                                         Visibility="{Binding IsNodeMenuOpen, Converter={StaticResource BoolToVisibility}}">
-                                    <Border.RenderTransform>
-                                        <TranslateTransform X="{Binding NodeMenuPosition.X}" Y="{Binding NodeMenuPosition.Y}" />
-                                    </Border.RenderTransform>
-                                    <Border.Effect>
-                                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3" />
-                                    </Border.Effect>
-
                                     <StackPanel>
+                                        <TextBlock Text="Add Node" FontWeight="SemiBold" Margin="0,0,0,8" />
                                         <TextBox Text="{Binding NodeSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                                 Height="28"
-                                                 Padding="6,4"
-                                                 Margin="0,0,0,8">
-                                            <TextBox.Style>
-                                                <Style TargetType="TextBox">
-                                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-                                                    <Style.Triggers>
-                                                        <Trigger Property="Text" Value="">
-                                                            <Setter Property="Background">
-                                                                <Setter.Value>
-                                                                    <VisualBrush Stretch="None" AlignmentX="Left">
-                                                                        <VisualBrush.Visual>
-                                                                            <TextBlock Text="Search nodes..."
-                                                                                     Foreground="#888888"
-                                                                                     Margin="6,0,0,0"/>
-                                                                        </VisualBrush.Visual>
-                                                                    </VisualBrush>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBox.Style>
-                                        </TextBox>
+                                               Padding="4" Margin="0,0,0,8"
+                                               Tag="Search nodes..." />
 
-                                        <ScrollViewer MaxHeight="350" VerticalScrollBarVisibility="Auto">
+                                        <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto">
                                             <ItemsControl ItemsSource="{Binding FilteredNodes}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Button HorizontalContentAlignment="Left"
-                                                                Padding="6,4"
-                                                                Margin="0,0,0,2"
-                                                                Command="{Binding DataContext.SelectNodeFromMenuCommand, RelativeSource={RelativeSource AncestorType=Grid}}"
-                                                                CommandParameter="{Binding}">
+                                                            <Button Margin="0,2"
+                                                              Command="{Binding DataContext.SelectNodeFromMenuCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                              CommandParameter="{Binding}"
+                                                              Background="Transparent"
+                                                              BorderThickness="0"
+                                                              HorizontalContentAlignment="Left"
+                                                              Padding="4">
                                                             <StackPanel Orientation="Horizontal">
-                                                                <TextBlock Text="{Binding Icon}"
-                                                                         Width="20"
-                                                                         Margin="0,0,8,0"
-                                                                         FontSize="12" />
+                                                                <TextBlock Text="{Binding Icon}" Width="24" />
                                                                 <TextBlock Text="{Binding Label}"
                                                                          VerticalAlignment="Center" />
                                                                 <TextBlock Text="{Binding Category, StringFormat=' ({0})'}"

@@ -1,7 +1,7 @@
 using System;
-using System.ComponentModel;
-using System.Globalization;
-using System.Text.RegularExpressions;
+using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
 using FableQuestTool.Models;
 using FableQuestTool.Services;
 using FableQuestTool.ViewModels;
@@ -10,126 +10,93 @@ namespace FableQuestTool.Views;
 
 public partial class QuestConfigView : System.Windows.Controls.UserControl
 {
-    private static readonly Regex StateNamePattern = new("^[A-Za-z][A-Za-z0-9_]*$");
-    private readonly CodeGenerator codeGenerator = new();
-    private bool isInitializing = true;
-
-    public QuestConfigViewModel QuestConfigViewModel { get; } = new();
+    private MainViewModel? ViewModel => DataContext as MainViewModel;
 
     public QuestConfigView()
     {
         InitializeComponent();
         Loaded += OnLoaded;
-        Unloaded += OnUnloaded;
     }
 
-    private MainViewModel? ViewModel => DataContext as MainViewModel;
-
-    private void OnLoaded(object sender, System.Windows.RoutedEventArgs e)
+    private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent, new System.Windows.Controls.TextChangedEventHandler(OnAnyFieldChanged));
-        AddHandler(System.Windows.Controls.ComboBox.SelectionChangedEvent, new System.Windows.Controls.SelectionChangedEventHandler(OnAnyFieldChanged));
-        AddHandler(System.Windows.Controls.CheckBox.CheckedEvent, new System.Windows.RoutedEventHandler(OnAnyFieldChanged));
-        AddHandler(System.Windows.Controls.CheckBox.UncheckedEvent, new System.Windows.RoutedEventHandler(OnAnyFieldChanged));
-
-        if (ViewModel != null)
-        {
-            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-        }
-
-        isInitializing = false;
-        UpdatePreview();
-        SetSectionVisibility();
-    }
-
-    private void OnUnloaded(object sender, System.Windows.RoutedEventArgs e)
-    {
-        if (ViewModel != null)
-        {
-            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-        }
-    }
-
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(MainViewModel.IsAdvancedMode))
-        {
-            SetSectionVisibility();
-        }
-    }
-
-    private void OnAnyFieldChanged(object? sender, System.Windows.RoutedEventArgs e)
-    {
-        if (isInitializing || ViewModel == null)
-        {
-            return;
-        }
-
-        ViewModel.IsModified = true;
         UpdatePreview();
     }
 
-    private void UpdatePreview()
+    private void OnSectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ViewModel == null)
         {
             return;
         }
 
-        PreviewText.Text = codeGenerator.GenerateQuestScript(ViewModel.Project);
-    }
+        string? section = (SectionList.SelectedItem as ListBoxItem)?.Content?.ToString();
+        bool advanced = ViewModel.IsAdvancedMode;
 
-    private void OnSectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-    {
-        if (!IsLoaded)
-        {
-            return;
-        }
-
-        SetSectionVisibility();
-    }
-
-    private void SetSectionVisibility()
-    {
-        if (SectionList == null || BasicInfoGroup == null)
-        {
-            return;
-        }
-
-        string? section = (SectionList.SelectedItem as System.Windows.Controls.ListBoxItem)?.Content?.ToString();
-        bool advanced = ViewModel?.IsAdvancedMode == true;
         if (string.IsNullOrWhiteSpace(section))
         {
-            BasicInfoGroup.Visibility = System.Windows.Visibility.Visible;
-            QuestCardGroup.Visibility = System.Windows.Visibility.Visible;
-            RegionsGroup.Visibility = System.Windows.Visibility.Visible;
-            RewardsGroup.Visibility = System.Windows.Visibility.Visible;
-            BoastsGroup.Visibility = System.Windows.Visibility.Visible;
-            StatesGroup.Visibility = System.Windows.Visibility.Visible;
-            ThreadsGroup.Visibility = System.Windows.Visibility.Visible;
+            // Show all
+            BasicInfoGroup.Visibility = Visibility.Visible;
+            QuestCardGroup.Visibility = Visibility.Visible;
+            RegionsGroup.Visibility = Visibility.Visible;
+            RewardsGroup.Visibility = Visibility.Visible;
+            BoastsGroup.Visibility = Visibility.Visible;
+            StatesGroup.Visibility = Visibility.Visible;
+            ThreadsGroup.Visibility = Visibility.Visible;
             return;
         }
 
+        // Handle advanced mode restrictions
         if (!advanced && (section == "Optional Challenges" || section == "Background Tasks"))
         {
             SectionList.SelectedIndex = 0;
             section = "Basic Info";
         }
 
-        BasicInfoGroup.Visibility = section == "Basic Info" ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        QuestCardGroup.Visibility = section == "Quest Card" ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        RegionsGroup.Visibility = section == "Regions" ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        RewardsGroup.Visibility = section == "Rewards" ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        BoastsGroup.Visibility = section == "Optional Challenges" ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        StatesGroup.Visibility = section == "States" ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        ThreadsGroup.Visibility = section == "Background Tasks" ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+        BasicInfoGroup.Visibility = section == "Basic Info" ? Visibility.Visible : Visibility.Collapsed;
+        QuestCardGroup.Visibility = section == "Quest Card" ? Visibility.Visible : Visibility.Collapsed;
+        RegionsGroup.Visibility = section == "Regions" ? Visibility.Visible : Visibility.Collapsed;
+        RewardsGroup.Visibility = section == "Rewards" ? Visibility.Visible : Visibility.Collapsed;
+        BoastsGroup.Visibility = section == "Optional Challenges" ? Visibility.Visible : Visibility.Collapsed;
+        StatesGroup.Visibility = section == "States" ? Visibility.Visible : Visibility.Collapsed;
+        ThreadsGroup.Visibility = section == "Background Tasks" ? Visibility.Visible : Visibility.Collapsed;
 
-        MapOffsetsPanel.Visibility = advanced ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        BoastsGroup.Visibility = advanced ? BoastsGroup.Visibility : System.Windows.Visibility.Collapsed;
-        ThreadsGroup.Visibility = advanced ? ThreadsGroup.Visibility : System.Windows.Visibility.Collapsed;
+        // Advanced-only sections
+        BoastsGroup.Visibility = advanced ? BoastsGroup.Visibility : Visibility.Collapsed;
+        ThreadsGroup.Visibility = advanced ? ThreadsGroup.Visibility : Visibility.Collapsed;
     }
 
-    private void OnAddRegion(object sender, System.Windows.RoutedEventArgs e)
+    private void OnAutoCalculateMapOffset(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.Project == null)
+        {
+            return;
+        }
+
+        try
+        {
+            string primaryRegion = ViewModel.Project.Regions?.FirstOrDefault() ?? "";
+            var offset = WorldMapCoordinateService.GetMapOffsetForQuest(primaryRegion, ViewModel.Project.Entities);
+
+            ViewModel.Project.WorldMapOffsetX = offset.X;
+            ViewModel.Project.WorldMapOffsetY = offset.Y;
+
+            ViewModel.IsModified = true;
+            ViewModel.StatusText = $"Map offset auto-calculated: ({offset.X}, {offset.Y}) based on region '{primaryRegion}'";
+            UpdatePreview();
+        }
+        catch (Exception ex)
+        {
+            ViewModel.StatusText = "Failed to auto-calculate map offset.";
+            System.Windows.MessageBox.Show(
+                $"Failed to auto-calculate map offset: {ex.Message}",
+                "Map Offset",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+        }
+    }
+
+    private void OnAddRegion(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -142,6 +109,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
             return;
         }
 
+        // Check for duplicates
         foreach (string existing in ViewModel.Project.Regions)
         {
             if (string.Equals(existing, region, StringComparison.OrdinalIgnoreCase))
@@ -158,7 +126,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         UpdatePreview();
     }
 
-    private void OnRemoveRegion(object sender, System.Windows.RoutedEventArgs e)
+    private void OnRemoveRegion(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -174,7 +142,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnRewardItemSelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void OnRewardItemSelected(object sender, SelectionChangedEventArgs e)
     {
         if (RewardItemsList.SelectedItem is string item)
         {
@@ -182,7 +150,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnAddRewardItem(object sender, System.Windows.RoutedEventArgs e)
+    private void OnAddRewardItem(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -202,7 +170,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         UpdatePreview();
     }
 
-    private void OnUpdateRewardItem(object sender, System.Windows.RoutedEventArgs e)
+    private void OnUpdateRewardItem(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null || RewardItemsList.SelectedItem is not string current)
         {
@@ -226,7 +194,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnRemoveRewardItem(object sender, System.Windows.RoutedEventArgs e)
+    private void OnRemoveRewardItem(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -242,7 +210,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnRewardAbilitySelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void OnRewardAbilitySelected(object sender, SelectionChangedEventArgs e)
     {
         if (RewardAbilitiesList.SelectedItem is string ability)
         {
@@ -250,7 +218,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnAddRewardAbility(object sender, System.Windows.RoutedEventArgs e)
+    private void OnAddRewardAbility(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -270,7 +238,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         UpdatePreview();
     }
 
-    private void OnUpdateRewardAbility(object sender, System.Windows.RoutedEventArgs e)
+    private void OnUpdateRewardAbility(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null || RewardAbilitiesList.SelectedItem is not string current)
         {
@@ -294,7 +262,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnRemoveRewardAbility(object sender, System.Windows.RoutedEventArgs e)
+    private void OnRemoveRewardAbility(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -310,40 +278,48 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnBoastSelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void OnBoastSelected(object sender, SelectionChangedEventArgs e)
     {
         if (BoastsList.SelectedItem is QuestBoast boast)
         {
-            BoastIdInput.Text = boast.BoastId.ToString(CultureInfo.InvariantCulture);
+            BoastIdInput.Text = boast.BoastId.ToString();
             BoastTextInput.Text = boast.Text;
-            BoastRenownInput.Text = boast.RenownReward.ToString(CultureInfo.InvariantCulture);
-            BoastGoldInput.Text = boast.GoldReward.ToString(CultureInfo.InvariantCulture);
-            BoastTextIdInput.Text = boast.TextId.ToString(CultureInfo.InvariantCulture);
-            BoastIsBoastInput.IsChecked = boast.IsBoast;
+            BoastRenownInput.Text = boast.RenownReward.ToString();
+            BoastGoldInput.Text = boast.GoldReward.ToString();
+            IsBoastCheck.IsChecked = boast.IsBoast;
         }
     }
 
-    private void OnAddBoast(object sender, System.Windows.RoutedEventArgs e)
+    private void OnAddBoast(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
             return;
         }
 
-        if (!int.TryParse(BoastIdInput.Text.Trim(), out int boastId))
+        string boastIdText = BoastIdInput.Text.Trim();
+        if (string.IsNullOrWhiteSpace(boastIdText))
         {
-            System.Windows.MessageBox.Show("Boast ID must be a number.", "Boast", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show("Please enter a Boast ID.", "Boast ID", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             return;
         }
+
+        if (!int.TryParse(boastIdText, out int boastId))
+        {
+            System.Windows.MessageBox.Show("Boast ID must be a whole number.", "Boast ID", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        int.TryParse(BoastRenownInput.Text, out int renown);
+        int.TryParse(BoastGoldInput.Text, out int gold);
 
         QuestBoast boast = new()
         {
             BoastId = boastId,
             Text = BoastTextInput.Text.Trim(),
-            RenownReward = ParseInt(BoastRenownInput.Text, 0),
-            GoldReward = ParseInt(BoastGoldInput.Text, 0),
-            TextId = ParseInt(BoastTextIdInput.Text, 0),
-            IsBoast = BoastIsBoastInput.IsChecked == true
+            RenownReward = renown,
+            GoldReward = gold,
+            IsBoast = IsBoastCheck.IsChecked == true
         };
 
         ViewModel.Project.Boasts.Add(boast);
@@ -353,41 +329,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         UpdatePreview();
     }
 
-    private void OnUpdateBoast(object sender, System.Windows.RoutedEventArgs e)
-    {
-        if (ViewModel == null || BoastsList.SelectedItem is not QuestBoast current)
-        {
-            return;
-        }
-
-        if (!int.TryParse(BoastIdInput.Text.Trim(), out int boastId))
-        {
-            System.Windows.MessageBox.Show("Boast ID must be a number.", "Boast", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-            return;
-        }
-
-        QuestBoast updated = new()
-        {
-            BoastId = boastId,
-            Text = BoastTextInput.Text.Trim(),
-            RenownReward = ParseInt(BoastRenownInput.Text, 0),
-            GoldReward = ParseInt(BoastGoldInput.Text, 0),
-            TextId = ParseInt(BoastTextIdInput.Text, 0),
-            IsBoast = BoastIsBoastInput.IsChecked == true
-        };
-
-        int index = ViewModel.Project.Boasts.IndexOf(current);
-        if (index >= 0)
-        {
-            ViewModel.Project.Boasts[index] = updated;
-            BoastsList.SelectedIndex = index;
-            ViewModel.IsModified = true;
-            ViewModel.StatusText = "Boast updated.";
-            UpdatePreview();
-        }
-    }
-
-    private void OnRemoveBoast(object sender, System.Windows.RoutedEventArgs e)
+    private void OnRemoveBoast(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -408,13 +350,12 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
     {
         BoastIdInput.Clear();
         BoastTextInput.Clear();
-        BoastRenownInput.Clear();
-        BoastGoldInput.Clear();
-        BoastTextIdInput.Clear();
-        BoastIsBoastInput.IsChecked = true;
+        BoastRenownInput.Text = "0";
+        BoastGoldInput.Text = "0";
+        IsBoastCheck.IsChecked = true;
     }
 
-    private void OnAddState(object sender, System.Windows.RoutedEventArgs e)
+    private void OnAddState(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -422,14 +363,13 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
 
         string name = StateNameInput.Text.Trim();
-        if (string.IsNullOrWhiteSpace(name) || !StateNamePattern.IsMatch(name))
+        if (string.IsNullOrWhiteSpace(name))
         {
-            System.Windows.MessageBox.Show("State name must start with a letter and contain only letters, numbers, and underscores.",
-                "State Name", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show("Please enter a state name.", "State Name", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             return;
         }
 
-        string type = (StateTypeInput.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "bool";
+        string type = (StateTypeInput.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "bool";
         object? defaultValue = ParseDefault(type, StateDefaultInput.Text.Trim());
 
         QuestState state = new()
@@ -451,7 +391,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         UpdatePreview();
     }
 
-    private void OnRemoveState(object sender, System.Windows.RoutedEventArgs e)
+    private void OnRemoveState(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -467,7 +407,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnThreadSelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void OnThreadSelected(object sender, SelectionChangedEventArgs e)
     {
         if (ThreadsList.SelectedItem is QuestThread thread)
         {
@@ -477,7 +417,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnAddThread(object sender, System.Windows.RoutedEventArgs e)
+    private void OnAddThread(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -504,32 +444,28 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         UpdatePreview();
     }
 
-    private void OnUpdateThread(object sender, System.Windows.RoutedEventArgs e)
+    private void OnUpdateThread(object sender, RoutedEventArgs e)
     {
-        if (ViewModel == null || ThreadsList.SelectedItem is not QuestThread current)
+        if (ViewModel == null || ThreadsList.SelectedItem is not QuestThread thread)
         {
             return;
         }
 
-        QuestThread updated = new()
-        {
-            FunctionName = ThreadFunctionInput.Text.Trim(),
-            Region = ThreadRegionInput.Text.Trim(),
-            Description = ThreadDescriptionInput.Text.Trim()
-        };
+        thread.FunctionName = ThreadFunctionInput.Text.Trim();
+        thread.Region = ThreadRegionInput.Text.Trim();
+        thread.Description = ThreadDescriptionInput.Text.Trim();
 
-        int index = ViewModel.Project.Threads.IndexOf(current);
-        if (index >= 0)
-        {
-            ViewModel.Project.Threads[index] = updated;
-            ThreadsList.SelectedIndex = index;
-            ViewModel.IsModified = true;
-            ViewModel.StatusText = "Thread updated.";
-            UpdatePreview();
-        }
+        // Refresh the list
+        int index = ThreadsList.SelectedIndex;
+        ThreadsList.Items.Refresh();
+        ThreadsList.SelectedIndex = index;
+
+        ViewModel.IsModified = true;
+        ViewModel.StatusText = "Thread updated.";
+        UpdatePreview();
     }
 
-    private void OnRemoveThread(object sender, System.Windows.RoutedEventArgs e)
+    private void OnRemoveThread(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
@@ -553,48 +489,44 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         ThreadDescriptionInput.Clear();
     }
 
-    private static int ParseInt(string text, int fallback)
+    private static object? ParseDefault(string type, string text)
     {
-        if (int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))
-        {
-            return value;
-        }
-
-        return fallback;
-    }
-
-    private static object? ParseDefault(string type, string input)
-    {
-        if (string.IsNullOrWhiteSpace(input))
+        if (string.IsNullOrWhiteSpace(text))
         {
             return type switch
             {
+                "bool" => false,
                 "int" => 0,
                 "string" => string.Empty,
-                _ => false
+                _ => null
             };
         }
 
-        if (type == "int")
+        return type switch
         {
-            if (int.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))
-            {
-                return value;
-            }
+            "bool" => text.Equals("true", StringComparison.OrdinalIgnoreCase) || text == "1",
+            "int" => int.TryParse(text, out int i) ? i : 0,
+            "string" => text,
+            _ => text
+        };
+    }
 
-            return 0;
+    public void UpdatePreview()
+    {
+        if (ViewModel?.Project == null || PreviewText == null)
+        {
+            return;
         }
 
-        if (type == "string")
+        try
         {
-            return input;
+            var generator = new CodeGenerator();
+            string code = generator.GenerateQuestScript(ViewModel.Project);
+            PreviewText.Text = code;
         }
-
-        if (bool.TryParse(input, out bool result))
+        catch (Exception ex)
         {
-            return result;
+            PreviewText.Text = $"// Error generating preview:\n// {ex.Message}";
         }
-
-        return false;
     }
 }

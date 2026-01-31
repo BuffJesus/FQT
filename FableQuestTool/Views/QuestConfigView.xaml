@@ -38,39 +38,21 @@
                     <GroupBox x:Name="BasicInfoGroup" Header="Basic Info" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <TextBlock Text="Quest Name" />
-                            <TextBox ToolTip="Internal script name used in Lua code (e.g., 'MyFirstQuest'). Must be unique and contain no spaces.">
-                                <TextBox.Text>
-                                    <Binding Path="Project.Name" UpdateSourceTrigger="PropertyChanged" ValidatesOnExceptions="True">
-                                        <Binding.ValidationRules>
-                                            <local:QuestNameRule />
-                                        </Binding.ValidationRules>
-                                    </Binding>
-                                </TextBox.Text>
-                            </TextBox>
-
-                            <TextBlock Text="Quest ID" Margin="0,12,0,0" />
-                            <DockPanel>
-                                <Button Content="Auto" DockPanel.Dock="Right" Width="60" Margin="4,0,0,0"
-                                        Command="{Binding QuestConfigViewModel.SuggestQuestIdCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        ToolTip="Automatically suggest next available Quest ID from existing quests" />
-                                <TextBox ToolTip="Unique numeric identifier for this quest (50000-99999 recommended for custom quests). Each quest and entity needs a unique ID.">
-                                    <TextBox.Text>
-                                        <Binding Path="Project.Id" UpdateSourceTrigger="PropertyChanged" ValidatesOnExceptions="True">
-                                            <Binding.ValidationRules>
-                                                <local:QuestIdRule />
-                                            </Binding.ValidationRules>
-                                        </Binding>
-                                    </TextBox.Text>
-                                </TextBox>
-                            </DockPanel>
+                            <TextBox ToolTip="Internal script name used in Lua code (e.g., 'MyFirstQuest'). Must be unique and contain no spaces."
+                                     Text="{Binding Project.Name, UpdateSourceTrigger=PropertyChanged}" />
 
                             <TextBlock Text="Display Name" Margin="0,12,0,0" />
-                            <TextBox Text="{Binding Project.DisplayName, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Human-readable quest name shown to players in the quest log (e.g., 'The Lost Sword')" />
+                            <TextBox ToolTip="Friendly name shown to players in quest log and UI."
+                                     Text="{Binding Project.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="Quest ID" Margin="0,12,0,0" />
+                            <TextBox ToolTip="Unique numeric ID for this quest. Must not conflict with existing quest IDs. Recommend using 50000+ for custom quests."
+                                     Text="{Binding Project.Id, UpdateSourceTrigger=PropertyChanged}" />
 
                             <TextBlock Text="Description" Margin="0,12,0,0" />
-                            <TextBox Text="{Binding Project.Description, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="60"
-                                     ToolTip="Optional internal description for your reference. Not shown to players." />
+                            <TextBox ToolTip="Quest description shown in quest log. Can be multiple lines. Not shown to players."
+                                     AcceptsReturn="True" TextWrapping="Wrap" Height="60"
+                                     Text="{Binding Project.Description, UpdateSourceTrigger=PropertyChanged}" />
 
                             <CheckBox Content="Quest Enabled" IsChecked="{Binding Project.IsEnabled, UpdateSourceTrigger=PropertyChanged}" Margin="0,12,0,0"
                                      ToolTip="When unchecked, this quest will not be deployed to FinalAlbion.qst" />
@@ -106,18 +88,29 @@
                                 </StackPanel>
                             </StackPanel>
 
+                            <!-- World Map Offset with Auto-Calculate Button -->
                             <StackPanel x:Name="MapOffsetsPanel" Orientation="Horizontal" Margin="0,12,0,0">
-                                <StackPanel Width="140">
+                                <StackPanel Width="100">
                                     <TextBlock Text="World Map X" />
                                     <TextBox Text="{Binding Project.WorldMapOffsetX, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="Horizontal pixel offset for the quest marker on the world map. Helps players locate the quest start point." />
+                                             ToolTip="Horizontal pixel offset for the quest marker on the world map. Set to 0 for auto-calculation." />
                                 </StackPanel>
-                                <StackPanel Width="140" Margin="8,0,0,0">
+                                <StackPanel Width="100" Margin="8,0,0,0">
                                     <TextBlock Text="World Map Y" />
                                     <TextBox Text="{Binding Project.WorldMapOffsetY, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="Vertical pixel offset for the quest marker on the world map. Helps players locate the quest start point." />
+                                             ToolTip="Vertical pixel offset for the quest marker on the world map. Set to 0 for auto-calculation." />
                                 </StackPanel>
+                                <Button Content="Auto" 
+                                        Width="50" 
+                                        Margin="8,14,0,0"
+                                        VerticalAlignment="Top"
+                                        Click="OnAutoCalculateMapOffset"
+                                        ToolTip="Auto-calculate map offset based on primary region. Uses region center coordinates." />
                             </StackPanel>
+                            <TextBlock Text="Leave at 0,0 to auto-calculate from region" 
+                                       FontSize="10" 
+                                       Opacity="0.6" 
+                                       Margin="0,4,0,0" />
 
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                 <CheckBox Content="Use Start Screen" IsChecked="{Binding Project.UseQuestStartScreen}" Margin="0,0,12,0"
@@ -191,38 +184,31 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <GroupBox x:Name="BoastsGroup" Header="Optional Challenges" Margin="0,0,0,12">
+                    <GroupBox x:Name="BoastsGroup" Header="Optional Challenges (Boasts)" Margin="0,0,0,12">
                         <StackPanel Margin="12">
-                            <WrapPanel>
-                                <StackPanel Width="120" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <StackPanel Width="80">
                                     <TextBlock Text="Boast ID" />
                                     <TextBox x:Name="BoastIdInput" />
                                 </StackPanel>
-                                <StackPanel Width="220" Margin="0,0,8,0">
-                                    <TextBlock Text="Text" />
+                                <StackPanel Width="180" Margin="8,0,0,0">
+                                    <TextBlock Text="Boast Text" />
                                     <TextBox x:Name="BoastTextInput" />
                                 </StackPanel>
-                                <StackPanel Width="100" Margin="0,0,8,0">
+                                <StackPanel Width="80" Margin="8,0,0,0">
                                     <TextBlock Text="Renown" />
-                                    <TextBox x:Name="BoastRenownInput" />
+                                    <TextBox x:Name="BoastRenownInput" Text="0" />
                                 </StackPanel>
-                                <StackPanel Width="100" Margin="0,0,8,0">
+                                <StackPanel Width="80" Margin="8,0,0,0">
                                     <TextBlock Text="Gold" />
-                                    <TextBox x:Name="BoastGoldInput" />
+                                    <TextBox x:Name="BoastGoldInput" Text="0" />
                                 </StackPanel>
-                                <StackPanel Width="100" Margin="0,0,8,0">
-                                    <TextBlock Text="Text ID" />
-                                    <TextBox x:Name="BoastTextIdInput" />
+                                <StackPanel Margin="8,18,0,0">
+                                    <CheckBox x:Name="IsBoastCheck" Content="Is Boast" IsChecked="True" />
                                 </StackPanel>
-                                <StackPanel Width="110" Margin="0,18,8,0">
-                                    <CheckBox x:Name="BoastIsBoastInput" Content="Is Boast" IsChecked="True" />
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
-                                    <Button Content="Add" Width="70" Click="OnAddBoast" />
-                                    <Button Content="Update" Width="80" Margin="8,0,0,0" Click="OnUpdateBoast" />
-                                    <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveBoast" />
-                                </StackPanel>
-                            </WrapPanel>
+                                <Button Content="Add" Width="60" Margin="8,18,0,0" Click="OnAddBoast" />
+                                <Button Content="Remove" Width="70" Margin="8,18,0,0" Click="OnRemoveBoast" />
+                            </StackPanel>
 
                             <ListBox x:Name="BoastsList" ItemsSource="{Binding Project.Boasts}" Height="120" Margin="0,8,0,0" SelectionChanged="OnBoastSelected">
                                 <ListBox.ItemTemplate>

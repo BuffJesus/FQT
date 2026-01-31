@@ -47,6 +47,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
     private System.Windows.Point nodeMenuPosition;
 
     [ObservableProperty]
+    private System.Windows.Point nodeMenuGraphPosition;
+
+    [ObservableProperty]
     private string nodeSearchText = string.Empty;
 
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
@@ -611,9 +614,19 @@ public sealed partial class EntityTabViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenNodeMenu(System.Windows.Point position)
+    private void OpenNodeMenu(object? parameter)
     {
-        NodeMenuPosition = position;
+        if (parameter is ValueTuple<System.Windows.Point, System.Windows.Point> tuple)
+        {
+            NodeMenuPosition = tuple.Item1;
+            NodeMenuGraphPosition = tuple.Item2;
+        }
+        else if (parameter is System.Windows.Point position)
+        {
+            NodeMenuPosition = position;
+            NodeMenuGraphPosition = position;
+        }
+
         NodeSearchText = string.Empty;
         UpdateFilteredNodes();
         IsNodeMenuOpen = true;
@@ -635,7 +648,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
 
         nodeSeed++;
-        var newNode = CreateNode(option.Definition, NodeMenuPosition.X, NodeMenuPosition.Y);
+        var newNode = CreateNode(option.Definition, NodeMenuGraphPosition.X, NodeMenuGraphPosition.Y);
         Nodes.Add(newNode);
 
         if (PendingConnection?.Source != null)

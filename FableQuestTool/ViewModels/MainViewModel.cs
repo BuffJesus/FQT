@@ -83,7 +83,7 @@ public sealed partial class MainViewModel : ObservableObject
             StatusText = "Project loaded.";
 
             // Reload entities in the entity editor
-            EntityEditorViewModel?.ReloadEntities();
+            EntityEditorViewModel?.RefreshFromProject();
         }
         catch (Exception ex)
         {

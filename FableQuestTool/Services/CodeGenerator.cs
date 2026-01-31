@@ -18,137 +18,34 @@ public sealed class CodeGenerator
         sb.AppendLine();
         sb.AppendLine("Quest = nil");
         sb.AppendLine();
-        sb.AppendLine("function Init(questObject)");
-        sb.AppendLine("    Quest = questObject");
-        sb.AppendLine($"    Quest:Log(\"{quest.Name}: Init phase started.\")");
-        foreach (string region in quest.Regions)
-        {
-            sb.AppendLine($"    Quest:AddQuestRegion(\"{quest.Name}\", \"{region}\")");
-        }
-        foreach (QuestState state in quest.States)
-        {
-            sb.AppendLine(RenderStateInit(state));
-        }
-        sb.AppendLine("end");
-        sb.AppendLine();
-        sb.AppendLine("function Main(questObject)");
-        sb.AppendLine("    Quest = questObject");
-        sb.AppendLine($"    Quest:Log(\"{quest.Name}: Main() started.\")");
 
-        if (quest.Entities.Count > 0)
-        {
-            sb.AppendLine("    -- Bind entity scripts");
-            foreach (QuestEntity entity in quest.Entities)
-            {
-                sb.AppendLine($"    Quest:AddEntityBinding(\"{entity.ScriptName}\", \"{quest.Name}/Entities/{entity.ScriptName}\")");
-            }
-            sb.AppendLine("    Quest:FinalizeEntityBindings()");
-            sb.AppendLine();
+        // Generate Init function
+        GenerateInitFunction(sb, quest);
 
-            // Spawn entities
-            sb.AppendLine("    -- Spawn entities");
-            foreach (QuestEntity entity in quest.Entities)
-            {
-                string spawnCode = GenerateEntitySpawnCode(entity);
-                if (!string.IsNullOrWhiteSpace(spawnCode))
-                {
-                    sb.AppendLine(spawnCode);
-                }
-            }
+        // Generate Main function
+        GenerateMainFunction(sb, quest);
+
+        // Generate OnPersist function
+        GenerateOnPersistFunction(sb, quest);
+
+        // Generate EntitySpawner thread if needed
+        if (quest.Entities.Any(e => e.SpawnMethod != SpawnMethod.BindExisting) || 
+            quest.Entities.Any(e => e.IsQuestTarget || e.ShowOnMinimap))
+        {
+            GenerateEntitySpawnerThread(sb, quest);
         }
 
-        if (!string.IsNullOrWhiteSpace(quest.QuestCardObject))
-        {
-            if (quest.IsGuildQuest)
-            {
-                // Guild quests need to be added to the quest table
-                sb.AppendLine($"    Quest:AddGuildQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\")");
-            }
-            else if (quest.GiveCardDirectly)
-            {
-                // Give quest card directly to hero
-                sb.AppendLine($"    Quest:GiveQuestCardDirectly(\"{quest.QuestCardObject}\", \"{quest.Name}\", true)");
-            }
-            else
-            {
-                // Non-guild quests are added to quest log
-                sb.AppendLine($"    Quest:AddQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\", false, false)");
-            }
-        }
+        // Generate MonitorQuestCompletion thread
+        GenerateMonitorQuestCompletion(sb, quest);
 
-        if (!string.IsNullOrWhiteSpace(quest.ObjectiveText))
-        {
-            sb.AppendLine($"    Quest:SetQuestCardObjective(\"{quest.Name}\", \"{Escape(quest.ObjectiveText)}\", \"{quest.ObjectiveRegion1}\", \"{quest.ObjectiveRegion2}\")");
-        }
-
-        if (quest.Rewards.Gold > 0)
-        {
-            sb.AppendLine($"    Quest:SetQuestGoldReward(\"{quest.Name}\", {quest.Rewards.Gold})");
-        }
-
-        if (quest.Rewards.Renown > 0)
-        {
-            sb.AppendLine($"    Quest:SetQuestRenownReward(\"{quest.Name}\", {quest.Rewards.Renown})");
-        }
-
-        if (quest.UseQuestStartScreen)
-        {
-            string isStory = quest.IsStoryQuest ? "true" : "false";
-            string isGold = quest.IsGoldQuest ? "true" : "false";
-            sb.AppendLine($"    Quest:KickOffQuestStartScreen(\"{quest.Name}\", {isStory}, {isGold})");
-        }
-
-        // Add automatic quest completion monitoring thread
-        sb.AppendLine($"    Quest:CreateThread(\"MonitorQuestCompletion\", {{ region = \"{quest.Regions.FirstOrDefault() ?? "Albion"}\" }})");
-
+        // Generate user-defined threads
         foreach (QuestThread thread in quest.Threads)
         {
-            sb.AppendLine($"    Quest:CreateThread(\"{thread.FunctionName}\", {{ region = \"{thread.Region}\" }})");
+            GenerateUserThread(sb, thread);
         }
 
-        sb.AppendLine("end");
-        sb.AppendLine();
-        sb.AppendLine("function OnPersist(questObject, context)");
-        sb.AppendLine("    Quest = questObject");
-        foreach (QuestState state in quest.States)
-        {
-            if (!state.Persist)
-            {
-                continue;
-            }
-            sb.AppendLine(RenderPersist(state, quest.Name));
-        }
-        sb.AppendLine("end");
-        sb.AppendLine();
-
-        // Generate quest completion monitoring thread
-        sb.AppendLine("function MonitorQuestCompletion(questObject)");
-        sb.AppendLine("    Quest = questObject");
-        sb.AppendLine("    while true do");
-        sb.AppendLine("        if Quest:GetStateBool(\"QuestCompleted\") then");
-        sb.AppendLine("            CompleteQuest()");
-        sb.AppendLine("            break");
-        sb.AppendLine("        end");
-        sb.AppendLine("        if not Quest:NewScriptFrame() then break end");
-        sb.AppendLine("    end");
-        sb.AppendLine("end");
-        sb.AppendLine();
-
-        foreach (QuestThread thread in quest.Threads)
-        {
-            sb.AppendLine($"function {thread.FunctionName}(questObject)");
-            sb.AppendLine("    Quest = questObject");
-            sb.AppendLine("    -- TODO: implement thread logic");
-            sb.AppendLine("end");
-            sb.AppendLine();
-        }
-
-        sb.AppendLine("function CompleteQuest()");
-        sb.Append(RenderRewards(quest));
-        // Don't show completion screen (first param false) since custom quest cards may not display rewards correctly
-        sb.AppendLine($"    Quest:SetQuestAsCompleted(\"{quest.Name}\", false, false, false)");
-        sb.AppendLine($"    Quest:DeactivateQuestLater(\"{quest.Name}\", 1.0)");
-        sb.AppendLine("end");
+        // Generate CompleteQuest function
+        GenerateCompleteQuestFunction(sb, quest);
 
         return sb.ToString();
     }
@@ -166,6 +63,8 @@ public sealed class CodeGenerator
         sb.AppendLine("function Init(questObject, meObject)");
         sb.AppendLine("    Quest = questObject");
         sb.AppendLine("    Me = meObject");
+
+        // Entity control settings from old implementation
         if (entity.MakeBehavioral)
         {
             sb.AppendLine("    Me:MakeBehavioral()");
@@ -178,12 +77,15 @@ public sealed class CodeGenerator
         {
             sb.AppendLine("    Me:AcquireControl()");
         }
+
         sb.AppendLine("end");
         sb.AppendLine();
         sb.AppendLine("function Main(questObject, meObject)");
         sb.AppendLine("    Quest = questObject");
         sb.AppendLine("    Me = meObject");
         sb.AppendLine("    local hero = Quest:GetHero()");
+
+        // Entity properties from old implementation
         if (entity.Invulnerable)
         {
             sb.AppendLine("    Quest:EntitySetAsDamageable(Me, false)");
@@ -200,17 +102,23 @@ public sealed class CodeGenerator
         {
             sb.AppendLine("    Me:SetToKillOnLevelUnload(true)");
         }
-        sb.AppendLine();
-        sb.AppendLine("    while true do");
-
-        // Generate behavior code from nodes
-        string behaviorCode = GenerateBehaviorCode(entity, quest.Name, 2);
-        sb.Append(behaviorCode);
 
         sb.AppendLine();
-        sb.AppendLine("        if Me:IsNull() then break end");
-        sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
-        sb.AppendLine("    end");
+
+        if (entity.Nodes.Count > 0)
+        {
+            sb.AppendLine("    while true do");
+
+            // Generate code from node graph using old implementation style
+            string behaviorCode = GenerateBehaviorCode(entity, quest.Name, 2);
+            sb.Append(behaviorCode);
+
+            sb.AppendLine();
+            sb.AppendLine("        if Me:IsNull() then break end");
+            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
+            sb.AppendLine("    end");
+        }
+
         sb.AppendLine();
         sb.AppendLine("    Me:ReleaseControl()");
         sb.AppendLine("end");
@@ -221,69 +129,349 @@ public sealed class CodeGenerator
     public string GenerateRegistrationSnippet(QuestProject quest)
     {
         StringBuilder sb = new StringBuilder();
-        sb.AppendLine("-- Add this to your quests.lua file:");
-        sb.AppendLine();
-        sb.AppendLine($"{quest.Name} = {{");
-        sb.AppendLine($"    name = \"{quest.Name}\",");
-        sb.AppendLine($"    file = \"{quest.Name}/{quest.Name}\",");
-        sb.AppendLine($"    id = {quest.Id},");
-        sb.AppendLine();
-        sb.AppendLine("    entity_scripts = {");
-        int entityId = quest.Id + 1;
-        foreach (QuestEntity entity in quest.Entities)
-        {
-            sb.AppendLine($"        {{ name = \"{entity.ScriptName}\", file = \"{quest.Name}/Entities/{entity.ScriptName}\", id = {entityId} }},");
-            entityId++;
-        }
-        sb.AppendLine("    }");
-        sb.AppendLine("},");
-
+        sb.AppendLine("-- Add this entry inside the Quests table in quests.lua");
+        sb.Append(GenerateQuestLuaEntry(quest));
         return sb.ToString();
     }
 
-    private static string RenderStateInit(QuestState state)
+    private void GenerateInitFunction(StringBuilder sb, QuestProject quest)
     {
-        string name = state.Name;
-        string value = FormatLuaValue(state.Type, state.DefaultValue);
-        return state.Type switch
+        sb.AppendLine("function Init(questObject)");
+        sb.AppendLine("    Quest = questObject");
+        sb.AppendLine($"    Quest:Log(\"{quest.Name}: Init phase started.\")");
+
+        // Add quest regions
+        foreach (string region in quest.Regions)
         {
-            "int" => $"    Quest:SetStateInt(\"{name}\", {value})",
-            "string" => $"    Quest:SetStateString(\"{name}\", {value})",
-            _ => $"    Quest:SetStateBool(\"{name}\", {value})"
+            sb.AppendLine($"    Quest:AddQuestRegion(\"{quest.Name}\", \"{region}\")");
+        }
+
+        // Set world map offset (auto-calculate if not manually set)
+        var mapOffset = GetWorldMapOffset(quest);
+        sb.AppendLine($"    Quest:SetQuestWorldMapOffset(\"{quest.Name}\", {mapOffset.X}, {mapOffset.Y})");
+
+        // Initialize QuestCompleted state for monitoring
+        sb.AppendLine("    Quest:SetStateBool(\"QuestCompleted\", false)");
+
+        // Initialize user-defined states
+        foreach (QuestState state in quest.States)
+        {
+            sb.AppendLine(RenderStateInit(state));
+        }
+
+        sb.AppendLine("end");
+        sb.AppendLine();
+    }
+
+    private void GenerateMainFunction(StringBuilder sb, QuestProject quest)
+    {
+        sb.AppendLine("function Main(questObject)");
+        sb.AppendLine("    Quest = questObject");
+        sb.AppendLine($"    Quest:Log(\"{quest.Name}: Main() started.\")");
+        sb.AppendLine();
+
+        // Bind entity scripts (must be done before spawning)
+        if (quest.Entities.Count > 0)
+        {
+            sb.AppendLine("    -- Bind entity scripts");
+            foreach (QuestEntity entity in quest.Entities)
+            {
+                sb.AppendLine($"    Quest:AddEntityBinding(\"{entity.ScriptName}\", \"{quest.Name}/Entities/{entity.ScriptName}\")");
+            }
+            sb.AppendLine("    Quest:FinalizeEntityBindings()");
+            sb.AppendLine();
+        }
+
+        // Quest card configuration (immediate, no region wait needed)
+        if (!string.IsNullOrWhiteSpace(quest.QuestCardObject))
+        {
+            sb.AppendLine("    -- Configure quest card");
+            if (quest.IsGuildQuest)
+            {
+                sb.AppendLine($"    Quest:AddGuildQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\", false, false)");
+            }
+            else if (quest.GiveCardDirectly)
+            {
+                sb.AppendLine($"    Quest:GiveQuestCardDirectly(\"{quest.QuestCardObject}\", \"{quest.Name}\", true)");
+            }
+            else
+            {
+                sb.AppendLine($"    Quest:AddQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\", false, false)");
+            }
+
+            if (!string.IsNullOrWhiteSpace(quest.ObjectiveText))
+            {
+                string region1 = quest.ObjectiveRegion1 ?? quest.Regions.FirstOrDefault() ?? "";
+                string region2 = quest.ObjectiveRegion2 ?? "";
+                sb.AppendLine($"    Quest:SetQuestCardObjective(\"{quest.Name}\", \"{Escape(quest.ObjectiveText)}\", \"{region1}\", \"{region2}\")");
+            }
+
+            if (quest.Rewards.Gold > 0)
+            {
+                sb.AppendLine($"    Quest:SetQuestGoldReward(\"{quest.Name}\", {quest.Rewards.Gold})");
+            }
+
+            if (quest.Rewards.Renown > 0)
+            {
+                sb.AppendLine($"    Quest:SetQuestRenownReward(\"{quest.Name}\", {quest.Rewards.Renown})");
+            }
+            sb.AppendLine();
+        }
+
+        // Show quest start screen (immediate, no region wait)
+        if (quest.UseQuestStartScreen)
+        {
+            string isStory = quest.IsStoryQuest ? "true" : "false";
+            string isGold = quest.IsGoldQuest ? "true" : "false";
+            sb.AppendLine("    -- Show quest start screen");
+            sb.AppendLine($"    Quest:KickOffQuestStartScreen(\"{quest.Name}\", {isStory}, {isGold})");
+            sb.AppendLine();
+        }
+
+        // Start threads - they will wait for their regions
+        sb.AppendLine("    -- Start quest threads");
+        
+        string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
+        
+        // Create EntitySpawner thread if we have entities to spawn
+        if (quest.Entities.Any(e => e.SpawnMethod != SpawnMethod.BindExisting) || 
+            quest.Entities.Any(e => e.IsQuestTarget || e.ShowOnMinimap))
+        {
+            sb.AppendLine($"    Quest:CreateThread(\"EntitySpawner\", {{ region = \"{primaryRegion}\" }})");
+        }
+        
+        sb.AppendLine($"    Quest:CreateThread(\"MonitorQuestCompletion\", {{ region = \"{primaryRegion}\" }})");
+
+        // Start user-defined threads
+        foreach (QuestThread thread in quest.Threads)
+        {
+            sb.AppendLine($"    Quest:CreateThread(\"{thread.FunctionName}\", {{ region = \"{thread.Region}\" }})");
+        }
+
+        sb.AppendLine("end");
+        sb.AppendLine();
+    }
+
+    private void GenerateOnPersistFunction(StringBuilder sb, QuestProject quest)
+    {
+        sb.AppendLine("function OnPersist(questObject, context)");
+        sb.AppendLine("    Quest = questObject");
+
+        // Persist QuestCompleted state
+        sb.AppendLine("    Quest:PersistTransferBool(context, \"QuestCompleted\")");
+
+        // Persist user-defined states
+        foreach (QuestState state in quest.States)
+        {
+            if (state.Persist)
+            {
+                sb.AppendLine(RenderStatePersist(state));
+            }
+        }
+
+        sb.AppendLine("end");
+        sb.AppendLine();
+    }
+
+    /// <summary>
+    /// Generates the EntitySpawner thread that waits for region load and spawns entities.
+    /// Thread is region-bound so it only executes when the region is loaded.
+    /// </summary>
+    private void GenerateEntitySpawnerThread(StringBuilder sb, QuestProject quest)
+    {
+        string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
+
+        sb.AppendLine("function EntitySpawner(questObject)");
+        sb.AppendLine("    Quest = questObject");
+        sb.AppendLine($"    Quest:Log(\"{quest.Name}: EntitySpawner thread started.\")");
+        sb.AppendLine();
+
+        // Wait for region to load
+        sb.AppendLine("    -- Wait for region to load");
+        sb.AppendLine($"    while not Quest:IsRegionLoaded(\"{primaryRegion}\") do");
+        sb.AppendLine("        Quest:Pause(0.1)");
+        sb.AppendLine("        if not Quest:NewScriptFrame() then return end");
+        sb.AppendLine("    end");
+        sb.AppendLine($"    Quest:Log(\"{quest.Name}: Region {primaryRegion} loaded.\")");
+        sb.AppendLine();
+
+        // Brief pause to let game settle
+        sb.AppendLine("    -- Brief pause to let game settle");
+        sb.AppendLine("    Quest:Pause(0.5)");
+        sb.AppendLine("    if not Quest:NewScriptFrame() then return end");
+        sb.AppendLine();
+
+        // Spawn entities
+        var entitiesToSpawn = quest.Entities.Where(e => e.SpawnMethod != SpawnMethod.BindExisting).ToList();
+        if (entitiesToSpawn.Count > 0)
+        {
+            sb.AppendLine("    -- Spawn entities");
+            foreach (QuestEntity entity in entitiesToSpawn)
+            {
+                string spawnCode = GenerateEntitySpawnCode(entity);
+                if (!string.IsNullOrWhiteSpace(spawnCode))
+                {
+                    sb.AppendLine(spawnCode);
+                    sb.AppendLine();
+                }
+            }
+        }
+
+        // Set up quest target highlighting and minimap markers
+        var questTargets = quest.Entities.Where(e => e.IsQuestTarget || e.ShowOnMinimap).ToList();
+        if (questTargets.Count > 0)
+        {
+            sb.AppendLine("    -- Set up quest target highlighting and minimap markers");
+            foreach (QuestEntity entity in questTargets)
+            {
+                sb.AppendLine($"    local {entity.ScriptName} = Quest:GetThingWithScriptName(\"{entity.ScriptName}\")");
+                sb.AppendLine($"    if {entity.ScriptName} ~= nil then");
+                
+                if (entity.IsQuestTarget)
+                {
+                    sb.AppendLine($"        Quest:SetThingHasInformation({entity.ScriptName}, true)");
+                }
+                
+                if (entity.ShowOnMinimap)
+                {
+                    sb.AppendLine($"        Quest:MiniMapAddMarker({entity.ScriptName}, \"{entity.ScriptName}\")");
+                }
+                
+                sb.AppendLine("    end");
+            }
+            sb.AppendLine();
+        }
+
+        sb.AppendLine($"    Quest:Log(\"{quest.Name}: EntitySpawner completed.\")");
+        sb.AppendLine("end");
+        sb.AppendLine();
+    }
+
+    private string GenerateEntitySpawnCode(QuestEntity entity)
+    {
+        return entity.SpawnMethod switch
+        {
+            SpawnMethod.AtMarker => GenerateCreateCreatureAtMarker(entity),
+            SpawnMethod.AtPosition => GenerateCreateCreatureAtPosition(entity),
+            SpawnMethod.CreateCreature => GenerateCreateCreatureAtMarker(entity),
+            SpawnMethod.OnEntity => GenerateCreateCreatureOnEntity(entity),
+            _ => string.Empty
         };
     }
 
-    private static string RenderPersist(QuestState state, string questName)
+    private string GenerateCreateCreatureAtMarker(QuestEntity entity)
     {
-        string key = $"{questName}_{state.Name}";
-        return state.Type switch
-        {
-            "int" => $"    Quest:SetStateInt(\"{state.Name}\", Quest:PersistTransferInt(context, \"{key}\", Quest:GetStateInt(\"{state.Name}\")))",
-            "string" => $"    Quest:SetStateString(\"{state.Name}\", Quest:PersistTransferString(context, \"{key}\", Quest:GetStateString(\"{state.Name}\")))",
-            _ => $"    Quest:SetStateBool(\"{state.Name}\", Quest:PersistTransferBool(context, \"{key}\", Quest:GetStateBool(\"{state.Name}\")))"
-        };
+        return $@"    local marker_{entity.ScriptName} = Quest:GetThingWithScriptName(""{entity.SpawnMarker}"")
+    if marker_{entity.ScriptName} ~= nil then
+        local pos_{entity.ScriptName} = marker_{entity.ScriptName}:GetPos()
+        Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
+    else
+        local hero = Quest:GetHero()
+        local heroPos = hero:GetPos()
+        Quest:CreateCreature(""{entity.DefName}"", heroPos, ""{entity.ScriptName}"")
+    end";
     }
 
-    private static string RenderRewards(QuestProject quest)
+    private string GenerateCreateCreatureAtPosition(QuestEntity entity)
     {
-        StringBuilder sb = new StringBuilder();
+        string x = entity.SpawnX.ToString(CultureInfo.InvariantCulture);
+        string y = entity.SpawnY.ToString(CultureInfo.InvariantCulture);
+        string z = entity.SpawnZ.ToString(CultureInfo.InvariantCulture);
+
+        return $@"    local pos_{entity.ScriptName} = {{x={x}, y={y}, z={z}}}
+    Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")";
+    }
+
+    private string GenerateCreateCreatureOnEntity(QuestEntity entity)
+    {
+        return $@"    local targetEntity_{entity.ScriptName} = Quest:GetThingWithScriptName(""{entity.SpawnMarker}"")
+    if targetEntity_{entity.ScriptName} ~= nil then
+        Quest:CreateCreatureOnEntity(""{entity.DefName}"", targetEntity_{entity.ScriptName}, ""{entity.ScriptName}"")
+    end";
+    }
+
+    private void GenerateMonitorQuestCompletion(StringBuilder sb, QuestProject quest)
+    {
+        sb.AppendLine("function MonitorQuestCompletion(questObject)");
+        sb.AppendLine("    Quest = questObject");
+        sb.AppendLine("    while true do");
+        sb.AppendLine("        if Quest:GetStateBool(\"QuestCompleted\") then");
+        sb.AppendLine("            CompleteQuest()");
+        sb.AppendLine("            break");
+        sb.AppendLine("        end");
+        sb.AppendLine("        Quest:Pause(0.5)");
+        sb.AppendLine("        if not Quest:NewScriptFrame() then break end");
+        sb.AppendLine("    end");
+        sb.AppendLine("end");
+        sb.AppendLine();
+    }
+
+    private void GenerateUserThread(StringBuilder sb, QuestThread thread)
+    {
+        sb.AppendLine($"function {thread.FunctionName}(questObject)");
+        sb.AppendLine("    Quest = questObject");
+        if (!string.IsNullOrWhiteSpace(thread.Description))
+        {
+            sb.AppendLine($"    -- {thread.Description}");
+        }
+        sb.AppendLine("    -- TODO: Implement thread logic");
+        sb.AppendLine("end");
+        sb.AppendLine();
+    }
+
+    private void GenerateCompleteQuestFunction(StringBuilder sb, QuestProject quest)
+    {
+        sb.AppendLine("function CompleteQuest()");
+        sb.AppendLine($"    Quest:Log(\"{quest.Name}: CompleteQuest called.\")");
+
+        // Clear quest target highlighting before completion
+        var questTargets = quest.Entities.Where(e => e.IsQuestTarget || e.ShowOnMinimap).ToList();
+        if (questTargets.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("    -- Clear quest target highlighting and minimap markers");
+            foreach (QuestEntity entity in questTargets)
+            {
+                sb.AppendLine($"    local {entity.ScriptName} = Quest:GetThingWithScriptName(\"{entity.ScriptName}\")");
+                sb.AppendLine($"    if {entity.ScriptName} ~= nil then");
+                
+                if (entity.IsQuestTarget)
+                {
+                    sb.AppendLine($"        Quest:ClearThingHasInformation({entity.ScriptName})");
+                }
+                
+                if (entity.ShowOnMinimap)
+                {
+                    sb.AppendLine($"        Quest:MiniMapRemoveMarker({entity.ScriptName})");
+                }
+                
+                sb.AppendLine("    end");
+            }
+        }
+
+        // Give rewards
+        sb.AppendLine();
+        sb.AppendLine("    -- Give rewards");
         if (quest.Rewards.Gold > 0)
         {
             sb.AppendLine($"    Quest:GiveHeroGold({quest.Rewards.Gold})");
         }
+
         if (quest.Rewards.Experience > 0)
         {
             sb.AppendLine($"    Quest:GiveHeroExperience({quest.Rewards.Experience})");
         }
+
         if (quest.Rewards.Renown > 0)
         {
             sb.AppendLine($"    Quest:GiveHeroRenownPoints({quest.Rewards.Renown})");
         }
-        if (Math.Abs(quest.Rewards.Morality) > 0.001f)
+
+        if (quest.Rewards.Morality != 0)
         {
-            string value = quest.Rewards.Morality.ToString("0.###", CultureInfo.InvariantCulture);
-            sb.AppendLine($"    Quest:GiveHeroMorality({value})");
+            sb.AppendLine($"    Quest:GiveHeroMorality({quest.Rewards.Morality})");
         }
+
         foreach (string item in quest.Rewards.Items)
         {
             if (!string.IsNullOrWhiteSpace(item))
@@ -291,55 +479,99 @@ public sealed class CodeGenerator
                 sb.AppendLine($"    Quest:GiveHeroObject(\"{item}\", 1)");
             }
         }
+
         foreach (string ability in quest.Rewards.Abilities)
         {
             if (!string.IsNullOrWhiteSpace(ability))
             {
-                sb.AppendLine($"    Quest:GiveHeroAbility({ability}, true)");
+                sb.AppendLine($"    Quest:GiveHeroAbility(\"{ability}\")");
             }
         }
+
+        sb.AppendLine();
+        sb.AppendLine("    -- Complete and deactivate quest");
+        sb.AppendLine($"    Quest:SetQuestAsCompleted(\"{quest.Name}\", false, false, false)");
+        sb.AppendLine($"    Quest:DeactivateQuestLater(\"{quest.Name}\", 1.0)");
+        sb.AppendLine("end");
+    }
+
+    /// <summary>
+    /// Gets the world map offset for the quest, auto-calculating if not manually set.
+    /// </summary>
+    private (int X, int Y) GetWorldMapOffset(QuestProject quest)
+    {
+        // If user has manually set offsets, use them
+        if (quest.WorldMapOffsetX != 0 || quest.WorldMapOffsetY != 0)
+        {
+            return (quest.WorldMapOffsetX, quest.WorldMapOffsetY);
+        }
+
+        // Otherwise, auto-calculate based on region and entities
+        string primaryRegion = quest.Regions.FirstOrDefault() ?? "";
+        return WorldMapCoordinateService.GetMapOffsetForQuest(primaryRegion, quest.Entities);
+    }
+
+
+
+    private string RenderStateInit(QuestState state)
+    {
+        string value = state.DefaultValue?.ToString() ?? GetDefaultForType(state.Type);
+        
+        return state.Type.ToLowerInvariant() switch
+        {
+            "bool" => $"    Quest:SetStateBool(\"{state.Name}\", {value.ToLowerInvariant()})",
+            "int" => $"    Quest:SetStateInt(\"{state.Name}\", {value})",
+            "float" => $"    Quest:SetStateFloat(\"{state.Name}\", {value})",
+            "string" => $"    Quest:SetStateString(\"{state.Name}\", \"{value}\")",
+            _ => $"    Quest:SetStateBool(\"{state.Name}\", false) -- Unknown type: {state.Type}"
+        };
+    }
+
+    private string RenderStatePersist(QuestState state)
+    {
+        return state.Type.ToLowerInvariant() switch
+        {
+            "bool" => $"    Quest:PersistTransferBool(context, \"{state.Name}\")",
+            "int" => $"    Quest:PersistTransferInt(context, \"{state.Name}\")",
+            "float" => $"    Quest:PersistTransferFloat(context, \"{state.Name}\")",
+            "string" => $"    Quest:PersistTransferString(context, \"{state.Name}\")",
+            _ => $"    Quest:PersistTransferBool(context, \"{state.Name}\") -- Unknown type: {state.Type}"
+        };
+    }
+
+    private string GenerateQuestLuaEntry(QuestProject quest)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"    {quest.Name} = {{");
+        sb.AppendLine($"        name = \"{quest.Name}\",");
+        sb.AppendLine($"        file = \"{quest.Name}/{quest.Name}\",");
+        sb.AppendLine($"        id = {quest.Id},");
+        sb.AppendLine();
+        sb.AppendLine("        entity_scripts = {");
+
+        int entityId = quest.Id + 1;
+        foreach (QuestEntity entity in quest.Entities)
+        {
+            sb.AppendLine($"            {{ name = \"{entity.ScriptName}\", file = \"{quest.Name}/Entities/{entity.ScriptName}\", id = {entityId} }},");
+            entityId++;
+        }
+
+        sb.AppendLine("        }");
+        sb.Append("    },");
+
         return sb.ToString();
     }
 
-    private static string Escape(string value)
+    private static string GetDefaultForType(string type)
     {
-        return value.Replace("\"", "\\\"");
-    }
-
-    private static string FormatLuaValue(string type, object? value)
-    {
-        if (type == "string")
+        return type.ToLowerInvariant() switch
         {
-            string text = value?.ToString() ?? string.Empty;
-            return $"\"{Escape(text)}\"";
-        }
-
-        if (type == "int")
-        {
-            if (value is int intValue)
-            {
-                return intValue.ToString(CultureInfo.InvariantCulture);
-            }
-
-            if (int.TryParse(value?.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed))
-            {
-                return parsed.ToString(CultureInfo.InvariantCulture);
-            }
-
-            return "0";
-        }
-
-        if (value is bool boolValue)
-        {
-            return boolValue ? "true" : "false";
-        }
-
-        if (bool.TryParse(value?.ToString(), out bool parsedBool))
-        {
-            return parsedBool ? "true" : "false";
-        }
-
-        return "false";
+            "bool" => "false",
+            "int" => "0",
+            "float" => "0.0",
+            "string" => "",
+            _ => "false"
+        };
     }
 
     public string GenerateBehaviorCode(QuestEntity entity, string questName, int indent = 2)
@@ -368,6 +600,12 @@ public sealed class CodeGenerator
 
         return sb.ToString();
     }
+
+    private static string GenerateIndent(int level)
+    {
+        return new string(' ', level * 4);
+    }
+
 
     private string GenerateNodeCode(BehaviorNode node, QuestEntity entity, string questName, int indent)
     {
@@ -417,7 +655,7 @@ public sealed class CodeGenerator
                     {
                         string childCode = GenerateNodeCode(childNode, entity, questName, indent + 1);
 
-                        // Find matching branch by FromPort
+                        // Find matching branch by FromPort (case-sensitive exact match)
                         if (branchCode.ContainsKey(conn.FromPort))
                         {
                             branchCode[conn.FromPort].Append(childCode);
@@ -429,11 +667,14 @@ public sealed class CodeGenerator
                 foreach (var label in branchLabels)
                 {
                     string placeholder = "{" + label + "}";
+                    string placeholderUpper = "{" + label.ToUpper() + "}";
                     string branchContent = branchCode[label].Length > 0
                         ? branchCode[label].ToString().TrimEnd('\n')
                         : GenerateIndent(indent + 1) + $"-- {label.ToLower()} branch";
 
+                    // Replace both the original case and uppercase versions
                     code = code.Replace(placeholder, branchContent);
+                    code = code.Replace(placeholderUpper, branchContent);
                 }
             }
             else
@@ -476,42 +717,9 @@ public sealed class CodeGenerator
         return sb.ToString();
     }
 
-    private static string GenerateIndent(int level)
-    {
-        return new string(' ', level * 4);
-    }
 
-    private string GenerateEntitySpawnCode(QuestEntity entity)
+    private static string Escape(string text)
     {
-        return entity.SpawnMethod switch
-        {
-            SpawnMethod.BindExisting => $"    -- Entity '{entity.ScriptName}' will bind to existing '{entity.DefName}' in the level",
-            SpawnMethod.AtMarker => GenerateCreateCreatureAtMarker(entity),
-            SpawnMethod.AtPosition => GenerateCreateCreatureAtPosition(entity),
-            SpawnMethod.CreateCreature => GenerateCreateCreatureAtMarker(entity),
-            _ => ""
-        };
-    }
-
-    private string GenerateCreateCreatureAtMarker(QuestEntity entity)
-    {
-        return $@"    local marker_{entity.ScriptName} = Quest:GetThingWithScriptName(""{entity.SpawnMarker}"")
-    if marker_{entity.ScriptName} ~= nil then
-        local pos_{entity.ScriptName} = marker_{entity.ScriptName}:GetPos()
-        Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
-        Quest:Log(""Spawned {entity.ScriptName} at marker {entity.SpawnMarker}"")
-    else
-        Quest:Log(""WARNING: Marker {entity.SpawnMarker} not found, spawning {entity.ScriptName} near hero"")
-        local hero = Quest:GetHero()
-        local heroPos = hero:GetPos()
-        Quest:CreateCreature(""{entity.DefName}"", heroPos, ""{entity.ScriptName}"")
-    end";
-    }
-
-    private string GenerateCreateCreatureAtPosition(QuestEntity entity)
-    {
-        return $@"    local pos_{entity.ScriptName} = {{{entity.SpawnX}, {entity.SpawnY}, {entity.SpawnZ}}}
-    Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
-    Quest:Log(""Spawned {entity.ScriptName} at position [{entity.SpawnX}, {entity.SpawnY}, {entity.SpawnZ}]"")";
+        return text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
     }
 }

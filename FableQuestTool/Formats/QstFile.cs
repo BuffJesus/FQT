@@ -279,6 +279,26 @@ public sealed class QstFile
         return true;
     }
 
+    public bool UpdateQuestStatus(string questName, bool enabled)
+    {
+        if (string.IsNullOrWhiteSpace(questName))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < quests.Count; i++)
+        {
+            if (quests[i].Name.Equals(questName, StringComparison.OrdinalIgnoreCase))
+            {
+                // Replace the entry with updated status
+                quests[i] = new QstQuestEntry(questName, enabled, enabled ? "TRUE" : "FALSE");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public bool RemoveQuest(string questName)
     {
         if (string.IsNullOrWhiteSpace(questName))

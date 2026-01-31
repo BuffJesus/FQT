@@ -30,6 +30,7 @@ public sealed partial class QuestProject : ObservableObject
     public bool IsGoldQuest { get; set; }
     public bool GiveCardDirectly { get; set; }
     public bool IsGuildQuest { get; set; } = false;
+    public bool IsEnabled { get; set; } = true;
 
     public QuestRewards Rewards { get; set; } = new();
     public ObservableCollection<QuestBoast> Boasts { get; set; } = new();

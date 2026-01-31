@@ -71,6 +71,9 @@
                             <TextBlock Text="Description" Margin="0,12,0,0" />
                             <TextBox Text="{Binding Project.Description, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="60"
                                      ToolTip="Optional internal description for your reference. Not shown to players." />
+
+                            <CheckBox Content="Quest Enabled" IsChecked="{Binding Project.IsEnabled, UpdateSourceTrigger=PropertyChanged}" Margin="0,12,0,0"
+                                     ToolTip="When unchecked, this quest will not be deployed to FinalAlbion.qst" />
                         </StackPanel>
                     </GroupBox>
 

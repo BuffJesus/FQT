@@ -68,7 +68,7 @@ public sealed class DeploymentService
             }
 
             // Register quest in FinalAlbion.qst
-            if (!RegisterInFinalAlbion(quest.Name, out string? qstError))
+            if (!RegisterInFinalAlbion(quest.Name, quest.IsEnabled, out string? qstError))
             {
                 message = $"Quest files deployed but failed to register in FinalAlbion.qst: {qstError}";
                 return false;
@@ -257,7 +257,7 @@ public sealed class DeploymentService
         }
     }
 
-    private bool RegisterInFinalAlbion(string questName, out string? error)
+    private bool RegisterInFinalAlbion(string questName, bool isEnabled, out string? error)
     {
         error = null;
 
@@ -286,11 +286,13 @@ public sealed class DeploymentService
 
             if (qstFile.HasQuest(questName))
             {
-                // Already registered
+                // Update existing quest with new enabled status
+                qstFile.UpdateQuestStatus(questName, isEnabled);
+                qstFile.Save();
                 return true;
             }
 
-            qstFile.AddQuestIfMissing(questName, true);
+            qstFile.AddQuestIfMissing(questName, isEnabled);
             qstFile.Save();
 
             return true;

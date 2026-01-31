@@ -15,11 +15,15 @@
                 <MenuItem Header="_Save" Command="{Binding SaveProjectCommand}" />
                 <MenuItem Header="Save _As" Command="{Binding SaveProjectAsCommand}" />
                 <Separator />
+                <MenuItem Header="_Delete Quest" Command="{Binding DeleteQuestCommand}" />
+                <Separator />
                 <MenuItem Header="_Export and Deploy" Command="{Binding ExportProjectCommand}" />
                 <Separator />
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
             </MenuItem>
             <MenuItem Header="_Tools">
+                <MenuItem Header="_Manage Deployed Quests" Command="{Binding ManageQuestsCommand}" />
+                <Separator />
                 <MenuItem Header="_Browse Entities" Command="{Binding BrowseEntitiesCommand}" />
                 <MenuItem Header="_Export Entity Catalog" Command="{Binding ExportCatalogCommand}" />
                 <Separator />
@@ -64,7 +68,7 @@
                 <views:QuestConfigView Background="{StaticResource BackgroundPrimary}" />
             </TabItem>
             <TabItem Header="Entities">
-                <views:EntityEditorView Background="{StaticResource BackgroundPrimary}" />
+                <views:EntityEditorView x:Name="EntityEditorViewControl" Background="{StaticResource BackgroundPrimary}" />
             </TabItem>
             <TabItem Header="API Reference">
                 <views:ApiReferenceView Background="{StaticResource BackgroundPrimary}" />

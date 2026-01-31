@@ -43,11 +43,32 @@ public sealed class CodeGenerator
                 sb.AppendLine($"    Quest:AddEntityBinding(\"{entity.ScriptName}\", \"{quest.Name}/Entities/{entity.ScriptName}\")");
             }
             sb.AppendLine("    Quest:FinalizeEntityBindings()");
+            sb.AppendLine();
+
+            // Spawn entities
+            sb.AppendLine("    -- Spawn entities");
+            foreach (QuestEntity entity in quest.Entities)
+            {
+                string spawnCode = GenerateEntitySpawnCode(entity);
+                if (!string.IsNullOrWhiteSpace(spawnCode))
+                {
+                    sb.AppendLine(spawnCode);
+                }
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(quest.QuestCardObject))
         {
-            sb.AppendLine($"    Quest:AddQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\", false, false)");
+            if (quest.IsGuildQuest)
+            {
+                // Guild quests need to be added to the quest table
+                sb.AppendLine($"    Quest:AddGuildQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\")");
+            }
+            else
+            {
+                // Non-guild quests are given directly
+                sb.AppendLine($"    Quest:AddQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\", false, false)");
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(quest.ObjectiveText))
@@ -353,25 +374,70 @@ public sealed class CodeGenerator
         var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
         if (connections.Count > 0)
         {
-            StringBuilder childrenCode = new StringBuilder();
-            foreach (var conn in connections)
+            // Check if this node has branching (True/False outputs)
+            bool hasBranching = nodeDef.HasBranching;
+
+            if (hasBranching)
             {
-                var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
-                if (childNode != null)
+                // Get branch labels from node definition (e.g., "True"/"False" or "Yes"/"No"/"Unsure")
+                var branchLabels = nodeDef.BranchLabels ?? new List<string> { "True", "False" };
+                var branchCode = new Dictionary<string, StringBuilder>();
+
+                // Initialize code builders for each branch
+                foreach (var label in branchLabels)
                 {
-                    childrenCode.Append(GenerateNodeCode(childNode, entity, questName, indent + 1));
+                    branchCode[label] = new StringBuilder();
+                }
+
+                // Route connections to their respective branches
+                foreach (var conn in connections)
+                {
+                    var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
+                    if (childNode != null && !string.IsNullOrEmpty(conn.FromPort))
+                    {
+                        string childCode = GenerateNodeCode(childNode, entity, questName, indent + 1);
+
+                        // Find matching branch by FromPort
+                        if (branchCode.ContainsKey(conn.FromPort))
+                        {
+                            branchCode[conn.FromPort].Append(childCode);
+                        }
+                    }
+                }
+
+                // Replace placeholders with branch code (or comments if empty)
+                foreach (var label in branchLabels)
+                {
+                    string placeholder = "{" + label + "}";
+                    string branchContent = branchCode[label].Length > 0
+                        ? branchCode[label].ToString().TrimEnd('\n')
+                        : GenerateIndent(indent + 1) + $"-- {label.ToLower()} branch";
+
+                    code = code.Replace(placeholder, branchContent);
                 }
             }
-            code = code.Replace("{CHILDREN}", childrenCode.ToString().TrimEnd('\n'));
+            else
+            {
+                // Normal linear flow (CHILDREN placeholder)
+                StringBuilder childrenCode = new StringBuilder();
+                foreach (var conn in connections)
+                {
+                    var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
+                    if (childNode != null)
+                    {
+                        childrenCode.Append(GenerateNodeCode(childNode, entity, questName, indent + 1));
+                    }
+                }
+                code = code.Replace("{CHILDREN}", childrenCode.ToString().TrimEnd('\n'));
+            }
         }
         else
         {
+            // No connections
             code = code.Replace("{CHILDREN}", "");
+            code = code.Replace("{TRUE}", "");
+            code = code.Replace("{FALSE}", "");
         }
-
-        // Handle conditional branches (true/false)
-        code = code.Replace("{TRUE}", "-- true branch");
-        code = code.Replace("{FALSE}", "-- false branch");
 
         // Apply indentation
         string[] lines = code.Split('\n');
@@ -393,5 +459,17 @@ public sealed class CodeGenerator
     private static string GenerateIndent(int level)
     {
         return new string(' ', level * 4);
+    }
+
+    private string GenerateEntitySpawnCode(QuestEntity entity)
+    {
+        return entity.SpawnMethod switch
+        {
+            SpawnMethod.BindExisting => $"    Quest:BindScriptToEntity(\"{entity.ScriptName}\", \"{entity.DefName}\")",
+            SpawnMethod.AtMarker => $"    Quest:SpawnEntityAtMarker(\"{entity.ScriptName}\", \"{entity.DefName}\", \"{entity.SpawnMarker}\")",
+            SpawnMethod.AtPosition => $"    Quest:SpawnEntityAtPosition(\"{entity.ScriptName}\", \"{entity.DefName}\", {entity.SpawnX}, {entity.SpawnY}, {entity.SpawnZ})",
+            SpawnMethod.CreateCreature => $"    Quest:CreateCreatureAtMarker(\"{entity.ScriptName}\", \"{entity.DefName}\", \"{entity.SpawnMarker}\")",
+            _ => ""
+        };
     }
 }

@@ -279,6 +279,104 @@ public sealed class QstFile
         return true;
     }
 
+    public bool RemoveQuest(string questName)
+    {
+        if (string.IsNullOrWhiteSpace(questName))
+        {
+            return false;
+        }
+
+        // Don't remove vanilla/protected quests
+        if (ShouldSkipRemoval(questName))
+        {
+            return false;
+        }
+
+        int removed = quests.RemoveAll(q => q.Name.Equals(questName, StringComparison.OrdinalIgnoreCase));
+        return removed > 0;
+    }
+
+    /// <summary>
+    /// Synchronizes the QST file with a list of active quest names.
+    /// Adds missing quests and removes quests not in the list.
+    /// </summary>
+    public void SyncQuests(IEnumerable<string> activeQuestNames, out int added, out int removed)
+    {
+        added = 0;
+        removed = 0;
+
+        var activeSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var name in activeQuestNames)
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                activeSet.Add(name);
+            }
+        }
+
+        // Add missing quests
+        foreach (var questName in activeSet)
+        {
+            if (AddQuestIfMissing(questName, false))
+            {
+                added++;
+            }
+        }
+
+        // Remove quests not in active list (but protect vanilla quests)
+        for (int i = quests.Count - 1; i >= 0; i--)
+        {
+            var questName = quests[i].Name;
+
+            // Skip vanilla/system quests
+            if (ShouldSkipRemoval(questName))
+            {
+                continue;
+            }
+
+            if (!activeSet.Contains(questName))
+            {
+                quests.RemoveAt(i);
+                removed++;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Determines if a quest should be protected from removal (vanilla quests).
+    /// </summary>
+    private static bool ShouldSkipRemoval(string questName)
+    {
+        // Protect vanilla quests - they start with specific prefixes
+        if (questName.StartsWith("Q_", StringComparison.OrdinalIgnoreCase) ||
+            questName.StartsWith("V_", StringComparison.OrdinalIgnoreCase) ||
+            questName.StartsWith("QS_", StringComparison.OrdinalIgnoreCase) ||
+            questName.StartsWith("QR_", StringComparison.OrdinalIgnoreCase) ||
+            questName.StartsWith("CS_", StringComparison.OrdinalIgnoreCase) ||
+            questName.StartsWith("Hook_", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Protect known system quests
+        var protectedQuests = new[]
+        {
+            "Gameflow", "GameflowAssistance", "CreatureGenerators",
+            "ChapterAndSceneManager", "PersonalScriptMain", "PersonalScript_GlobalThings",
+            "NPCDeath", "HeroBoasts", "DummyQuestForHeroLevels", "DummyQuestForScarletRoseStatue"
+        };
+
+        foreach (var protected_ in protectedQuests)
+        {
+            if (questName.Equals(protected_, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void Save(string? outputPath = null)
     {
         string path = outputPath ?? sourcePath;

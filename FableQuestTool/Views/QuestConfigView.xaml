@@ -38,7 +38,7 @@
                     <GroupBox x:Name="BasicInfoGroup" Header="Basic Info" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <TextBlock Text="Quest Name" />
-                            <TextBox>
+                            <TextBox ToolTip="Internal script name used in Lua code (e.g., 'MyFirstQuest'). Must be unique and contain no spaces.">
                                 <TextBox.Text>
                                     <Binding Path="Project.Name" UpdateSourceTrigger="PropertyChanged" ValidatesOnExceptions="True">
                                         <Binding.ValidationRules>
@@ -52,8 +52,8 @@
                             <DockPanel>
                                 <Button Content="Auto" DockPanel.Dock="Right" Width="60" Margin="4,0,0,0"
                                         Command="{Binding QuestConfigViewModel.SuggestQuestIdCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        ToolTip="Automatically suggest next available Quest ID" />
-                                <TextBox>
+                                        ToolTip="Automatically suggest next available Quest ID from existing quests" />
+                                <TextBox ToolTip="Unique numeric identifier for this quest (50000-99999 recommended for custom quests). Each quest and entity needs a unique ID.">
                                     <TextBox.Text>
                                         <Binding Path="Project.Id" UpdateSourceTrigger="PropertyChanged" ValidatesOnExceptions="True">
                                             <Binding.ValidationRules>
@@ -65,10 +65,12 @@
                             </DockPanel>
 
                             <TextBlock Text="Display Name" Margin="0,12,0,0" />
-                            <TextBox Text="{Binding Project.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Text="{Binding Project.DisplayName, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Human-readable quest name shown to players in the quest log (e.g., 'The Lost Sword')" />
 
                             <TextBlock Text="Description" Margin="0,12,0,0" />
-                            <TextBox Text="{Binding Project.Description, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="60" />
+                            <TextBox Text="{Binding Project.Description, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="60"
+                                     ToolTip="Optional internal description for your reference. Not shown to players." />
                         </StackPanel>
                     </GroupBox>
 
@@ -77,43 +79,57 @@
                             <TextBlock Text="Quest Card Object" />
                             <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                                       ItemsSource="{x:Static data:GameData.QuestCards}"
-                                      Text="{Binding Project.QuestCardObject, UpdateSourceTrigger=PropertyChanged}" />
+                                      Text="{Binding Project.QuestCardObject, UpdateSourceTrigger=PropertyChanged}"
+                                      ToolTip="The physical quest card item given to the player. Different cards have different icons/appearance in the quest log (Generic, Gold, Silver, etc.)." />
 
                             <TextBlock Text="Objective Text" Margin="0,12,0,0" />
-                            <TextBox Text="{Binding Project.ObjectiveText, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Text="{Binding Project.ObjectiveText, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="The quest objective shown to players in their quest log. Describes what they need to do to complete the quest." />
 
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                 <StackPanel Width="180">
                                     <TextBlock Text="Objective Region 1" />
                                     <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                                               ItemsSource="{x:Static data:GameData.Regions}"
-                                              Text="{Binding Project.ObjectiveRegion1, UpdateSourceTrigger=PropertyChanged}" />
+                                              Text="{Binding Project.ObjectiveRegion1, UpdateSourceTrigger=PropertyChanged}"
+                                              ToolTip="Primary region where quest objectives are located. Used to show golden trail/breadcrumb path to guide players." />
                                 </StackPanel>
                                 <StackPanel Width="180" Margin="8,0,0,0">
                                     <TextBlock Text="Objective Region 2" />
                                     <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                                               ItemsSource="{x:Static data:GameData.Regions}"
-                                              Text="{Binding Project.ObjectiveRegion2, UpdateSourceTrigger=PropertyChanged}" />
+                                              Text="{Binding Project.ObjectiveRegion2, UpdateSourceTrigger=PropertyChanged}"
+                                              ToolTip="Optional secondary region for quests spanning multiple areas. Leave blank if quest is in one region only." />
                                 </StackPanel>
                             </StackPanel>
 
                             <StackPanel x:Name="MapOffsetsPanel" Orientation="Horizontal" Margin="0,12,0,0">
                                 <StackPanel Width="140">
                                     <TextBlock Text="World Map X" />
-                                    <TextBox Text="{Binding Project.WorldMapOffsetX, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Text="{Binding Project.WorldMapOffsetX, UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="Horizontal pixel offset for the quest marker on the world map. Helps players locate the quest start point." />
                                 </StackPanel>
                                 <StackPanel Width="140" Margin="8,0,0,0">
                                     <TextBlock Text="World Map Y" />
-                                    <TextBox Text="{Binding Project.WorldMapOffsetY, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Text="{Binding Project.WorldMapOffsetY, UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="Vertical pixel offset for the quest marker on the world map. Helps players locate the quest start point." />
                                 </StackPanel>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                <CheckBox Content="Use Start Screen" IsChecked="{Binding Project.UseQuestStartScreen}" Margin="0,0,12,0" />
-                                <CheckBox Content="Story Quest" IsChecked="{Binding Project.IsStoryQuest}" Margin="0,0,12,0" />
-                                <CheckBox Content="Gold Quest" IsChecked="{Binding Project.IsGoldQuest}" />
+                                <CheckBox Content="Use Start Screen" IsChecked="{Binding Project.UseQuestStartScreen}" Margin="0,0,12,0"
+                                          ToolTip="Shows a fancy quest introduction screen when the quest begins, displaying quest name, description, and rewards preview. Typically used for major quests." />
+                                <CheckBox Content="Story Quest" IsChecked="{Binding Project.IsStoryQuest}" Margin="0,0,12,0"
+                                          ToolTip="Marks this as a main storyline quest. Affects display order in quest log (story quests appear at top)." />
+                                <CheckBox Content="Gold Quest" IsChecked="{Binding Project.IsGoldQuest}"
+                                          ToolTip="Marks as a Gold difficulty quest (harder challenges, better rewards). Shows a gold-colored quest card icon." />
                             </StackPanel>
-                            <CheckBox Content="Give Quest Card Directly" IsChecked="{Binding Project.GiveCardDirectly}" Margin="0,8,0,0" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <CheckBox Content="Give Quest Card Directly" IsChecked="{Binding Project.GiveCardDirectly}" Margin="0,0,12,0"
+                                          ToolTip="If checked, player receives the quest card automatically when quest activates. If unchecked, card must be obtained through scripting/NPCs/pickups." />
+                                <CheckBox Content="Guild Quest (Quest Table)" IsChecked="{Binding Project.IsGuildQuest}"
+                                          ToolTip="If checked, quest appears on Heroes' Guild quest table where players can read details and accept it. If unchecked, quest activates through scripting (cutscenes, NPCs, etc.)." />
+                            </StackPanel>
                         </StackPanel>
                     </GroupBox>
 

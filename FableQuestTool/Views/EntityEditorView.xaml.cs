@@ -15,7 +15,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
     public EntityEditorView()
     {
         InitializeComponent();
-        DataContext = new EntityEditorViewModel();
+        // DataContext will be set by MainWindow
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -66,15 +66,21 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
     {
         try
         {
-            if (DataContext is not EntityEditorViewModel viewModel)
+            if (DataContext is not EntityEditorViewModel editorViewModel)
+            {
+                return;
+            }
+
+            var currentTab = editorViewModel.SelectedTab;
+            if (currentTab == null)
             {
                 return;
             }
 
             // Close node menu with Escape
-            if (e.Key == Key.Escape && viewModel.IsNodeMenuOpen)
+            if (e.Key == Key.Escape && currentTab.IsNodeMenuOpen)
             {
-                viewModel.CloseNodeMenuCommand.Execute(null);
+                currentTab.CloseNodeMenuCommand.Execute(null);
                 e.Handled = true;
                 return;
             }
@@ -82,7 +88,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             // Create redirection node immediately when Ctrl is pressed during drag
             if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
             {
-                if (viewModel.PendingConnection == null)
+                if (currentTab.PendingConnection == null)
                 {
                     return;
                 }
@@ -112,11 +118,11 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 }
 
                 // Create redirection node immediately at current mouse position
-                if (viewModel.CreateRedirectionNodeCommand.CanExecute(position))
+                if (currentTab.CreateRedirectionNodeCommand.CanExecute(position))
                 {
-                    viewModel.CreateRedirectionNodeCommand.Execute(position);
+                    currentTab.CreateRedirectionNodeCommand.Execute(position);
                     _redirectNodeCreated = true; // Flag that we created a redirect node
-                    
+
                     // Simulate an Escape key press to cancel Nodify's internal drag state
                     var escapeEvent = new System.Windows.Input.KeyEventArgs(
                         Keyboard.PrimaryDevice,
@@ -127,7 +133,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                         RoutedEvent = Keyboard.KeyDownEvent
                     };
                     editor.RaiseEvent(escapeEvent);
-                    
+
                     e.Handled = true;
                 }
             }
@@ -147,7 +153,13 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 return;
             }
 
-            if (DataContext is not EntityEditorViewModel vm)
+            if (DataContext is not EntityEditorViewModel editorViewModel)
+            {
+                return;
+            }
+
+            var currentTab = editorViewModel.SelectedTab;
+            if (currentTab == null)
             {
                 return;
             }
@@ -160,7 +172,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             // Get the element that was clicked
             var position = e.GetPosition(editor);
             var hitElement = editor.InputHitTest(position) as DependencyObject;
-            
+
             bool clickedOnConnector = false;
             if (hitElement != null)
             {
@@ -177,20 +189,20 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             }
 
             // If we have a pending connection and clicked on empty space (not a connector)
-            if (vm.PendingConnection != null && !clickedOnConnector && !_redirectNodeCreated)
+            if (currentTab.PendingConnection != null && !clickedOnConnector && !_redirectNodeCreated)
             {
                 // Show node menu to create and connect to a new node
-                if (vm.OpenNodeMenuCommand.CanExecute(position))
+                if (currentTab.OpenNodeMenuCommand.CanExecute(position))
                 {
-                    vm.OpenNodeMenuCommand.Execute(position);
+                    currentTab.OpenNodeMenuCommand.Execute(position);
                 }
                 return;
             }
 
             // If we created a redirect node or clicked empty space, clear the pending connection
-            if (vm.PendingConnection != null && (!clickedOnConnector || _redirectNodeCreated))
+            if (currentTab.PendingConnection != null && (!clickedOnConnector || _redirectNodeCreated))
             {
-                vm.PendingConnection = null;
+                currentTab.PendingConnection = null;
                 _redirectNodeCreated = false;
             }
         }
@@ -218,7 +230,13 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
     {
         try
         {
-            if (DataContext is not EntityEditorViewModel vm)
+            if (DataContext is not EntityEditorViewModel editorViewModel)
+            {
+                return;
+            }
+
+            var currentTab = editorViewModel.SelectedTab;
+            if (currentTab == null)
             {
                 return;
             }
@@ -229,11 +247,11 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             }
 
             var position = e.GetPosition(editor);
-            
+
             // Open node menu at right-click position
-            if (vm.OpenNodeMenuCommand.CanExecute(position))
+            if (currentTab.OpenNodeMenuCommand.CanExecute(position))
             {
-                vm.OpenNodeMenuCommand.Execute(position);
+                currentTab.OpenNodeMenuCommand.Execute(position);
                 e.Handled = true;
             }
         }
@@ -262,5 +280,85 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         }
 
         return null;
+    }
+
+    private void OnPropertyTextBoxLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab?.SelectedNode == null)
+        {
+            return;
+        }
+
+        var propertyName = textBox.Tag as string;
+        if (string.IsNullOrEmpty(propertyName))
+        {
+            return;
+        }
+
+        // Load current value from node properties
+        if (currentTab.SelectedNode.Properties.TryGetValue(propertyName, out var value))
+        {
+            textBox.Text = value?.ToString() ?? string.Empty;
+        }
+    }
+
+    private void OnPropertyTextBoxChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab?.SelectedNode == null)
+        {
+            return;
+        }
+
+        var propertyName = textBox.Tag as string;
+        if (string.IsNullOrEmpty(propertyName))
+        {
+            return;
+        }
+
+        // Update node property and trigger title update
+        currentTab.SelectedNode.SetProperty(propertyName, textBox.Text);
+    }
+}
+
+// Converter to access dictionary values by key
+public class DictionaryItemConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length >= 2 && values[0] is System.Collections.Generic.Dictionary<string, object> dict && values[1] is string key)
+        {
+            if (dict.TryGetValue(key, out var value))
+            {
+                return value?.ToString() ?? string.Empty;
+            }
+        }
+        return string.Empty;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        return new[] { value };
     }
 }

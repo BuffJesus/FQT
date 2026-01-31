@@ -1,12 +1,19 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace FableQuestTool.Models;
 
-public sealed class QuestProject
+public sealed partial class QuestProject : ObservableObject
 {
-    public string Name { get; set; } = "NewQuest";
-    public int Id { get; set; } = 50000;
+    [ObservableProperty]
+    [property: JsonPropertyName("Name")]
+    private string name = "NewQuest";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("Id")]
+    private int id = 50000;
     public string DisplayName { get; set; } = "New Quest";
     public string Description { get; set; } = string.Empty;
     public ObservableCollection<string> Regions { get; set; } = new();
@@ -22,6 +29,7 @@ public sealed class QuestProject
     public bool IsStoryQuest { get; set; }
     public bool IsGoldQuest { get; set; }
     public bool GiveCardDirectly { get; set; }
+    public bool IsGuildQuest { get; set; } = false;
 
     public QuestRewards Rewards { get; set; } = new();
     public ObservableCollection<QuestBoast> Boasts { get; set; } = new();

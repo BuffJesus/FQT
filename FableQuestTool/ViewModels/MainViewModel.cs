@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FableQuestTool.Config;
@@ -30,6 +31,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isAdvancedMode;
+
+    public EntityEditorViewModel? EntityEditorViewModel { get; set; }
 
     public string Title => "FSE Quest Creator Pro";
 
@@ -78,6 +81,9 @@ public sealed partial class MainViewModel : ObservableObject
             ProjectPath = dialog.FileName;
             IsModified = false;
             StatusText = "Project loaded.";
+
+            // Reload entities in the entity editor
+            EntityEditorViewModel?.ReloadEntities();
         }
         catch (Exception ex)
         {
@@ -96,9 +102,16 @@ public sealed partial class MainViewModel : ObservableObject
 
         try
         {
+            // Save node graph data from all entity tabs back to entity models
+            EntityEditorViewModel?.SaveAllTabs();
+
+            // Debug: Check if entities have data before saving
+            int totalNodes = Project.Entities.Sum(e => e.Nodes.Count);
+            int totalConnections = Project.Entities.Sum(e => e.Connections.Count);
+
             fileService.Save(ProjectPath, Project);
             IsModified = false;
-            StatusText = "Project saved.";
+            StatusText = $"Project saved. ({Project.Entities.Count} entities, {totalNodes} nodes, {totalConnections} connections)";
         }
         catch (Exception ex)
         {
@@ -125,10 +138,69 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void DeleteQuest()
+    {
+        if (string.IsNullOrWhiteSpace(Project.Name))
+        {
+            System.Windows.MessageBox.Show("No quest loaded to delete.", "Delete Quest", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
+        var result = System.Windows.MessageBox.Show(
+            $"Are you sure you want to delete the quest '{Project.Name}'?\n\n" +
+            "This will:\n" +
+            "• Delete quest files from Fable installation\n" +
+            "• Remove quest registration from quests.lua\n" +
+            "• Remove quest registration from FinalAlbion.qst\n\n" +
+            "This action cannot be undone!",
+            "Delete Quest",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+
+        if (result != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            if (deploymentService.DeleteQuest(Project.Name, out string message))
+            {
+                StatusText = "Quest deleted successfully";
+                System.Windows.MessageBox.Show(message, "Deletion Success", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+
+                // Delete project file if it exists
+                if (!string.IsNullOrWhiteSpace(ProjectPath) && File.Exists(ProjectPath))
+                {
+                    File.Delete(ProjectPath);
+                }
+
+                // Create new project
+                Project = new QuestProject();
+                ProjectPath = null;
+                IsModified = false;
+            }
+            else
+            {
+                StatusText = "Deletion failed";
+                System.Windows.MessageBox.Show(message, "Deletion Failed", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusText = "Deletion error";
+            System.Windows.MessageBox.Show($"Failed to delete quest: {ex.Message}", "Deletion Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
     private void ExportProject()
     {
         try
         {
+            // Save node graph data from all entity tabs back to entity models
+            EntityEditorViewModel?.SaveAllTabs();
+
             if (deploymentService.DeployQuest(Project, out string message))
             {
                 StatusText = "Quest deployed successfully";
@@ -175,6 +247,17 @@ public sealed partial class MainViewModel : ObservableObject
             StatusText = $"Fable path configured: {fableConfig.FablePath}";
             System.Windows.MessageBox.Show($"Fable path set to:\n{fableConfig.FablePath}", "Configuration", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
         }
+    }
+
+    [RelayCommand]
+    private void ManageQuests()
+    {
+        var dialog = new Views.QuestManagerView
+        {
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+        dialog.ShowDialog();
+        StatusText = "Quest Manager closed";
     }
 
     [RelayCommand]

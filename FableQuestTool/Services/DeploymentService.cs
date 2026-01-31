@@ -74,6 +74,16 @@ public sealed class DeploymentService
                 return false;
             }
 
+            // Add quest activation to FSE_Master.lua
+            if (!AddQuestActivationToMaster(fseFolder, quest.Name, out string? masterError))
+            {
+                message = $"Quest deployed but failed to add activation to FSE_Master.lua: {masterError}\n\n" +
+                         "You may need to manually add:\n" +
+                         $"quest:ActivateQuest(\"{quest.Name}\")\n" +
+                         "to FSE_Master.lua Main() function.";
+                // Don't return false - this is a non-critical warning
+            }
+
             message = $"Quest '{quest.Name}' deployed successfully to:\n{questFolder}";
             return true;
         }
@@ -100,12 +110,46 @@ public sealed class DeploymentService
             string content = File.ReadAllText(questsLuaPath);
 
             // Check if quest is already registered
-            string pattern = $@"{quest.Name}\s*=\s*{{";
-            if (Regex.IsMatch(content, pattern, RegexOptions.Multiline))
+            string pattern = $@"^\s*{Regex.Escape(quest.Name)}\s*=\s*\{{";
+            var match = Regex.Match(content, pattern, RegexOptions.Multiline);
+
+            if (match.Success)
             {
-                // Quest already registered, update it
-                string questEntry = GenerateQuestLuaEntry(quest);
-                content = Regex.Replace(content, $@"{quest.Name}\s*=\s*{{[^}}]*}},?", questEntry, RegexOptions.Singleline);
+                // Quest already registered, find and replace the entire entry
+                int startPos = match.Index;
+                int braceCount = 0;
+                int currentPos = content.IndexOf('{', startPos);
+
+                if (currentPos == -1)
+                {
+                    error = "Failed to parse quest entry in quests.lua";
+                    return false;
+                }
+
+                // Find matching closing brace by counting braces
+                for (int i = currentPos; i < content.Length; i++)
+                {
+                    if (content[i] == '{') braceCount++;
+                    else if (content[i] == '}')
+                    {
+                        braceCount--;
+                        if (braceCount == 0)
+                        {
+                            // Found the end of this quest entry
+                            int endPos = i + 1;
+
+                            // Include trailing comma if present
+                            if (endPos < content.Length && content[endPos] == ',')
+                                endPos++;
+
+                            // Replace the entire quest entry
+                            string questEntry = GenerateQuestLuaEntry(quest);
+                            content = content.Remove(startPos, endPos - startPos);
+                            content = content.Insert(startPos, questEntry);
+                            break;
+                        }
+                    }
+                }
             }
             else
             {
@@ -136,11 +180,81 @@ public sealed class DeploymentService
 
     private string GenerateQuestLuaEntry(QuestProject quest)
     {
-        return $@"    {quest.Name} = {{
-        QuestName = ""{quest.Name}"",
-        QuestID = {quest.Id},
-        Folder = ""{quest.Name}""
-    }},";
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"    {quest.Name} = {{");
+        sb.AppendLine($"        name = \"{quest.Name}\",");
+        sb.AppendLine($"        file = \"{quest.Name}/{quest.Name}\",");
+        sb.AppendLine($"        id = {quest.Id},");
+        sb.AppendLine();
+        sb.AppendLine("        entity_scripts = {");
+
+        int entityId = quest.Id + 1;
+        foreach (var entity in quest.Entities)
+        {
+            sb.AppendLine($"            {{ name = \"{entity.ScriptName}\", file = \"{quest.Name}/Entities/{entity.ScriptName}\", id = {entityId} }},");
+            entityId++;
+        }
+
+        sb.AppendLine("        }");
+        sb.Append("    },");
+
+        return sb.ToString();
+    }
+
+    private bool AddQuestActivationToMaster(string fseFolder, string questName, out string? error)
+    {
+        error = null;
+        string masterPath = Path.Combine(fseFolder, "Master", "FSE_Master.lua");
+
+        if (!File.Exists(masterPath))
+        {
+            error = "FSE_Master.lua not found. Quest will not auto-activate.";
+            return false;
+        }
+
+        try
+        {
+            string content = File.ReadAllText(masterPath);
+
+            // Check if quest is already activated
+            string activationPattern = $@"quest:ActivateQuest\(""{questName}""\)";
+            if (Regex.IsMatch(content, Regex.Escape(activationPattern)))
+            {
+                // Already activated
+                return true;
+            }
+
+            // Find the Main function and add activation before the end
+            int mainFuncStart = content.IndexOf("function Main(quest)");
+            if (mainFuncStart == -1)
+            {
+                error = "Could not find Main function in FSE_Master.lua";
+                return false;
+            }
+
+            // Find the end of Main function
+            int mainFuncEnd = content.IndexOf("end", mainFuncStart);
+            if (mainFuncEnd == -1)
+            {
+                error = "Could not find end of Main function in FSE_Master.lua";
+                return false;
+            }
+
+            // Insert activation code before the "end"
+            string activation = $"\n    -- Auto-activate {questName}\n" +
+                               $"    quest:ActivateQuest(\"{questName}\")\n" +
+                               $"    quest:Log(\"FSE_Master: Activated {questName}\")\n";
+
+            content = content.Insert(mainFuncEnd, activation);
+            File.WriteAllText(masterPath, content);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
     }
 
     private bool RegisterInFinalAlbion(string questName, out string? error)
@@ -164,6 +278,12 @@ public sealed class DeploymentService
         {
             QstFile qstFile = QstFile.Load(qstPath);
 
+            // Ensure FSE_Master is always registered and enabled (TRUE)
+            if (!qstFile.HasQuest("FSE_Master"))
+            {
+                qstFile.AddQuestIfMissing("FSE_Master", true);
+            }
+
             if (qstFile.HasQuest(questName))
             {
                 // Already registered
@@ -178,6 +298,146 @@ public sealed class DeploymentService
         catch (Exception ex)
         {
             error = $"Failed to register in FinalAlbion.qst: {ex.Message}";
+            return false;
+        }
+    }
+
+    public bool DeleteQuest(string questName, out string message)
+    {
+        message = string.Empty;
+
+        if (!config.EnsureFablePath())
+        {
+            message = "Fable installation path not configured.";
+            return false;
+        }
+
+        string? fseFolder = config.GetFseFolder();
+        if (string.IsNullOrWhiteSpace(fseFolder))
+        {
+            message = "Could not determine FSE folder path.";
+            return false;
+        }
+
+        try
+        {
+            bool filesDeleted = false;
+            bool questsLuaUpdated = false;
+            bool qstFileUpdated = false;
+
+            // Delete quest folder from FSE
+            string questFolder = Path.Combine(fseFolder, questName);
+            if (Directory.Exists(questFolder))
+            {
+                Directory.Delete(questFolder, true);
+                filesDeleted = true;
+            }
+
+            // Remove from quests.lua
+            string questsLuaPath = Path.Combine(fseFolder, "quests.lua");
+            if (File.Exists(questsLuaPath))
+            {
+                string content = File.ReadAllText(questsLuaPath);
+                string pattern = $@"^\s*{Regex.Escape(questName)}\s*=\s*\{{";
+                var match = Regex.Match(content, pattern, RegexOptions.Multiline);
+
+                if (match.Success)
+                {
+                    int startPos = match.Index;
+                    int braceCount = 0;
+                    int currentPos = content.IndexOf('{', startPos);
+
+                    if (currentPos != -1)
+                    {
+                        // Find matching closing brace by counting braces
+                        for (int i = currentPos; i < content.Length; i++)
+                        {
+                            if (content[i] == '{') braceCount++;
+                            else if (content[i] == '}')
+                            {
+                                braceCount--;
+                                if (braceCount == 0)
+                                {
+                                    // Found the end of this quest entry
+                                    int endPos = i + 1;
+
+                                    // Include trailing comma and newline if present
+                                    if (endPos < content.Length && content[endPos] == ',')
+                                        endPos++;
+                                    if (endPos < content.Length && content[endPos] == '\n')
+                                        endPos++;
+
+                                    // Remove the entire quest entry
+                                    content = content.Remove(startPos, endPos - startPos);
+                                    File.WriteAllText(questsLuaPath, content);
+                                    questsLuaUpdated = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Remove from FinalAlbion.qst
+            string qstPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion.qst");
+            if (File.Exists(qstPath))
+            {
+                try
+                {
+                    QstFile qstFile = QstFile.Load(qstPath);
+                    if (qstFile.RemoveQuest(questName))
+                    {
+                        qstFile.Save();
+                        qstFileUpdated = true;
+                    }
+                }
+                catch
+                {
+                    // If QST removal fails, continue anyway
+                }
+            }
+
+            // Remove from FSE_Master.lua
+            bool masterUpdated = false;
+            string masterPath = Path.Combine(fseFolder, "Master", "FSE_Master.lua");
+            if (File.Exists(masterPath))
+            {
+                try
+                {
+                    string content = File.ReadAllText(masterPath);
+                    // Remove the activation block (including comments and log)
+                    string pattern = $@"\s*--\s*Auto-activate {Regex.Escape(questName)}.*?\n\s*quest:ActivateQuest\(""{Regex.Escape(questName)}""\).*?\n\s*quest:Log\(""FSE_Master: Activated {Regex.Escape(questName)}""\).*?\n";
+                    string newContent = Regex.Replace(content, pattern, "", RegexOptions.Singleline);
+
+                    if (newContent != content)
+                    {
+                        File.WriteAllText(masterPath, newContent);
+                        masterUpdated = true;
+                    }
+                }
+                catch
+                {
+                    // If Master removal fails, continue anyway
+                }
+            }
+
+            if (!filesDeleted && !questsLuaUpdated && !qstFileUpdated && !masterUpdated)
+            {
+                message = $"Quest '{questName}' was not found in Fable installation.";
+                return false;
+            }
+
+            message = $"Quest '{questName}' deleted successfully.\n\n" +
+                     $"Files deleted: {(filesDeleted ? "Yes" : "No")}\n" +
+                     $"quests.lua updated: {(questsLuaUpdated ? "Yes" : "Not found")}\n" +
+                     $"FinalAlbion.qst updated: {(qstFileUpdated ? "Yes" : "Not found")}\n" +
+                     $"FSE_Master.lua updated: {(masterUpdated ? "Yes" : "Not found")}";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            message = $"Deletion failed: {ex.Message}";
             return false;
         }
     }

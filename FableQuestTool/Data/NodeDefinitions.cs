@@ -226,11 +226,11 @@ public static class NodeDefinitions
                 CodeTemplate = "Me:PlayLoopingAnimation(\"{anim}\", {loops})" },
             
             new() { Type = "completeQuest", Label = "Complete Quest", Category = "action", Icon = "✅", IsAdvanced = false,
-                Description = "Mark quest as completed",
+                Description = "Mark quest as completed and give rewards",
                 Properties = new() {
                     new NodeProperty { Name = "showScreen", Type = "bool", Label = "Show Completion Screen", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:SetQuestAsCompleted(\"{QUEST_NAME}\", {showScreen}, false, false)" },
+                CodeTemplate = "CompleteQuest()" },
             
             new() { Type = "failQuest", Label = "Fail Quest", Category = "action", Icon = "❌", IsAdvanced = false,
                 Description = "Mark quest as failed",
@@ -407,32 +407,32 @@ public static class NodeDefinitions
     {
         return new List<NodeDefinition>
         {
-            new() { Type = "checkState", Label = "Check State", Category = "condition", Icon = "?", IsAdvanced = false,
+            new() { Type = "checkState", Label = "Check State", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
                 Description = "Check if state variable equals value",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "questStarted" },
                     new NodeProperty { Name = "value", Type = "string", Label = "Expected Value", DefaultValue = "true" }
                 },
                 CodeTemplate = "if Quest:GetStateBool(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkGlobal", Label = "Check Global", Category = "condition", Icon = "?", IsAdvanced = true,
+
+            new() { Type = "checkGlobal", Label = "Check Global", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check if global variable equals value",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "Global Name", DefaultValue = "globalEvent" },
                     new NodeProperty { Name = "value", Type = "string", Label = "Expected Value", DefaultValue = "true" }
                 },
                 CodeTemplate = "if Quest:GetGlobalBool(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkHeroGold", Label = "Check Hero Gold", Category = "condition", Icon = "?", IsAdvanced = false,
+
+            new() { Type = "checkHeroGold", Label = "Check Hero Gold", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
                 Description = "Check hero's gold amount",
                 Properties = new() {
-                    new NodeProperty { Name = "operator", Type = "select", Label = "Operator", DefaultValue = ">=", 
+                    new NodeProperty { Name = "operator", Type = "select", Label = "Operator", DefaultValue = ">=",
                         Options = new List<string> { "==", "!=", ">", ">=", "<", "<=" } },
                     new NodeProperty { Name = "amount", Type = "int", Label = "Gold Amount", DefaultValue = "100" }
                 },
                 CodeTemplate = "if Quest:GetHeroGold() {operator} {amount} then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkHeroMorality", Label = "Check Morality", Category = "condition", Icon = "?", IsAdvanced = true,
+
+            new() { Type = "checkHeroMorality", Label = "Check Morality", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check hero's morality value",
                 Properties = new() {
                     new NodeProperty { Name = "operator", Type = "select", Label = "Operator", DefaultValue = ">",
@@ -440,8 +440,8 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "threshold", Type = "float", Label = "Threshold", DefaultValue = "0" }
                 },
                 CodeTemplate = "if Quest:GetHeroMorality() {operator} {threshold} then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkHeroHealth", Label = "Check Health", Category = "condition", Icon = "?", IsAdvanced = true,
+
+            new() { Type = "checkHeroHealth", Label = "Check Health", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check hero's current health",
                 Properties = new() {
                     new NodeProperty { Name = "operator", Type = "select", Label = "Operator", DefaultValue = "<",
@@ -449,42 +449,40 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "threshold", Type = "float", Label = "Threshold", DefaultValue = "50" }
                 },
                 CodeTemplate = "if Quest:GetHeroHealth() {operator} {threshold} then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkHasItem", Label = "Has Item", Category = "condition", Icon = "?", IsAdvanced = false,
+
+            new() { Type = "checkHasItem", Label = "Has Item", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
                 Description = "Check if hero has specific item",
                 Properties = new() {
                     new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
                 CodeTemplate = "if Quest:DoesHeroHaveObject(\"{item}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkIsAlive", Label = "Is Alive", Category = "condition", Icon = "?", IsAdvanced = false,
+
+            new() { Type = "checkIsAlive", Label = "Is Alive", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
                 Description = "Check if entity is alive",
                 Properties = new(),
                 CodeTemplate = "if Me:IsAlive() then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkYesNoAnswer", Label = "Check Answer", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
+                Description = "Check yes/no question answer and branch (Yes/No/Unsure)",
+                Properties = new(),
+                BranchLabels = new List<string> { "Yes", "No", "Unsure" },
+                CodeTemplate = "if answer == 0 then\n{Yes}\nelseif answer == 1 then\n{No}\nelse\n{Unsure}\nend" },
             
-            new() { Type = "checkYesNoAnswer", Label = "Check Answer", Category = "condition", Icon = "?", IsAdvanced = false,
-                Description = "Check yes/no question answer (0=yes, 1=no, 2=unsure)",
-                Properties = new() {
-                    new NodeProperty { Name = "expectedAnswer", Type = "select", Label = "Expected", DefaultValue = "0",
-                        Options = new List<string> { "0 (Yes)", "1 (No)", "2 (Unsure)" } }
-                },
-                CodeTemplate = "if answer == {expectedAnswer} then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkRegionLoaded", Label = "Region Loaded", Category = "condition", Icon = "?", IsAdvanced = true,
+            new() { Type = "checkRegionLoaded", Label = "Region Loaded", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check if region is currently loaded",
                 Properties = new() {
                     new NodeProperty { Name = "region", Type = "string", Label = "Region", DefaultValue = "Oakvale", Options = new List<string>(GameData.Regions) }
                 },
                 CodeTemplate = "if Quest:IsRegionLoaded(\"{region}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkQuestComplete", Label = "Quest Complete", Category = "condition", Icon = "?", IsAdvanced = true,
+
+            new() { Type = "checkQuestComplete", Label = "Quest Complete", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check if another quest is completed",
                 Properties = new() {
                     new NodeProperty { Name = "questName", Type = "string", Label = "Quest Name", DefaultValue = "QUEST_NAME" }
                 },
                 CodeTemplate = "if Quest:IsQuestComplete(\"{questName}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
-            
-            new() { Type = "checkBoastTaken", Label = "Boast Taken", Category = "condition", Icon = "?", IsAdvanced = true,
+
+            new() { Type = "checkBoastTaken", Label = "Boast Taken", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check if boast was accepted",
                 Properties = new() {
                     new NodeProperty { Name = "boastId", Type = "int", Label = "Boast ID", DefaultValue = "1" }
@@ -540,7 +538,21 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "functionName", Type = "string", Label = "Function Name", DefaultValue = "CustomFunction" }
                 },
-                CodeTemplate = "{functionName}()" }
+                CodeTemplate = "{functionName}()" },
+
+            new() { Type = "defineEvent", Label = "Define Event", Category = "custom", Icon = "🎯", IsAdvanced = false,
+                Description = "Create a custom event that can be called from anywhere in the graph",
+                Properties = new() {
+                    new NodeProperty { Name = "eventName", Type = "string", Label = "Event Name", DefaultValue = "MyCustomEvent" }
+                },
+                CodeTemplate = "-- Event: {eventName}\nfunction Event_{eventName}()\n{CHILDREN}\nend" },
+
+            new() { Type = "callEvent", Label = "Call Event", Category = "custom", Icon = "📡", IsAdvanced = false,
+                Description = "Trigger a custom event defined elsewhere",
+                Properties = new() {
+                    new NodeProperty { Name = "eventName", Type = "string", Label = "Event Name", DefaultValue = "MyCustomEvent" }
+                },
+                CodeTemplate = "Event_{eventName}()" }
         };
     }
 }
@@ -555,6 +567,8 @@ public class NodeDefinition
     public string Description { get; set; } = string.Empty;
     public List<NodeProperty> Properties { get; set; } = new();
     public string CodeTemplate { get; set; } = string.Empty;
+    public bool HasBranching { get; set; } = false; // True for nodes with True/False outputs
+    public List<string>? BranchLabels { get; set; } = null; // Custom branch labels (e.g., "Yes", "No", "Unsure")
 }
 
 public class NodeProperty

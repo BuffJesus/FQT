@@ -2,433 +2,222 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
-using FableQuestTool.Data;
+using FableQuestTool.Models;
 
 namespace FableQuestTool.ViewModels;
 
 public sealed partial class EntityEditorViewModel : ObservableObject
 {
-    public ObservableCollection<NodeViewModel> Nodes { get; } = new();
-    public ObservableCollection<ConnectionViewModel> Connections { get; } = new();
-    public ObservableCollection<NodeOption> SimpleNodes { get; } = new();
-    public ObservableCollection<NodeOption> AdvancedNodes { get; } = new();
+    private readonly MainViewModel mainViewModel;
+
+    public ObservableCollection<EntityTabViewModel> EntityTabs { get; } = new();
 
     [ObservableProperty]
-    private NodeViewModel? selectedNode;
+    private EntityTabViewModel? selectedTab;
 
     [ObservableProperty]
-    private PendingConnectionViewModel? pendingConnection;
+    private int selectedTabIndex = -1;
 
-    [ObservableProperty]
-    private bool isNodeMenuOpen;
-
-    [ObservableProperty]
-    private System.Windows.Point nodeMenuPosition;
-
-    [ObservableProperty]
-    private string nodeSearchText = string.Empty;
-
-    public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
-
-    private int nodeSeed = 0;
-
-    public EntityEditorViewModel()
+    public EntityEditorViewModel(MainViewModel mainViewModel)
     {
-        LoadNodePalette();
+        this.mainViewModel = mainViewModel;
 
-        // Add sample nodes for testing
-        var talkNode = NodeDefinitions.GetAllNodes().First(n => n.Type == "onHeroTalks");
-        var dialogueNode = NodeDefinitions.GetAllNodes().First(n => n.Type == "showDialogue");
+        // Load existing entities from project
+        LoadEntityTabs();
 
-        Nodes.Add(CreateNode(talkNode, 120, 120));
-        Nodes.Add(CreateNode(dialogueNode, 420, 200));
-    }
-
-    private void LoadNodePalette()
-    {
-        var allNodes = NodeDefinitions.GetAllNodes();
-
-        // Simple nodes (non-advanced)
-        foreach (var node in allNodes.Where(n => !n.IsAdvanced))
+        // Create default entity if none exist
+        if (EntityTabs.Count == 0)
         {
-            SimpleNodes.Add(new NodeOption(node.Label, node.Category, node.Icon)
-            {
-                Type = node.Type,
-                Definition = node
-            });
-        }
-
-        // Advanced nodes
-        foreach (var node in allNodes.Where(n => n.IsAdvanced))
-        {
-            AdvancedNodes.Add(new NodeOption(node.Label, node.Category, node.Icon)
-            {
-                Type = node.Type,
-                Definition = node
-            });
+            AddNewEntity();
         }
     }
 
-    [RelayCommand]
-    private void AddNode(NodeOption option)
+    public void ReloadEntities()
     {
-        if (option?.Definition == null)
-        {
-            return;
-        }
+        LoadEntityTabs();
 
-        nodeSeed++;
-        double offset = 30 * (nodeSeed % 6);
-        Nodes.Add(CreateNode(option.Definition, 140 + offset, 140 + offset));
+        // Create default entity if none exist
+        if (EntityTabs.Count == 0)
+        {
+            AddNewEntity();
+        }
     }
 
-    [RelayCommand]
-    private void ApplyTemplate(string template)
+    private void LoadEntityTabs()
     {
-        if (string.IsNullOrWhiteSpace(template))
+        EntityTabs.Clear();
+
+        int totalNodes = 0;
+        int totalConnections = 0;
+
+        foreach (var entity in mainViewModel.Project.Entities)
         {
-            return;
+            totalNodes += entity.Nodes.Count;
+            totalConnections += entity.Connections.Count;
+
+            var tab = new EntityTabViewModel(entity);
+            EntityTabs.Add(tab);
         }
 
-        var allNodes = NodeDefinitions.GetAllNodes();
-        Nodes.Clear();
+        // Show diagnostic info
+        if (EntityTabs.Count > 0)
+        {
+            var firstEntity = mainViewModel.Project.Entities[0];
+            System.Windows.MessageBox.Show(
+                $"Loaded {EntityTabs.Count} entities\n" +
+                $"First entity: {firstEntity.ScriptName}\n" +
+                $"Total nodes: {totalNodes}\n" +
+                $"Total connections: {totalConnections}\n" +
+                $"First entity nodes: {firstEntity.Nodes.Count}\n" +
+                $"First entity connections: {firstEntity.Connections.Count}",
+                "Entity Load Debug",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Information);
 
-        if (template == "Talk")
-        {
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "onHeroTalks"), 120, 120));
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "showDialogue"), 420, 160));
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "completeQuest"), 720, 200));
-        }
-        else if (template == "Kill")
-        {
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "onHeroHits"), 120, 120));
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "giveReward"), 420, 160));
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "completeQuest"), 720, 200));
-        }
-        else if (template == "Fetch")
-        {
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "onItemPresented"), 120, 120));
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "giveReward"), 420, 160));
-            Nodes.Add(CreateNode(allNodes.First(n => n.Type == "completeQuest"), 720, 200));
+            SelectedTabIndex = 0;
+            SelectedTab = EntityTabs[0];
         }
     }
 
     [RelayCommand]
-    private void DeleteNode()
+    private void AddNewEntity()
     {
-        if (SelectedNode == null)
+        var newEntity = new QuestEntity
         {
-            return;
-        }
-
-        // Remove connections to/from this node
-        var connectionsToRemove = Connections.Where(c =>
-            c.Source?.Equals(SelectedNode.Output.FirstOrDefault()) == true ||
-            c.Target?.Equals(SelectedNode.Input.FirstOrDefault()) == true).ToList();
-
-        foreach (var conn in connectionsToRemove)
-        {
-            Connections.Remove(conn);
-        }
-
-        Nodes.Remove(SelectedNode);
-        SelectedNode = null;
-    }
-
-    [RelayCommand]
-    private void DuplicateNode()
-    {
-        if (SelectedNode?.Definition == null)
-        {
-            return;
-        }
-
-        var duplicate = CreateNode(SelectedNode.Definition,
-            SelectedNode.Location.X + 30,
-            SelectedNode.Location.Y + 30);
-
-        // Copy properties
-        foreach (var prop in SelectedNode.Properties)
-        {
-            duplicate.Properties[prop.Key] = prop.Value;
-        }
-
-        Nodes.Add(duplicate);
-        SelectedNode = duplicate;
-    }
-
-    [RelayCommand]
-    private void AddOutputPin()
-    {
-        if (SelectedNode == null)
-        {
-            return;
-        }
-
-        // Only allow adding outputs to sequence/flow nodes
-        if (SelectedNode.Category != "flow")
-        {
-            return;
-        }
-
-        var pinNumber = SelectedNode.Output.Count;
-        SelectedNode.Output.Add(new ConnectorViewModel 
-        { 
-            Title = $"Then {pinNumber}" 
-        });
-    }
-
-    [RelayCommand]
-    private void RemoveOutputPin()
-    {
-        if (SelectedNode == null || SelectedNode.Output.Count <= 1)
-        {
-            return;
-        }
-
-        // Only allow removing from sequence/flow nodes
-        if (SelectedNode.Category != "flow")
-        {
-            return;
-        }
-
-        var lastOutput = SelectedNode.Output.LastOrDefault();
-        if (lastOutput != null)
-        {
-            // Remove any connections to this output
-            var connectionsToRemove = Connections.Where(c => c.Source == lastOutput).ToList();
-            foreach (var conn in connectionsToRemove)
-            {
-                Connections.Remove(conn);
-            }
-
-            SelectedNode.Output.Remove(lastOutput);
-        }
-    }
-
-    [RelayCommand]
-    private void StartConnection(ConnectorViewModel? connector)
-    {
-        if (connector == null)
-        {
-            return;
-        }
-
-        PendingConnection = new PendingConnectionViewModel
-        {
-            Source = connector
+            Id = System.Guid.NewGuid().ToString(),
+            ScriptName = $"Entity{mainViewModel.Project.Entities.Count + 1}",
+            EntityType = EntityType.Creature
         };
+
+        mainViewModel.Project.Entities.Add(newEntity);
+
+        var tab = new EntityTabViewModel(newEntity);
+        EntityTabs.Add(tab);
+
+        SelectedTabIndex = EntityTabs.Count - 1;
+        SelectedTab = tab;
     }
 
     [RelayCommand]
-    private void FinishConnection(object? parameter)
+    private void RemoveEntity(EntityTabViewModel? tab)
     {
-        try
+        if (tab == null || EntityTabs.Count == 1)
         {
-            ConnectorViewModel? targetConnector = null;
+            return;
+        }
 
-            // Handle different parameter types from Nodify
-            if (parameter is ConnectorViewModel connector)
-            {
-                targetConnector = connector;
-            }
-            else if (parameter is ValueTuple<object, object> tuple)
-            {
-                // Nodify passes (Source, Target) tuple
-                targetConnector = tuple.Item2 as ConnectorViewModel;
-            }
+        var result = System.Windows.MessageBox.Show(
+            $"Are you sure you want to remove entity '{tab.Entity.ScriptName}'?",
+            "Remove Entity",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
 
-            if (PendingConnection?.Source == null || targetConnector == null)
-            {
-                PendingConnection = null;
-                return;
-            }
+        if (result != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
 
-            // Don't connect to the same connector
-            if (PendingConnection.Source == targetConnector)
-            {
-                PendingConnection = null;
-                return;
-            }
+        var index = EntityTabs.IndexOf(tab);
+        EntityTabs.Remove(tab);
+        mainViewModel.Project.Entities.Remove(tab.Entity);
 
-            // Don't allow duplicate connections
-            var existingConnection = Connections.FirstOrDefault(c =>
-                c.Source == PendingConnection.Source && c.Target == targetConnector);
-            if (existingConnection != null)
-            {
-                PendingConnection = null;
-                return;
-            }
+        if (EntityTabs.Count > 0)
+        {
+            SelectedTabIndex = System.Math.Max(0, index - 1);
+            SelectedTab = EntityTabs[SelectedTabIndex];
+        }
+    }
 
-            // Create the connection
-            var connection = new ConnectionViewModel
+    [RelayCommand]
+    private void DuplicateEntity(EntityTabViewModel? tab)
+    {
+        if (tab == null)
+        {
+            return;
+        }
+
+        // Save current state to entity model
+        tab.SaveToEntity();
+
+        // Deep copy the entity
+        var duplicate = new QuestEntity
+        {
+            Id = System.Guid.NewGuid().ToString(),
+            ScriptName = $"{tab.Entity.ScriptName}_Copy",
+            DefName = tab.Entity.DefName,
+            EntityType = tab.Entity.EntityType,
+            ExclusiveControl = tab.Entity.ExclusiveControl,
+            AcquireControl = tab.Entity.AcquireControl,
+            MakeBehavioral = tab.Entity.MakeBehavioral,
+            Invulnerable = tab.Entity.Invulnerable,
+            Unkillable = tab.Entity.Unkillable,
+            Persistent = tab.Entity.Persistent,
+            KillOnLevelUnload = tab.Entity.KillOnLevelUnload,
+            SpawnMethod = tab.Entity.SpawnMethod,
+            SpawnRegion = tab.Entity.SpawnRegion,
+            SpawnMarker = tab.Entity.SpawnMarker,
+            SpawnX = tab.Entity.SpawnX,
+            SpawnY = tab.Entity.SpawnY,
+            SpawnZ = tab.Entity.SpawnZ
+        };
+
+        // Copy nodes
+        foreach (var node in tab.Entity.Nodes)
+        {
+            var duplicateNode = new BehaviorNode
             {
-                Source = PendingConnection.Source,
-                Target = targetConnector
+                Id = System.Guid.NewGuid().ToString(),
+                Type = node.Type,
+                Category = node.Category,
+                Label = node.Label,
+                Icon = node.Icon,
+                X = node.X + 30,
+                Y = node.Y + 30
             };
 
-            Connections.Add(connection);
-            PendingConnection = null;
-        }
-        catch
-        {
-            PendingConnection = null;
-        }
-    }
-
-    [RelayCommand]
-    private void DisconnectConnector(ConnectorViewModel? connector)
-    {
-        if (connector == null)
-        {
-            return;
-        }
-
-        var connectionsToRemove = Connections.Where(c =>
-            c.Source == connector || c.Target == connector).ToList();
-
-        foreach (var conn in connectionsToRemove)
-        {
-            Connections.Remove(conn);
-        }
-    }
-
-    [RelayCommand]
-    private void OpenNodeMenu(System.Windows.Point position)
-    {
-        NodeMenuPosition = position;
-        NodeSearchText = string.Empty;
-        UpdateFilteredNodes();
-        IsNodeMenuOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseNodeMenu()
-    {
-        IsNodeMenuOpen = false;
-        NodeSearchText = string.Empty;
-    }
-
-    [RelayCommand]
-    private void SelectNodeFromMenu(NodeOption? option)
-    {
-        if (option?.Definition == null)
-        {
-            return;
-        }
-
-        nodeSeed++;
-        var newNode = CreateNode(option.Definition, NodeMenuPosition.X, NodeMenuPosition.Y);
-        Nodes.Add(newNode);
-
-        // If there's a pending connection, connect it to the new node
-        if (PendingConnection?.Source != null)
-        {
-            var targetConnector = newNode.Input.FirstOrDefault();
-            if (targetConnector != null)
+            // Deep copy Config dictionary
+            if (node.Config != null)
             {
-                var connection = new ConnectionViewModel
+                foreach (var kvp in node.Config)
                 {
-                    Source = PendingConnection.Source,
-                    Target = targetConnector
-                };
-                Connections.Add(connection);
+                    duplicateNode.Config[kvp.Key] = kvp.Value;
+                }
             }
-            PendingConnection = null;
+
+            duplicate.Nodes.Add(duplicateNode);
         }
 
-        IsNodeMenuOpen = false;
-    }
-
-    partial void OnNodeSearchTextChanged(string value)
-    {
-        UpdateFilteredNodes();
-    }
-
-    private void UpdateFilteredNodes()
-    {
-        FilteredNodes.Clear();
-
-        var allNodes = SimpleNodes.Concat(AdvancedNodes);
-
-        if (string.IsNullOrWhiteSpace(NodeSearchText))
+        // Copy connections
+        foreach (var conn in tab.Entity.Connections)
         {
-            foreach (var node in allNodes)
+            duplicate.Connections.Add(new NodeConnection
             {
-                FilteredNodes.Add(node);
-            }
+                FromNodeId = conn.FromNodeId,
+                ToNodeId = conn.ToNodeId,
+                FromPort = conn.FromPort,
+                ToPort = conn.ToPort
+            });
         }
-        else
+
+        mainViewModel.Project.Entities.Add(duplicate);
+
+        var newTab = new EntityTabViewModel(duplicate);
+        EntityTabs.Add(newTab);
+
+        SelectedTabIndex = EntityTabs.Count - 1;
+        SelectedTab = newTab;
+    }
+
+    public void SaveAllTabs()
+    {
+        foreach (var tab in EntityTabs)
         {
-            var searchLower = NodeSearchText.ToLower();
-            foreach (var node in allNodes.Where(n => 
-                n.Label.ToLower().Contains(searchLower) || 
-                n.Category.ToLower().Contains(searchLower)))
-            {
-                FilteredNodes.Add(node);
-            }
+            tab.SaveToEntity();
         }
     }
 
-    [RelayCommand]
-    private void CreateRedirectionNode(System.Windows.Point location)
+    partial void OnSelectedTabChanged(EntityTabViewModel? value)
     {
-        if (PendingConnection?.Source == null)
-        {
-            return;
-        }
-
-        // Store the source connector before clearing
-        var sourceConnector = PendingConnection.Source;
-
-        // Create a redirection (flow) node
-        var flowDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == "sequence");
-        if (flowDef == null)
-        {
-            return;
-        }
-
-        var redirectNode = CreateNode(flowDef, location.X, location.Y);
-        redirectNode.IsRedirectionNode = true;
-
-        // Ensure the node has input and output connectors
-        if (redirectNode.Input.Count == 0)
-        {
-            redirectNode.Input.Add(new ConnectorViewModel { Title = "Input" });
-        }
-        if (redirectNode.Output.Count == 0)
-        {
-            redirectNode.Output.Add(new ConnectorViewModel { Title = "Output" });
-        }
-
-        Nodes.Add(redirectNode);
-
-        // Connect source to redirect node input
-        var targetConnector = redirectNode.Input.FirstOrDefault();
-        if (targetConnector != null)
-        {
-            var connection = new ConnectionViewModel
-            {
-                Source = sourceConnector,
-                Target = targetConnector
-            };
-            Connections.Add(connection);
-        }
-
-        // Clear the pending connection completely - don't try to continue
-        PendingConnection = null;
-    }
-
-    private static NodeViewModel CreateNode(NodeDefinition nodeDef, double x, double y)
-    {
-        return new NodeViewModel
-        {
-            Title = nodeDef.Label,
-            Category = nodeDef.Category,
-            Icon = nodeDef.Icon,
-            Type = nodeDef.Type,
-            Definition = nodeDef,
-            Location = new System.Windows.Point(x, y)
-        };
+        // Could add logic here to save previous tab or perform cleanup
     }
 }

@@ -1,31 +1,90 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace FableQuestTool.Models;
 
-public sealed class QuestEntity
+public sealed partial class QuestEntity : ObservableObject
 {
-    public string Id { get; set; } = string.Empty;
-    public string ScriptName { get; set; } = string.Empty;
-    public string DefName { get; set; } = string.Empty;
-    public EntityType EntityType { get; set; } = EntityType.Creature;
+    [ObservableProperty]
+    [property: JsonPropertyName("Id")]
+    private string id = string.Empty;
 
-    public bool ExclusiveControl { get; set; }
-    public bool AcquireControl { get; set; } = true;
-    public bool MakeBehavioral { get; set; } = true;
-    public bool Invulnerable { get; set; }
-    public bool Unkillable { get; set; }
-    public bool Persistent { get; set; }
-    public bool KillOnLevelUnload { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("ScriptName")]
+    private string scriptName = string.Empty;
 
-    public SpawnMethod SpawnMethod { get; set; } = SpawnMethod.BindExisting;
-    public string SpawnRegion { get; set; } = string.Empty;
-    public string SpawnMarker { get; set; } = string.Empty;
-    public float SpawnX { get; set; }
-    public float SpawnY { get; set; }
-    public float SpawnZ { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("DefName")]
+    private string defName = string.Empty;
 
+    [ObservableProperty]
+    [property: JsonPropertyName("EntityType")]
+    private EntityType entityType = EntityType.Creature;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("ExclusiveControl")]
+    private bool exclusiveControl;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("AcquireControl")]
+    private bool acquireControl = true;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("MakeBehavioral")]
+    private bool makeBehavioral = true;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("Invulnerable")]
+    private bool invulnerable;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("Unkillable")]
+    private bool unkillable;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("Persistent")]
+    private bool persistent;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("KillOnLevelUnload")]
+    private bool killOnLevelUnload;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("SpawnMethod")]
+    private SpawnMethod spawnMethod = SpawnMethod.BindExisting;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("SpawnRegion")]
+    private string spawnRegion = string.Empty;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("SpawnMarker")]
+    private string spawnMarker = string.Empty;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("SpawnX")]
+    private float spawnX;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("SpawnY")]
+    private float spawnY;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("SpawnZ")]
+    private float spawnZ;
+
+    [JsonPropertyName("Nodes")]
     public List<BehaviorNode> Nodes { get; set; } = new();
+
+    [JsonPropertyName("Connections")]
     public List<NodeConnection> Connections { get; set; } = new();
+
+    partial void OnScriptNameChanged(string value)
+    {
+        // Notify that we need to update tab title
+        OnPropertyChanged(nameof(ScriptName));
+    }
 }
 
 public enum EntityType

@@ -62,8 +62,8 @@ public sealed class QuestIdManager
         {
             string content = File.ReadAllText(questsLuaPath);
 
-            // Match patterns like: QuestID = 50001
-            var matches = Regex.Matches(content, @"QuestID\s*=\s*(\d+)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            // Match patterns like: id = 50001 (new format) or QuestID = 50001 (old format)
+            var matches = Regex.Matches(content, @"(?:^|\s)(?:id|QuestID)\s*=\s*(\d+)", RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
             foreach (Match match in matches)
             {
@@ -113,8 +113,8 @@ public sealed class QuestIdManager
         {
             string content = File.ReadAllText(questsLuaPath);
 
-            // Match patterns like: QuestName = "MyQuest"
-            var matches = Regex.Matches(content, @"QuestName\s*=\s*""([^""]+)""", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            // Match patterns like: name = "MyQuest" (new format) or QuestName = "MyQuest" (old format)
+            var matches = Regex.Matches(content, @"(?:^|\s)(?:name|QuestName)\s*=\s*""([^""]+)""", RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
             foreach (Match match in matches)
             {

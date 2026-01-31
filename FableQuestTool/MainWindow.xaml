@@ -74,7 +74,7 @@
                 <views:ApiReferenceView Background="{StaticResource BackgroundPrimary}" />
             </TabItem>
             <TabItem Header="Templates">
-                <views:TemplatesView Background="{StaticResource BackgroundPrimary}" />
+                <views:TemplatesView x:Name="TemplatesViewControl" Background="{StaticResource BackgroundPrimary}" />
             </TabItem>
         </TabControl>
     </DockPanel>

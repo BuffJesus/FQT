@@ -8,5 +8,11 @@ public sealed partial class NodeViewModel : ObservableObject
     private string title = string.Empty;
 
     [ObservableProperty]
+    private string category = string.Empty;
+
+    [ObservableProperty]
+    private string icon = string.Empty;
+
+    [ObservableProperty]
     private System.Windows.Point location;
 }

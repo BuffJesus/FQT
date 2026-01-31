@@ -8,6 +8,48 @@
              mc:Ignorable="d">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <Style x:Key="NodeIconStyle" TargetType="Border">
+            <Setter Property="Background" Value="#3498DB" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Category}" Value="trigger">
+                    <Setter Property="Background" Value="#27AE60" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="action">
+                    <Setter Property="Background" Value="#3498DB" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="condition">
+                    <Setter Property="Background" Value="#F39C12" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="flow">
+                    <Setter Property="Background" Value="#9B59B6" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="custom">
+                    <Setter Property="Background" Value="#7F8C8D" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="nodify:Node">
+            <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Category}" Value="trigger">
+                    <Setter Property="BorderBrush" Value="#27AE60" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="action">
+                    <Setter Property="BorderBrush" Value="#3498DB" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="condition">
+                    <Setter Property="BorderBrush" Value="#F39C12" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="flow">
+                    <Setter Property="BorderBrush" Value="#9B59B6" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="custom">
+                    <Setter Property="BorderBrush" Value="#7F8C8D" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid Background="{DynamicResource BackgroundPrimary}">
         <Grid.ColumnDefinitions>
@@ -18,11 +60,21 @@
         <Border Grid.Column="0" Background="{DynamicResource PanelBackground}">
             <ScrollViewer>
                 <StackPanel Margin="12">
+                    <TextBlock Text="Quick Start" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <Button Content="Talk" Width="70" Margin="0,0,6,0"
+                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Talk" />
+                        <Button Content="Kill" Width="70" Margin="0,0,6,0"
+                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Kill" />
+                        <Button Content="Fetch" Width="70"
+                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Fetch" />
+                    </StackPanel>
+
                     <TextBlock Text="Quick Nodes" FontWeight="SemiBold" Margin="0,0,0,8" />
                     <ItemsControl ItemsSource="{Binding SimpleNodes}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Content="{Binding}" Margin="0,0,0,6"
+                                <Button Content="{Binding Label}" Margin="0,0,0,6"
                                         Command="{Binding DataContext.AddNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" />
                             </DataTemplate>
@@ -34,7 +86,7 @@
                         <ItemsControl ItemsSource="{Binding AdvancedNodes}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Content="{Binding}" Margin="0,0,0,6"
+                                    <Button Content="{Binding Label}" Margin="0,0,0,6"
                                             Command="{Binding DataContext.AddNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}" />
                                 </DataTemplate>
@@ -53,7 +105,19 @@
                 </nodify:NodifyEditor.ItemContainerStyle>
                 <nodify:NodifyEditor.ItemTemplate>
                     <DataTemplate>
-                        <nodify:Node Header="{Binding Title}" />
+                        <nodify:Node>
+                            <nodify:Node.Header>
+                                <Border Padding="6" Background="{DynamicResource BackgroundSecondary}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="18" Height="18" CornerRadius="3" Margin="0,0,6,0"
+                                                Style="{StaticResource NodeIconStyle}">
+                                            <TextBlock Text="{Binding Icon}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10" />
+                                        </Border>
+                                        <TextBlock Text="{Binding Title}" />
+                                    </StackPanel>
+                                </Border>
+                            </nodify:Node.Header>
+                        </nodify:Node>
                     </DataTemplate>
                 </nodify:NodifyEditor.ItemTemplate>
             </nodify:NodifyEditor>

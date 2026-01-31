@@ -180,8 +180,6 @@ public sealed class CodeGenerator
         }
         sb.AppendLine();
         sb.AppendLine("    while true do");
-        sb.AppendLine("        if not Quest:Wait(0) then break end");
-        sb.AppendLine();
 
         // Generate behavior code from nodes
         string behaviorCode = GenerateBehaviorCode(entity, quest.Name, 2);
@@ -481,7 +479,10 @@ public sealed class CodeGenerator
         Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
         Quest:Log(""Spawned {entity.ScriptName} at marker {entity.SpawnMarker}"")
     else
-        Quest:Log(""ERROR: Marker {entity.SpawnMarker} not found for {entity.ScriptName}"")
+        Quest:Log(""WARNING: Marker {entity.SpawnMarker} not found, spawning {entity.ScriptName} near hero"")
+        local hero = Quest:GetHero()
+        local heroPos = hero:GetPos()
+        Quest:CreateCreature(""{entity.DefName}"", heroPos, ""{entity.ScriptName}"")
     end";
     }
 

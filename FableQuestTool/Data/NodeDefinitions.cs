@@ -200,7 +200,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "y", Type = "float", Label = "Y", DefaultValue = "0" },
                     new NodeProperty { Name = "z", Type = "float", Label = "Z", DefaultValue = "0" }
                 },
-                CodeTemplate = "Me:MoveToPosition({{x}={x}, {y}={y}, {z}={z}}, 1.0, 1)\n{CHILDREN}" },
+                CodeTemplate = "Me:MoveToPosition({x={x}, y={y}, z={z}}, 1.0, 1)\n{CHILDREN}" },
 
             new() { Type = "teleportToMarker", Label = "Teleport To Marker", Category = "action", Icon = "⚡", IsAdvanced = true,
                 Description = "Instantly teleport to a marker",
@@ -230,64 +230,64 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "showScreen", Type = "bool", Label = "Show Completion Screen", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:SetStateBool(\"QuestCompleted\", true)" },
+                CodeTemplate = "Quest:SetStateBool(\"QuestCompleted\", true)\n{CHILDREN}" },
             
             new() { Type = "failQuest", Label = "Fail Quest", Category = "action", Icon = "❌", IsAdvanced = false,
                 Description = "Mark quest as failed",
                 Properties = new() {
                     new NodeProperty { Name = "message", Type = "text", Label = "Failure Message", DefaultValue = "Quest Failed" }
                 },
-                CodeTemplate = "Quest:SetQuestAsFailed(\"{QUEST_NAME}\", true, \"{message}\", true)" },
+                CodeTemplate = "Quest:SetQuestAsFailed(\"{QUEST_NAME}\", true, \"{message}\", true)\n{CHILDREN}" },
             
             new() { Type = "wait", Label = "Wait", Category = "action", Icon = "⏱️", IsAdvanced = false,
                 Description = "Pause execution for specified seconds",
                 Properties = new() {
                     new NodeProperty { Name = "seconds", Type = "float", Label = "Seconds", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:Pause({seconds})" },
+                CodeTemplate = "Quest:Pause({seconds})\n{CHILDREN}" },
             
             new() { Type = "despawn", Label = "Remove Entity", Category = "action", Icon = "🗑️", IsAdvanced = false,
                 Description = "Remove this entity from the world",
                 Properties = new(),
-                CodeTemplate = "Quest:RemoveThing(Me)" },
+                CodeTemplate = "Quest:RemoveThing(Me)\n{CHILDREN}" },
             
             new() { Type = "fadeOut", Label = "Fade Out", Category = "action", Icon = "🌑", IsAdvanced = true,
                 Description = "Fade entity out over time",
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration (seconds)", DefaultValue = "2.0" }
                 },
-                CodeTemplate = "Quest:EntityFadeOut(Me, {duration})" },
+                CodeTemplate = "Quest:EntityFadeOut(Me, {duration})\n{CHILDREN}" },
             
             new() { Type = "fadeIn", Label = "Fade In", Category = "action", Icon = "🌕", IsAdvanced = true,
                 Description = "Fade entity in over time",
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration (seconds)", DefaultValue = "2.0" }
                 },
-                CodeTemplate = "Quest:EntityFadeIn(Me, {duration})" },
+                CodeTemplate = "Quest:EntityFadeIn(Me, {duration})\n{CHILDREN}" },
             
             new() { Type = "setInvulnerable", Label = "Set Invulnerable", Category = "action", Icon = "🛡️", IsAdvanced = true,
                 Description = "Make entity invulnerable or vulnerable",
                 Properties = new() {
                     new NodeProperty { Name = "value", Type = "bool", Label = "Invulnerable", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:EntitySetAsDamageable(Me, not {value})" },
+                CodeTemplate = "Quest:EntitySetAsDamageable(Me, not {value})\n{CHILDREN}" },
             
             new() { Type = "setTargetable", Label = "Set Targetable", Category = "action", Icon = "🎯", IsAdvanced = true,
                 Description = "Make entity targetable or not",
                 Properties = new() {
                     new NodeProperty { Name = "value", Type = "bool", Label = "Targetable", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:EntitySetTargetable(Me, {value})" },
+                CodeTemplate = "Quest:EntitySetTargetable(Me, {value})\n{CHILDREN}" },
             
             new() { Type = "sheatheWeapons", Label = "Sheathe Weapons", Category = "action", Icon = "⚔️", IsAdvanced = true,
                 Description = "Put away weapons",
                 Properties = new(),
-                CodeTemplate = "Me:SheatheWeapons()" },
+                CodeTemplate = "Me:SheatheWeapons()\n{CHILDREN}" },
             
             new() { Type = "unsheatheWeapons", Label = "Unsheathe Weapons", Category = "action", Icon = "🗡️", IsAdvanced = true,
                 Description = "Draw weapons",
                 Properties = new(),
-                CodeTemplate = "Me:UnsheatheWeapons()" },
+                CodeTemplate = "Me:UnsheatheWeapons()\n{CHILDREN}" },
             
             new() { Type = "showMessage", Label = "Show Message", Category = "action", Icon = "📨", IsAdvanced = false,
                 Description = "Display on-screen message",
@@ -295,7 +295,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "text", Type = "text", Label = "Message", DefaultValue = "Objective Updated" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "3.0" }
                 },
-                CodeTemplate = "Quest:ShowMessage(\"{text}\", {duration})" },
+                CodeTemplate = "Quest:ShowMessage(\"{text}\", {duration})\n{CHILDREN}" },
             
             new() { Type = "showTitleMessage", Label = "Show Title Message", Category = "action", Icon = "📢", IsAdvanced = false,
                 Description = "Display large title message",
@@ -303,14 +303,14 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "text", Type = "text", Label = "Title", DefaultValue = "New Objective" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "5.0" }
                 },
-                CodeTemplate = "Quest:AddScreenTitleMessage(\"{text}\", {duration}, true)" },
+                CodeTemplate = "Quest:AddScreenTitleMessage(\"{text}\", {duration}, true)\n{CHILDREN}" },
             
             new() { Type = "guildmasterMessage", Label = "Guildmaster Says", Category = "action", Icon = "🎓", IsAdvanced = true,
                 Description = "Show message from guild master",
                 Properties = new() {
                     new NodeProperty { Name = "key", Type = "string", Label = "Message Key", DefaultValue = "QUEST_MESSAGE" }
                 },
-                CodeTemplate = "Quest:HeroReceiveMessageFromGuildMaster(\"{key}\", \"Class\", true, true)" },
+                CodeTemplate = "Quest:HeroReceiveMessageFromGuildMaster(\"{key}\", \"Class\", true, true)\n{CHILDREN}" },
             
             new() { Type = "yesNoQuestion", Label = "Yes/No Question", Category = "action", Icon = "❓", IsAdvanced = false,
                 Description = "Ask hero a yes/no question",
@@ -320,14 +320,14 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "no", Type = "text", Label = "No Text", DefaultValue = "No" },
                     new NodeProperty { Name = "unsure", Type = "text", Label = "Unsure Text", DefaultValue = "I'm not sure" }
                 },
-                CodeTemplate = "local answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")" },
+                CodeTemplate = "local answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")\n{CHILDREN}" },
             
             new() { Type = "giveAbility", Label = "Give Ability", Category = "action", Icon = "✨", IsAdvanced = false,
                 Description = "Grant hero a combat ability",
                 Properties = new() {
                     new NodeProperty { Name = "abilityId", Type = "int", Label = "Ability ID", DefaultValue = "1", Options = new List<string>(GameData.Abilities) }
                 },
-                CodeTemplate = "Quest:GiveHeroAbility({abilityId}, true)" },
+                CodeTemplate = "Quest:GiveHeroAbility({abilityId}, true)\n{CHILDREN}" },
             
             new() { Type = "giveExpression", Label = "Give Expression", Category = "action", Icon = "😊", IsAdvanced = true,
                 Description = "Unlock a hero expression",
@@ -335,28 +335,28 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "expression", Type = "string", Label = "Expression Name", DefaultValue = "LAUGH" },
                     new NodeProperty { Name = "level", Type = "int", Label = "Level", DefaultValue = "1" }
                 },
-                CodeTemplate = "Quest:GiveHeroExpression(\"{expression}\", {level})" },
+                CodeTemplate = "Quest:GiveHeroExpression(\"{expression}\", {level})\n{CHILDREN}" },
             
             new() { Type = "giveMorality", Label = "Give Morality", Category = "action", Icon = "⚖️", IsAdvanced = false,
                 Description = "Change hero's morality (+ good, - evil)",
                 Properties = new() {
                     new NodeProperty { Name = "amount", Type = "float", Label = "Amount", DefaultValue = "10.0" }
                 },
-                CodeTemplate = "Quest:GiveHeroMorality({amount})" },
+                CodeTemplate = "Quest:GiveHeroMorality({amount})\n{CHILDREN}" },
             
             new() { Type = "giveRenown", Label = "Give Renown", Category = "action", Icon = "⭐", IsAdvanced = false,
                 Description = "Grant renown points",
                 Properties = new() {
                     new NodeProperty { Name = "amount", Type = "int", Label = "Amount", DefaultValue = "50" }
                 },
-                CodeTemplate = "Quest:GiveHeroRenownPoints({amount})" },
+                CodeTemplate = "Quest:GiveHeroRenownPoints({amount})\n{CHILDREN}" },
             
             new() { Type = "giveExperience", Label = "Give Experience", Category = "action", Icon = "📈", IsAdvanced = false,
                 Description = "Grant experience points",
                 Properties = new() {
                     new NodeProperty { Name = "amount", Type = "int", Label = "Amount", DefaultValue = "100" }
                 },
-                CodeTemplate = "Quest:GiveHeroExperience({amount})" },
+                CodeTemplate = "Quest:GiveHeroExperience({amount})\n{CHILDREN}" },
             
             new() { Type = "changeHealth", Label = "Change Health", Category = "action", Icon = "❤️", IsAdvanced = true,
                 Description = "Modify hero's health",
@@ -364,7 +364,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "amount", Type = "float", Label = "Amount (+ heal, - damage)", DefaultValue = "50" },
                     new NodeProperty { Name = "canKill", Type = "bool", Label = "Can Kill", DefaultValue = "false" }
                 },
-                CodeTemplate = "Quest:ChangeHeroHealthBy({amount}, {canKill}, true)" },
+                CodeTemplate = "Quest:ChangeHeroHealthBy({amount}, {canKill}, true)\n{CHILDREN}" },
             
             new() { Type = "cameraShake", Label = "Camera Shake", Category = "action", Icon = "📹", IsAdvanced = true,
                 Description = "Shake the camera",
@@ -372,14 +372,14 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "intensity", Type = "float", Label = "Intensity", DefaultValue = "0.5" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:CameraShake({intensity}, {duration})" },
+                CodeTemplate = "Quest:CameraShake({intensity}, {duration})\n{CHILDREN}" },
             
             new() { Type = "playSound", Label = "Play Sound", Category = "action", Icon = "🔊", IsAdvanced = true,
                 Description = "Play a 2D sound effect",
                 Properties = new() {
                     new NodeProperty { Name = "sound", Type = "string", Label = "Sound Name", DefaultValue = "SOUND_QUEST_COMPLETE" }
                 },
-                CodeTemplate = "Quest:Play2DSound(\"{sound}\")" },
+                CodeTemplate = "Quest:Play2DSound(\"{sound}\")\n{CHILDREN}" },
             
             new() { Type = "createEffect", Label = "Create Effect", Category = "action", Icon = "💥", IsAdvanced = true,
                 Description = "Create visual effect on entity",
@@ -387,19 +387,19 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "effect", Type = "string", Label = "Effect Name", DefaultValue = "SPARKLE" },
                     new NodeProperty { Name = "bone", Type = "string", Label = "Bone Name", DefaultValue = "" }
                 },
-                CodeTemplate = "Quest:CreateEffectOnThing(\"{effect}\", Me, \"{bone}\")" },
+                CodeTemplate = "Quest:CreateEffectOnThing(\"{effect}\", Me, \"{bone}\")\n{CHILDREN}" },
             
             new() { Type = "setReadableText", Label = "Set Readable Text", Category = "action", Icon = "📖", IsAdvanced = true,
                 Description = "Set text for readable object",
                 Properties = new() {
                     new NodeProperty { Name = "textKey", Type = "string", Label = "Text Key", DefaultValue = "TEXT_NOTE" }
                 },
-                CodeTemplate = "Me:SetReadableText(\"{textKey}\")" },
+                CodeTemplate = "Me:SetReadableText(\"{textKey}\")\n{CHILDREN}" },
             
             new() { Type = "openDoor", Label = "Open Door", Category = "action", Icon = "🚪", IsAdvanced = true,
                 Description = "Open a door object",
                 Properties = new(),
-                CodeTemplate = "Quest:OpenDoor(Me)" }
+                CodeTemplate = "Quest:OpenDoor(Me)\n{CHILDREN}" }
         };
     }
 
@@ -524,7 +524,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "seconds", Type = "float", Label = "Seconds", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:Pause({seconds})" },
+                CodeTemplate = "Quest:Pause({seconds})\n{CHILDREN}" },
             
             new() { Type = "randomChoice", Label = "Random Choice", Category = "flow", Icon = "🎲", IsAdvanced = true,
                 Description = "Pick random branch based on weights",
@@ -538,7 +538,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "functionName", Type = "string", Label = "Function Name", DefaultValue = "CustomFunction" }
                 },
-                CodeTemplate = "{functionName}()" },
+                CodeTemplate = "{functionName}()\n{CHILDREN}" },
 
             new() { Type = "defineEvent", Label = "Define Event", Category = "custom", Icon = "🎯", IsAdvanced = false,
                 Description = "Create a custom event that can be called from anywhere in the graph",
@@ -552,7 +552,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "eventName", Type = "string", Label = "Event Name", DefaultValue = "MyCustomEvent" }
                 },
-                CodeTemplate = "Event_{eventName}()" }
+                CodeTemplate = "Event_{eventName}()\n{CHILDREN}" }
         };
     }
 }

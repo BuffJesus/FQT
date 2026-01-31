@@ -701,10 +701,27 @@ public sealed class CodeGenerator
         }
         else
         {
-            // No connections
+            // No connections - replace with placeholder comments for readability
             code = code.Replace("{CHILDREN}", "");
-            code = code.Replace("{TRUE}", "");
-            code = code.Replace("{FALSE}", "");
+
+            // For branching nodes, add placeholder comments instead of empty strings
+            if (nodeDef.HasBranching)
+            {
+                var branchLabels = nodeDef.BranchLabels ?? new List<string> { "True", "False" };
+                foreach (var label in branchLabels)
+                {
+                    string placeholder = "{" + label + "}";
+                    string placeholderUpper = "{" + label.ToUpper() + "}";
+                    string comment = GenerateIndent(indent + 1) + $"-- {label.ToLower()} branch";
+                    code = code.Replace(placeholder, comment);
+                    code = code.Replace(placeholderUpper, comment);
+                }
+            }
+            else
+            {
+                code = code.Replace("{TRUE}", "");
+                code = code.Replace("{FALSE}", "");
+            }
         }
 
         // Apply indentation

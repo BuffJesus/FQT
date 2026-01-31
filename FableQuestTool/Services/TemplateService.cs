@@ -1,7 +1,6 @@
-﻿using System.Collections.ObjectModel;
-using FableQuestTool.Data;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using FableQuestTool.Models;
-using FableQuestTool.ViewModels;
 
 namespace FableQuestTool.Services;
 
@@ -53,40 +52,62 @@ public class TemplateService
             ExclusiveControl = true
         };
 
-        // Add basic talk node
-        var talkNode = new NodeViewModel
+        // Create node IDs for connections
+        string talkNodeId = Guid.NewGuid().ToString();
+        string dialogueNodeId = Guid.NewGuid().ToString();
+        string completeNodeId = Guid.NewGuid().ToString();
+
+        // Create nodes with proper Config values
+        var talkBehaviorNode = new BehaviorNode
         {
+            Id = talkNodeId,
             Type = "onHeroTalks",
-            Title = "When Hero Talks",
             Category = "trigger",
+            Label = "When Hero Talks",
             Icon = "💬",
-            Location = new System.Windows.Point(100, 100)
+            X = 100,
+            Y = 100
         };
 
-        var dialogueNode = new NodeViewModel
+        var dialogueBehaviorNode = new BehaviorNode
         {
+            Id = dialogueNodeId,
             Type = "showDialogue",
-            Title = "Show Dialogue",
             Category = "action",
-            Icon = "💭",
-            Location = new System.Windows.Point(400, 100)
+            Label = "Show Dialogue",
+            Icon = "💬",
+            X = 400,
+            Y = 100,
+            Config = new Dictionary<string, object>
+            {
+                { "text", "Hello, hero! Thank you for speaking with me." }
+            }
         };
 
-        var completeNode = new NodeViewModel
+        var completeBehaviorNode = new BehaviorNode
         {
+            Id = completeNodeId,
             Type = "completeQuest",
-            Title = "Complete Quest",
             Category = "action",
+            Label = "Complete Quest",
             Icon = "✅",
-            Location = new System.Windows.Point(700, 100)
+            X = 700,
+            Y = 100,
+            Config = new Dictionary<string, object>
+            {
+                { "showScreen", "true" }
+            }
         };
 
-        npc.Nodes = new List<BehaviorNode>
+        npc.Nodes = new List<BehaviorNode> { talkBehaviorNode, dialogueBehaviorNode, completeBehaviorNode };
+
+        // Add connections between nodes
+        npc.Connections = new List<NodeConnection>
         {
-            new BehaviorNode { Id = Guid.NewGuid().ToString(), Type = talkNode.Type, Category = talkNode.Category, Label = talkNode.Title, Icon = talkNode.Icon, X = talkNode.Location.X, Y = talkNode.Location.Y },
-            new BehaviorNode { Id = Guid.NewGuid().ToString(), Type = dialogueNode.Type, Category = dialogueNode.Category, Label = dialogueNode.Title, Icon = dialogueNode.Icon, X = dialogueNode.Location.X, Y = dialogueNode.Location.Y },
-            new BehaviorNode { Id = Guid.NewGuid().ToString(), Type = completeNode.Type, Category = completeNode.Category, Label = completeNode.Title, Icon = completeNode.Icon, X = completeNode.Location.X, Y = completeNode.Location.Y }
+            new NodeConnection { FromNodeId = talkNodeId, FromPort = "output", ToNodeId = dialogueNodeId, ToPort = "input" },
+            new NodeConnection { FromNodeId = dialogueNodeId, FromPort = "output", ToNodeId = completeNodeId, ToPort = "input" }
         };
+
         project.Entities.Add(npc);
 
         return new QuestTemplate
@@ -213,7 +234,7 @@ public class TemplateService
             Id = 50004,
             DisplayName = "Delivery Mission",
             Description = "Deliver a package to multiple locations",
-            Regions = new ObservableCollection<string> { "Oakvale", "BowerStone", "Knothole" },
+            Regions = new ObservableCollection<string> { "Oakvale", "Bowerstone", "Knothole" },
             QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
             ObjectiveText = "Make deliveries to three towns",
             ObjectiveRegion1 = "Oakvale",

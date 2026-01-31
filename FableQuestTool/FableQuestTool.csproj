@@ -14,4 +14,11 @@
         <PackageReference Include="Nodify" Version="4.0.0" />
     </ItemGroup>
 
+    <!-- FSE Framework Resources - copied to output directory -->
+    <ItemGroup>
+        <Content Include="Resources\FSE\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
 </Project>

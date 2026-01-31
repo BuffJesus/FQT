@@ -29,6 +29,13 @@ public sealed class DeploymentService
             return false;
         }
 
+        // Check and install FSE if needed
+        if (!EnsureFseInstalled(out string? fseError))
+        {
+            message = $"FSE installation check failed: {fseError}";
+            return false;
+        }
+
         string? fseFolder = config.GetFseFolder();
         if (string.IsNullOrWhiteSpace(fseFolder))
         {
@@ -669,6 +676,90 @@ public sealed class DeploymentService
         return found;
     }
 
+    private bool EnsureFseInstalled(out string? error)
+    {
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(config.FablePath))
+        {
+            error = "Fable path not configured.";
+            return false;
+        }
+
+        // Check if FSE is already installed
+        string launcherPath = Path.Combine(config.FablePath, "FSE_Launcher.exe");
+        string dllPath = Path.Combine(config.FablePath, "FableScriptExtender.dll");
+
+        if (File.Exists(launcherPath) && File.Exists(dllPath))
+        {
+            // FSE already installed
+            return true;
+        }
+
+        // Install FSE from packaged binaries (included with the application)
+        string appDirectory = AppContext.BaseDirectory;
+        string fseBinariesFolder = Path.Combine(appDirectory, "FSE_Binaries");
+
+        string sourceLauncher = Path.Combine(fseBinariesFolder, "FSE_Launcher.exe");
+        string sourceDll = Path.Combine(fseBinariesFolder, "FableScriptExtender.dll");
+
+        if (!File.Exists(sourceLauncher) || !File.Exists(sourceDll))
+        {
+            error = $"FSE binaries not found in application folder.\n\nExpected location: {fseBinariesFolder}\n\nPlease reinstall the application or contact support.";
+            return false;
+        }
+
+        try
+        {
+            // Copy FSE files to Fable directory
+            File.Copy(sourceLauncher, launcherPath, overwrite: true);
+            File.Copy(sourceDll, dllPath, overwrite: true);
+
+            // Create FSE folder if it doesn't exist
+            string fseFolder = Path.Combine(config.FablePath, "FSE");
+            Directory.CreateDirectory(fseFolder);
+
+            // Create Master folder for FSE_Master.lua
+            string masterFolder = Path.Combine(fseFolder, "Master");
+            Directory.CreateDirectory(masterFolder);
+
+            // Create FSE_Master.lua if it doesn't exist
+            string masterLuaPath = Path.Combine(masterFolder, "FSE_Master.lua");
+            if (!File.Exists(masterLuaPath))
+            {
+                string masterLuaContent = @"-- FSE_Master.lua - Master quest for FSE
+Quest = nil
+
+function Init(quest)
+    Quest = quest
+    Quest:Log(""FSE_Master Init()"")
+end
+
+function Main(quest)
+    Quest = quest
+    Quest:Log(""FSE_Master Main() started"")
+
+    -- Custom quests will be auto-activated here by the deployment tool
+
+    Quest:Log(""FSE_Master Main() completed"")
+end
+
+function OnPersist(quest, context)
+    Quest = quest
+end
+";
+                File.WriteAllText(masterLuaPath, masterLuaContent);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to install FSE: {ex.Message}";
+            return false;
+        }
+    }
+
     public bool LaunchFse(out string message)
     {
         message = string.Empty;
@@ -679,10 +770,17 @@ public sealed class DeploymentService
             return false;
         }
 
+        // Ensure FSE is installed before launching
+        if (!EnsureFseInstalled(out string? fseError))
+        {
+            message = $"Cannot launch FSE: {fseError}";
+            return false;
+        }
+
         string? launcherPath = config.GetFseLauncherPath();
         if (string.IsNullOrWhiteSpace(launcherPath))
         {
-            message = "FSE_Launcher.exe not found in Fable installation folder.\nPlease install FSE first.";
+            message = "FSE_Launcher.exe not found in Fable installation folder.";
             return false;
         }
 

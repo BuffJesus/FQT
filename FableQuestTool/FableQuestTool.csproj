@@ -14,4 +14,10 @@
         <PackageReference Include="Nodify" Version="4.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="FSE_Binaries\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>

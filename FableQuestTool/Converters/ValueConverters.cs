@@ -2,8 +2,101 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace FableQuestTool.Converters;
+
+/// <summary>
+/// Converts a hex color string (e.g., "#FF0000") to a SolidColorBrush
+/// </summary>
+public class StringToColorBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is string colorString && !string.IsNullOrEmpty(colorString))
+        {
+            try
+            {
+                var color = (Color)ColorConverter.ConvertFromString(colorString);
+                return new SolidColorBrush(color);
+            }
+            catch
+            {
+                return new SolidColorBrush(Colors.Gray);
+            }
+        }
+        return new SolidColorBrush(Colors.Gray);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("StringToColorBrushConverter is one-way only.");
+    }
+}
+
+/// <summary>
+/// Converts a hex color string to a Color object
+/// </summary>
+public class StringToColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is string colorString && !string.IsNullOrEmpty(colorString))
+        {
+            try
+            {
+                return (Color)ColorConverter.ConvertFromString(colorString);
+            }
+            catch
+            {
+                return Colors.Gray;
+            }
+        }
+        return Colors.Gray;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("StringToColorConverter is one-way only.");
+    }
+}
+
+/// <summary>
+/// Creates a linear gradient brush from two color strings for UE5-style node headers
+/// </summary>
+public class HeaderGradientConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length >= 2 && values[0] is string startColor && values[1] is string endColor)
+        {
+            try
+            {
+                var color1 = (Color)ColorConverter.ConvertFromString(startColor);
+                var color2 = (Color)ColorConverter.ConvertFromString(endColor);
+
+                var brush = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(0, 1)
+                };
+                brush.GradientStops.Add(new GradientStop(color1, 0.0));
+                brush.GradientStops.Add(new GradientStop(color2, 1.0));
+                return brush;
+            }
+            catch
+            {
+                return new SolidColorBrush(Colors.Gray);
+            }
+        }
+        return new SolidColorBrush(Colors.Gray);
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("HeaderGradientConverter is one-way only.");
+    }
+}
 
 public class NullToVisibilityConverter : IValueConverter
 {

@@ -211,16 +211,19 @@ public sealed class GameDataCatalogService
         string cacheDir = Path.Combine(Path.GetTempPath(), "FQT_TngCache");
         Directory.CreateDirectory(cacheDir);
 
+        // WAD extracts to Data/Levels/FinalAlbion subdirectory structure
+        string extractedTngDir = Path.Combine(cacheDir, "Data", "Levels", "FinalAlbion");
+
         // Check if already extracted
-        if (Directory.Exists(cacheDir) && Directory.GetFiles(cacheDir, "*.tng").Length > 0)
+        if (Directory.Exists(extractedTngDir) && Directory.GetFiles(extractedTngDir, "*.tng").Length > 0)
         {
-            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Using cached TNG files from {cacheDir}");
+            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Using cached TNG files from {extractedTngDir}");
 
             // Copy cached TNGs to FinalAlbion directory for compatibility
             string finalAlbionPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion");
             Directory.CreateDirectory(finalAlbionPath);
 
-            foreach (string cachedTng in Directory.GetFiles(cacheDir, "*.tng"))
+            foreach (string cachedTng in Directory.GetFiles(extractedTngDir, "*.tng"))
             {
                 string targetPath = Path.Combine(finalAlbionPath, Path.GetFileName(cachedTng));
                 if (!File.Exists(targetPath))
@@ -228,6 +231,7 @@ public sealed class GameDataCatalogService
                     try
                     {
                         File.Copy(cachedTng, targetPath, overwrite: false);
+                        System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Copied {Path.GetFileName(cachedTng)} from cache");
                     }
                     catch
                     {
@@ -253,7 +257,15 @@ public sealed class GameDataCatalogService
         string levelsPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion");
         Directory.CreateDirectory(levelsPath);
 
-        foreach (string tngFile in Directory.GetFiles(cacheDir, "*.tng"))
+        // TNG files are in Data/Levels/FinalAlbion subdirectory
+        string extractedTngPath = Path.Combine(cacheDir, "Data", "Levels", "FinalAlbion");
+        if (!Directory.Exists(extractedTngPath))
+        {
+            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Extracted TNG directory not found at {extractedTngPath}");
+            return;
+        }
+
+        foreach (string tngFile in Directory.GetFiles(extractedTngPath, "*.tng"))
         {
             string targetPath = Path.Combine(levelsPath, Path.GetFileName(tngFile));
             try

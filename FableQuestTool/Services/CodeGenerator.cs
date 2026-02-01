@@ -63,6 +63,7 @@ public sealed class CodeGenerator
         sb.AppendLine("function Init(questObject, meObject)");
         sb.AppendLine("    Quest = questObject");
         sb.AppendLine("    Me = meObject");
+        sb.AppendLine($"    Quest:Log(\"{entity.ScriptName}: Init called\")");
 
         // Entity control settings from old implementation
         if (entity.MakeBehavioral)
@@ -83,6 +84,7 @@ public sealed class CodeGenerator
         sb.AppendLine("function Main(questObject, meObject)");
         sb.AppendLine("    Quest = questObject");
         sb.AppendLine("    Me = meObject");
+        sb.AppendLine($"    Quest:Log(\"{entity.ScriptName}: Main started\")");
         sb.AppendLine("    local hero = Quest:GetHero()");
 
         // Entity properties from old implementation

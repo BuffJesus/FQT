@@ -188,6 +188,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             if (allEntities != null && allEntities.Count > 0)
             {
                 UpdateAvailableDefinitions();
+                UpdateAvailableMarkers(); // Also update markers when region changes
             }
         }
         else if (e.PropertyName == nameof(QuestEntity.SpawnMethod))
@@ -286,7 +287,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 string.Equals(e.RegionName, region, System.StringComparison.OrdinalIgnoreCase));
         }
 
-        // Filter by spawn method
+        // Filter by spawn method and entity type
         if (spawnMethod == SpawnMethod.BindExisting)
         {
             // For BindExisting, show only scriptable entities (those with script names)
@@ -294,8 +295,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
         else if (spawnMethod == SpawnMethod.AtMarker)
         {
-            // For AtMarker, show scriptable entities as marker names
-            filteredEntities = filteredEntities.Where(e => e.HasScriptName);
+            // For AtMarker, show only Marker entities with script names
+            filteredEntities = filteredEntities.Where(e =>
+                e.Category == EntityCategory.Marker && e.HasScriptName);
         }
 
         var markers = filteredEntities
@@ -304,6 +306,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
             .Distinct()
             .OrderBy(m => m)
             .ToList();
+
+        System.Diagnostics.Debug.WriteLine($"UpdateAvailableMarkers: Region={region}, Method={spawnMethod}, Found {markers.Count} markers");
 
         foreach (var marker in markers)
         {

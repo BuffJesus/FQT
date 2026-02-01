@@ -201,39 +201,38 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "local answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")\nQuest:EndMovieSequence()\nif answer ~= nil then\n{CHILDREN}\nend" },
 
-            // ===== CINEMATIC - Movie Sequence (FIX: Added pauses) =====
+            // ===== CINEMATIC - Movie Sequence (No frame checks during movie mode!) =====
             new() { Type = "startMovieSequence", Label = "Start Movie Sequence", Category = "action", Icon = "🎬", IsAdvanced = false,
                 Description = "Begin cinematic mode (prevents interruptions during cutscenes/conversations)",
                 Properties = new(),
-                CodeTemplate = "Quest:StartMovieSequence()\nQuest:Pause(0.1)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:StartMovieSequence()\nQuest:Pause(0.1)\n{CHILDREN}" },
 
             new() { Type = "endMovieSequence", Label = "End Movie Sequence", Category = "action", Icon = "🎬✅", IsAdvanced = false,
                 Description = "End cinematic mode and return control to player",
                 Properties = new(),
-                CodeTemplate = "Quest:EndMovieSequence()\nQuest:Pause(0.1)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:EndMovieSequence()\n{CHILDREN}" },
 
-            // FIX: letterbox now includes pause after StartMovieSequence
+            // letterbox starts cinematic mode
             new() { Type = "letterbox", Label = "Start Cinematic", Category = "action", Icon = "🎬", IsAdvanced = true,
                 Description = "Start cinematic mode with letterbox bars (use Letterbox Off to remove)",
                 Properties = new(),
-                CodeTemplate = "Quest:StartMovieSequence()\nQuest:Pause(0.1)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:StartMovieSequence()\nQuest:Pause(0.1)\n{CHILDREN}" },
 
-            // FIX: letterboxOff now includes EndMovieSequence AND EndLetterBox
+            // letterboxOff ends both letterbox AND movie sequence
             new() { Type = "letterboxOff", Label = "Letterbox Off", Category = "action", Icon = "📺", IsAdvanced = true,
                 Description = "End cinematic mode and remove letterbox bars",
                 Properties = new(),
-                CodeTemplate = "Quest:EndLetterBox()\nQuest:EndMovieSequence()\nQuest:Pause(0.1)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:EndLetterBox()\nQuest:EndMovieSequence()\n{CHILDREN}" },
 
-            // ===== CONVERSATIONS (FIX: Added pauses) =====
+            // ===== CONVERSATIONS (Just pause, no frame checks during cinematics) =====
             new() { Type = "startConversation", Label = "Start Conversation", Category = "action", Icon = "🎭", IsAdvanced = false,
                 Description = "Begin a multi-line conversation (stores conversation ID for adding lines)",
                 Properties = new() {
                     new NodeProperty { Name = "use2DSound", Type = "bool", Label = "Use 2D Sound (no spatial)", DefaultValue = "true" },
-                    new NodeProperty { Name = "playInCutscene", Type = "bool", Label = "Play During Cutscene", DefaultValue = "false" }
+                    new NodeProperty { Name = "playInCutscene", Type = "bool", Label = "Play During Cutscene", DefaultValue = "true" }
                 },
-                CodeTemplate = "local convoId = Quest:StartAmbientConversation(Me, hero, {use2DSound}, {playInCutscene})\nQuest:Pause(0.5)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "local convoId = Quest:StartAmbientConversation(Me, hero, {use2DSound}, {playInCutscene})\nQuest:Pause(0.5)\n{CHILDREN}" },
 
-            // FIX: Added pause after each conversation line
             new() { Type = "addConversationLine", Label = "Add Conversation Line", Category = "action", Icon = "💭", IsAdvanced = false,
                 Description = "Add a dialogue line to current conversation (use after Start Conversation)",
                 Properties = new() {
@@ -241,15 +240,14 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "showSubtitle", Type = "bool", Label = "Show Subtitle", DefaultValue = "true" },
                     new NodeProperty { Name = "waitTime", Type = "float", Label = "Wait After (seconds)", DefaultValue = "3.0" }
                 },
-                CodeTemplate = "Quest:AddLineToConversation(convoId, \"{textKey}\", Me, hero, {showSubtitle})\nQuest:Pause({waitTime})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:AddLineToConversation(convoId, \"{textKey}\", Me, hero, {showSubtitle})\nQuest:Pause({waitTime})\n{CHILDREN}" },
 
-            // FIX: Added pause after ending conversation
             new() { Type = "endConversation", Label = "End Conversation", Category = "action", Icon = "🔚", IsAdvanced = false,
                 Description = "End the current conversation",
                 Properties = new() {
                     new NodeProperty { Name = "immediate", Type = "bool", Label = "End Immediately", DefaultValue = "false" }
                 },
-                CodeTemplate = "Quest:RemoveConversation(convoId, {immediate})\nQuest:Pause(0.5)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:RemoveConversation(convoId, {immediate})\nQuest:Pause(0.5)\n{CHILDREN}" },
 
             new() { Type = "speakWithOptions", Label = "Speak (Advanced)", Category = "action", Icon = "🎤", IsAdvanced = true,
                 Description = "Entity speaks with full audio and display options",
@@ -261,7 +259,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "Me:Speak(hero, \"{text}\", {use2DSound}, {useVoice}, {displayOnScreen})\n{CHILDREN}" },
 
-            // ===== CAMERA (FIX: Added pauses) =====
+            // ===== CAMERA (Just pause for timing, no frame checks during cinematics) =====
             new() { Type = "cameraOrbitEntity", Label = "Camera Orbit Entity", Category = "action", Icon = "🎥", IsAdvanced = false,
                 Description = "Orbit camera around this entity",
                 Properties = new() {
@@ -270,7 +268,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "speed", Type = "float", Label = "Speed", DefaultValue = "0.3" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "3.0" }
                 },
-                CodeTemplate = "Quest:CameraCircleAroundThing(Me, {x=0, y={height}, z={distance}}, {duration})\nQuest:Pause(0.5)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraCircleAroundThing(Me, {x=0, y={height}, z={distance}}, {duration})\nQuest:Pause(0.5)\n{CHILDREN}" },
 
             new() { Type = "cameraLookAtEntity", Label = "Camera Look At Entity", Category = "action", Icon = "👁️🎥", IsAdvanced = false,
                 Description = "Point camera at this entity",
@@ -280,15 +278,14 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "camZ", Type = "float", Label = "Camera Z Offset", DefaultValue = "5.0" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:CameraLookAtThing(Me, {x={camX}, y={camY}, z={camZ}}, {duration})\nQuest:Pause(0.5)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraLookAtThing(Me, {x={camX}, y={camY}, z={camZ}}, {duration})\nQuest:Pause(0.5)\n{CHILDREN}" },
 
-            // FIX: Added pause after camera reset
             new() { Type = "cameraResetToHero", Label = "Reset Camera To Hero", Category = "action", Icon = "🔄🎥", IsAdvanced = false,
                 Description = "Return camera to default third-person view behind hero",
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:CameraResetToViewBehindHero({duration})\nQuest:Pause({duration})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraResetToViewBehindHero({duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "cameraUseCameraPoint", Label = "Use Camera Point", Category = "action", Icon = "📷", IsAdvanced = true,
                 Description = "Use a predefined camera point from the level",
@@ -298,30 +295,29 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "easeIn", Type = "int", Label = "Ease In Type", DefaultValue = "0" },
                     new NodeProperty { Name = "easeOut", Type = "int", Label = "Ease Out Type", DefaultValue = "0" }
                 },
-                CodeTemplate = "local camPoint = Quest:GetThingWithScriptName(\"{cameraPoint}\")\nQuest:CameraUseCameraPoint(camPoint, Me, {duration}, {easeIn}, {easeOut})\nQuest:Pause({duration})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "local camPoint = Quest:GetThingWithScriptName(\"{cameraPoint}\")\nQuest:CameraUseCameraPoint(camPoint, Me, {duration}, {easeIn}, {easeOut})\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "cameraConversation", Label = "Conversation Camera", Category = "action", Icon = "🎬💬", IsAdvanced = true,
                 Description = "Set up camera for dialogue scene (0=Default, 1=Close, 2=OTS_Speaker, 3=OTS_Listener)",
                 Properties = new() {
                     new NodeProperty { Name = "cameraOp", Type = "int", Label = "Camera Type", DefaultValue = "0" }
                 },
-                CodeTemplate = "Quest:CameraDoConversation(Me, hero, {cameraOp})\nQuest:Pause(0.5)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraDoConversation(Me, hero, {cameraOp})\nQuest:Pause(0.5)\n{CHILDREN}" },
 
-            // ===== SCREEN EFFECTS (FIX: Added pauses) =====
+            // ===== SCREEN EFFECTS (Just pause for timing, no frame checks) =====
             new() { Type = "screenFadeOut", Label = "Screen Fade Out", Category = "action", Icon = "⬛", IsAdvanced = false,
                 Description = "Fade screen to black",
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "0.5" }
                 },
-                CodeTemplate = "Quest:FadeScreenOutUntilNextCallToFadeScreenIn({duration})\nQuest:Pause({duration})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:FadeScreenOutUntilNextCallToFadeScreenIn({duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
-            // FIX: Added pause after fade in
             new() { Type = "screenFadeIn", Label = "Screen Fade In", Category = "action", Icon = "⬜", IsAdvanced = false,
                 Description = "Fade screen back from black",
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "0.5" }
                 },
-                CodeTemplate = "Quest:EndCutFade()\nQuest:Pause({duration})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:EndCutFade()\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "radialBlur", Label = "Radial Blur", Category = "action", Icon = "🌀", IsAdvanced = true,
                 Description = "Apply radial blur effect",
@@ -329,14 +325,14 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "intensity", Type = "float", Label = "Intensity (0-1)", DefaultValue = "0.3" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "0.5" }
                 },
-                CodeTemplate = "Quest:RadialBlurFadeTo({intensity}, {duration})\nQuest:Pause({duration})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:RadialBlurFadeTo({intensity}, {duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "radialBlurOff", Label = "Radial Blur Off", Category = "action", Icon = "🌀❌", IsAdvanced = true,
                 Description = "Remove radial blur effect",
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "0.5" }
                 },
-                CodeTemplate = "Quest:RadialBlurFadeOut({duration})\nQuest:Pause({duration})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:RadialBlurFadeOut({duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "colorFilter", Label = "Color Filter", Category = "action", Icon = "🎨", IsAdvanced = true,
                 Description = "Apply color filter to screen",
@@ -347,16 +343,16 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "a", Type = "float", Label = "Alpha (0-1)", DefaultValue = "0.3" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Fade Duration", DefaultValue = "0.5" }
                 },
-                CodeTemplate = "Quest:ScreenFilterFadeTo({r}, {g}, {b}, {a}, {duration})\nQuest:Pause({duration})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:ScreenFilterFadeTo({r}, {g}, {b}, {a}, {duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "colorFilterOff", Label = "Color Filter Off", Category = "action", Icon = "🔲🎨", IsAdvanced = true,
                 Description = "Remove color filter from screen",
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Fade Duration", DefaultValue = "0.5" }
                 },
-                CodeTemplate = "Quest:ScreenFilterFadeOut({duration})\nQuest:Pause({duration})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:ScreenFilterFadeOut({duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
-            // ===== MUSIC (FIX: Added pauses) =====
+            // ===== MUSIC (Just pause for timing) =====
             new() { Type = "overrideMusic", Label = "Override Music", Category = "action", Icon = "🎵", IsAdvanced = false,
                 Description = "Override current music with specified music set",
                 Properties = new() {
@@ -364,12 +360,12 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "isCutscene", Type = "bool", Label = "Is Cutscene Music", DefaultValue = "true" },
                     new NodeProperty { Name = "forcePlay", Type = "bool", Label = "Force Play", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:OverrideMusic({musicSetType}, {isCutscene}, {forcePlay})\nQuest:Pause(0.1)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:OverrideMusic({musicSetType}, {isCutscene}, {forcePlay})\n{CHILDREN}" },
 
             new() { Type = "stopMusicOverride", Label = "Stop Music Override", Category = "action", Icon = "⏹️🎵", IsAdvanced = false,
                 Description = "Stop overriding music and return to normal",
                 Properties = new(),
-                CodeTemplate = "Quest:StopOverrideMusic()\nQuest:Pause(0.1)\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:StopOverrideMusic()\n{CHILDREN}" },
 
             new() { Type = "enableDangerMusic", Label = "Enable Danger Music", Category = "action", Icon = "⚠️🎵", IsAdvanced = true,
                 Description = "Enable or disable danger/combat music",
@@ -503,7 +499,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "seconds", Type = "float", Label = "Seconds", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:Pause({seconds})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:Pause({seconds})\n{CHILDREN}" },
 
             // ===== ABILITIES =====
             new() { Type = "giveAbility", Label = "Give Ability", Category = "action", Icon = "✨", IsAdvanced = false,
@@ -629,7 +625,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "seconds", Type = "float", Label = "Seconds", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:Pause({seconds})\nif not Quest:NewScriptFrame(Me) then return end\n{CHILDREN}" },
+                CodeTemplate = "Quest:Pause({seconds})\n{CHILDREN}" },
             
             new() { Type = "randomChoice", Label = "Random Choice", Category = "flow", Icon = "🎲", IsAdvanced = true,
                 Description = "Pick random branch based on weights",

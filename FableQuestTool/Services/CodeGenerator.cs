@@ -122,11 +122,6 @@ public sealed class CodeGenerator
         {
             sb.AppendLine("    -- Main behavior loop");
             sb.AppendLine("    while true do");
-            
-            // FIX: Add loop timing at the START of each iteration
-            sb.AppendLine("        Quest:Pause(0.1)");
-            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
-            sb.AppendLine();
 
             // Generate code from node graph
             string behaviorCode = GenerateBehaviorCode(entity, quest.Name, 2);
@@ -134,6 +129,8 @@ public sealed class CodeGenerator
 
             sb.AppendLine();
             sb.AppendLine("        if Me:IsNull() then break end");
+            // Frame check at END of loop only (like working MAssassinNPC example)
+            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
             sb.AppendLine("    end");
         }
         else if (entity.AcquireControl || entity.ExclusiveControl)
@@ -141,10 +138,9 @@ public sealed class CodeGenerator
             // Entity has control but no behavior nodes - add minimal loop
             sb.AppendLine("    -- Minimal behavior loop (add behavior nodes for triggers and actions)");
             sb.AppendLine("    while true do");
-            sb.AppendLine("        Quest:Pause(0.1)");
-            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
             sb.AppendLine("        -- Add trigger nodes in the visual editor to respond to hero interactions");
             sb.AppendLine("        if Me:IsNull() then break end");
+            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
             sb.AppendLine("    end");
         }
 

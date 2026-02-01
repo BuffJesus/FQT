@@ -10,6 +10,17 @@ namespace FableQuestTool.Services;
 
 public sealed class CodeGenerator
 {
+    // Set of node types that are cinematic/async and need pauses after them
+    private static readonly HashSet<string> CinematicNodeTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "letterbox", "letterboxOff", "screenFadeOut", "screenFadeIn", "overrideMusic", 
+        "stopMusicOverride", "cameraOrbitEntity", "cameraLookAtEntity", "cameraResetToHero",
+        "cameraUseCameraPoint", "cameraConversation", "cameraCircleAroundThing",
+        "startConversation", "addConversationLine", "endConversation",
+        "radialBlur", "radialBlurOff", "colorFilter", "colorFilterOff",
+        "playMovie", "startMovieSequence", "endMovieSequence"
+    };
+
     public string GenerateQuestScript(QuestProject quest)
     {
         StringBuilder sb = new StringBuilder();
@@ -65,7 +76,7 @@ public sealed class CodeGenerator
         sb.AppendLine("    Me = meObject");
         sb.AppendLine($"    Quest:Log(\"{entity.ScriptName}: Init called\")");
 
-        // Entity control settings from old implementation
+        // Entity control settings
         if (entity.MakeBehavioral)
         {
             sb.AppendLine("    Me:MakeBehavioral()");
@@ -87,7 +98,7 @@ public sealed class CodeGenerator
         sb.AppendLine($"    Quest:Log(\"{entity.ScriptName}: Main started\")");
         sb.AppendLine("    local hero = Quest:GetHero()");
 
-        // Entity properties from old implementation
+        // Entity properties
         if (entity.Invulnerable)
         {
             sb.AppendLine("    Quest:EntitySetAsDamageable(Me, false)");
@@ -111,25 +122,29 @@ public sealed class CodeGenerator
         {
             sb.AppendLine("    -- Main behavior loop");
             sb.AppendLine("    while true do");
+            
+            // FIX: Add loop timing at the START of each iteration
+            sb.AppendLine("        Quest:Pause(0.1)");
+            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
+            sb.AppendLine();
 
-            // Generate code from node graph using old implementation style
+            // Generate code from node graph
             string behaviorCode = GenerateBehaviorCode(entity, quest.Name, 2);
             sb.Append(behaviorCode);
 
             sb.AppendLine();
             sb.AppendLine("        if Me:IsNull() then break end");
-            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
             sb.AppendLine("    end");
         }
         else if (entity.AcquireControl || entity.ExclusiveControl)
         {
-            // Entity has control but no behavior nodes - add minimal loop to keep entity active
-            // and allow it to respond to game events (can be customized by user)
+            // Entity has control but no behavior nodes - add minimal loop
             sb.AppendLine("    -- Minimal behavior loop (add behavior nodes for triggers and actions)");
             sb.AppendLine("    while true do");
+            sb.AppendLine("        Quest:Pause(0.1)");
+            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
             sb.AppendLine("        -- Add trigger nodes in the visual editor to respond to hero interactions");
             sb.AppendLine("        if Me:IsNull() then break end");
-            sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
             sb.AppendLine("    end");
         }
 
@@ -160,11 +175,11 @@ public sealed class CodeGenerator
             sb.AppendLine($"    Quest:AddQuestRegion(\"{quest.Name}\", \"{region}\")");
         }
 
-        // Set world map offset (auto-calculate if not manually set)
+        // Set world map offset
         var mapOffset = GetWorldMapOffset(quest);
         sb.AppendLine($"    Quest:SetQuestWorldMapOffset(\"{quest.Name}\", {mapOffset.X}, {mapOffset.Y})");
 
-        // Initialize QuestCompleted state for monitoring
+        // Initialize QuestCompleted state
         sb.AppendLine("    Quest:SetStateBool(\"QuestCompleted\", false)");
 
         // Initialize user-defined states
@@ -184,7 +199,7 @@ public sealed class CodeGenerator
         sb.AppendLine($"    Quest:Log(\"{quest.Name}: Main() started.\")");
         sb.AppendLine();
 
-        // Bind entity scripts (must be done before spawning)
+        // Bind entity scripts
         if (quest.Entities.Count > 0)
         {
             sb.AppendLine("    -- Bind entity scripts");
@@ -196,7 +211,7 @@ public sealed class CodeGenerator
             sb.AppendLine();
         }
 
-        // Quest card configuration (immediate, no region wait needed)
+        // Quest card configuration
         if (!string.IsNullOrWhiteSpace(quest.QuestCardObject))
         {
             sb.AppendLine("    -- Configure quest card");
@@ -232,7 +247,7 @@ public sealed class CodeGenerator
             sb.AppendLine();
         }
 
-        // Show quest start screen (immediate, no region wait)
+        // Show quest start screen
         if (quest.UseQuestStartScreen)
         {
             string isStory = quest.IsStoryQuest ? "true" : "false";
@@ -242,13 +257,11 @@ public sealed class CodeGenerator
             sb.AppendLine();
         }
 
-        // Start threads - they will wait for their regions
+        // Start threads
         sb.AppendLine("    -- Start quest threads");
         
         string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
         
-        // Create EntitySpawner thread if we have entities to spawn
-        // Note: Region-bound threads auto-wait for their region to load
         if (quest.Entities.Any(e => e.SpawnMethod != SpawnMethod.BindExisting) ||
             quest.Entities.Any(e => e.IsQuestTarget || e.ShowOnMinimap))
         {
@@ -257,7 +270,6 @@ public sealed class CodeGenerator
 
         sb.AppendLine($"    Quest:CreateThread(\"MonitorQuestCompletion\", {{region=\"{primaryRegion}\"}})");
 
-        // Start user-defined threads
         foreach (QuestThread thread in quest.Threads)
         {
             sb.AppendLine($"    Quest:CreateThread(\"{thread.FunctionName}\", {{region=\"{thread.Region}\"}})");
@@ -271,11 +283,8 @@ public sealed class CodeGenerator
     {
         sb.AppendLine("function OnPersist(questObject, context)");
         sb.AppendLine("    Quest = questObject");
-
-        // Persist QuestCompleted state
         sb.AppendLine("    Quest:PersistTransferBool(context, \"QuestCompleted\")");
 
-        // Persist user-defined states
         foreach (QuestState state in quest.States)
         {
             if (state.Persist)
@@ -288,12 +297,6 @@ public sealed class CodeGenerator
         sb.AppendLine();
     }
 
-    /// <summary>
-    /// Generates the EntitySpawner thread that spawns entities when the region is loaded.
-    /// Thread is region-bound via CreateThread({region="..."}) so FSE automatically delays
-    /// execution until the region loads. Do NOT add manual region-waiting loops here -
-    /// they are redundant and can cause the thread to hang.
-    /// </summary>
     private void GenerateEntitySpawnerThread(StringBuilder sb, QuestProject quest)
     {
         string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
@@ -303,8 +306,6 @@ public sealed class CodeGenerator
         sb.AppendLine($"    -- Thread is region-bound to {primaryRegion} - FSE auto-waits for region load");
         sb.AppendLine($"    Quest:Log(\"{quest.Name}: EntitySpawner executing (region is loaded).\")");
         sb.AppendLine();
-
-        // Brief pause to let game settle after region load
         sb.AppendLine("    -- Brief pause to let game settle after region load");
         sb.AppendLine("    Quest:Pause(0.5)");
         sb.AppendLine("    if not Quest:NewScriptFrame() then return end");
@@ -326,7 +327,7 @@ public sealed class CodeGenerator
             }
         }
 
-        // Set up quest target highlighting and minimap markers
+        // Set up quest target highlighting
         var questTargets = quest.Entities.Where(e => e.IsQuestTarget || e.ShowOnMinimap).ToList();
         if (questTargets.Count > 0)
         {
@@ -445,7 +446,7 @@ public sealed class CodeGenerator
         sb.AppendLine("function CompleteQuest()");
         sb.AppendLine($"    Quest:Log(\"{quest.Name}: CompleteQuest called.\")");
 
-        // Clear quest target highlighting before completion
+        // Clear quest target highlighting
         var questTargets = quest.Entities.Where(e => e.IsQuestTarget || e.ShowOnMinimap).ToList();
         if (questTargets.Count > 0)
         {
@@ -470,43 +471,28 @@ public sealed class CodeGenerator
             }
         }
 
-        // Give rewards
         sb.AppendLine();
         sb.AppendLine("    -- Give rewards");
+
         if (quest.Rewards.Gold > 0)
         {
             sb.AppendLine($"    Quest:GiveHeroGold({quest.Rewards.Gold})");
         }
-
         if (quest.Rewards.Experience > 0)
         {
             sb.AppendLine($"    Quest:GiveHeroExperience({quest.Rewards.Experience})");
         }
-
         if (quest.Rewards.Renown > 0)
         {
             sb.AppendLine($"    Quest:GiveHeroRenownPoints({quest.Rewards.Renown})");
         }
-
         if (quest.Rewards.Morality != 0)
         {
             sb.AppendLine($"    Quest:GiveHeroMorality({quest.Rewards.Morality})");
         }
-
         foreach (string item in quest.Rewards.Items)
         {
-            if (!string.IsNullOrWhiteSpace(item))
-            {
-                sb.AppendLine($"    Quest:GiveHeroObject(\"{item}\", 1)");
-            }
-        }
-
-        foreach (string ability in quest.Rewards.Abilities)
-        {
-            if (!string.IsNullOrWhiteSpace(ability))
-            {
-                sb.AppendLine($"    Quest:GiveHeroAbility(\"{ability}\")");
-            }
+            sb.AppendLine($"    Quest:GiveHeroObject(\"{item}\", 1)");
         }
 
         sb.AppendLine();
@@ -516,23 +502,11 @@ public sealed class CodeGenerator
         sb.AppendLine("end");
     }
 
-    /// <summary>
-    /// Gets the world map offset for the quest, auto-calculating if not manually set.
-    /// </summary>
     private (int X, int Y) GetWorldMapOffset(QuestProject quest)
     {
-        // If user has manually set offsets, use them
-        if (quest.WorldMapOffsetX != 0 || quest.WorldMapOffsetY != 0)
-        {
-            return (quest.WorldMapOffsetX, quest.WorldMapOffsetY);
-        }
-
-        // Otherwise, auto-calculate based on region and entities
         string primaryRegion = quest.Regions.FirstOrDefault() ?? "";
         return WorldMapCoordinateService.GetMapOffsetForQuest(primaryRegion, quest.Entities);
     }
-
-
 
     private string RenderStateInit(QuestState state)
     {
@@ -627,7 +601,6 @@ public sealed class CodeGenerator
         return new string(' ', level * 4);
     }
 
-
     private string GenerateNodeCode(BehaviorNode node, QuestEntity entity, string questName, int indent)
     {
         var nodeDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == node.Type);
@@ -642,19 +615,15 @@ public sealed class CodeGenerator
         // Replace placeholders with actual values
         code = code.Replace("{QUEST_NAME}", questName);
 
-        // Migrate old property names to new ones for backwards compatibility
-        var migratedConfig = MigratePropertyNames(node.Type, node.Config);
-
-        // First, apply actual config values from the node (these take priority)
-        foreach (var prop in migratedConfig)
+        // Apply actual config values from the node (these take priority)
+        foreach (var prop in node.Config)
         {
             string placeholder = "{" + prop.Key + "}";
             string value = prop.Value?.ToString() ?? "";
             code = code.Replace(placeholder, value);
         }
 
-        // Then, fill in any remaining placeholders with default values
-        // This ensures new properties have values even if the saved project uses old property names
+        // Fill in remaining placeholders with default values
         if (nodeDef.Properties != null)
         {
             foreach (var propDef in nodeDef.Properties)
@@ -672,30 +641,27 @@ public sealed class CodeGenerator
         var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
         if (connections.Count > 0)
         {
-            // Check if this node has branching (True/False outputs)
             bool hasBranching = nodeDef.HasBranching;
 
             if (hasBranching)
             {
-                // Get branch labels from node definition (e.g., "True"/"False" or "Yes"/"No"/"Unsure")
+                // Branching nodes (if/else) - children get indented
                 var branchLabels = nodeDef.BranchLabels ?? new List<string> { "True", "False" };
                 var branchCode = new Dictionary<string, StringBuilder>();
 
-                // Initialize code builders for each branch
                 foreach (var label in branchLabels)
                 {
                     branchCode[label] = new StringBuilder();
                 }
 
-                // Route connections to their respective branches
                 foreach (var conn in connections)
                 {
                     var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
                     if (childNode != null && !string.IsNullOrEmpty(conn.FromPort))
                     {
+                        // FIX: Branch children get indented (indent + 1)
                         string childCode = GenerateNodeCode(childNode, entity, questName, indent + 1);
 
-                        // Find matching branch by FromPort (case-sensitive exact match)
                         if (branchCode.ContainsKey(conn.FromPort))
                         {
                             branchCode[conn.FromPort].Append(childCode);
@@ -703,7 +669,6 @@ public sealed class CodeGenerator
                     }
                 }
 
-                // Replace placeholders with branch code (or comments if empty)
                 foreach (var label in branchLabels)
                 {
                     string placeholder = "{" + label + "}";
@@ -712,21 +677,22 @@ public sealed class CodeGenerator
                         ? branchCode[label].ToString().TrimEnd('\n')
                         : GenerateIndent(indent + 1) + $"-- {label.ToLower()} branch";
 
-                    // Replace both the original case and uppercase versions
                     code = code.Replace(placeholder, branchContent);
                     code = code.Replace(placeholderUpper, branchContent);
                 }
             }
             else
             {
-                // Normal linear flow (CHILDREN placeholder)
+                // FIX: Linear flow - children stay at SAME indent level (no indent + 1)
+                // This prevents the pyramid indentation bug
                 StringBuilder childrenCode = new StringBuilder();
                 foreach (var conn in connections)
                 {
                     var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
                     if (childNode != null)
                     {
-                        childrenCode.Append(GenerateNodeCode(childNode, entity, questName, indent + 1));
+                        // Same indent level for linear sequences
+                        childrenCode.Append(GenerateNodeCode(childNode, entity, questName, indent));
                     }
                 }
                 code = code.Replace("{CHILDREN}", childrenCode.ToString().TrimEnd('\n'));
@@ -734,10 +700,9 @@ public sealed class CodeGenerator
         }
         else
         {
-            // No connections - replace with placeholder comments for readability
+            // No connections - replace placeholders
             code = code.Replace("{CHILDREN}", "");
 
-            // For branching nodes, add placeholder comments instead of empty strings
             if (nodeDef.HasBranching)
             {
                 var branchLabels = nodeDef.BranchLabels ?? new List<string> { "True", "False" };
@@ -757,83 +722,21 @@ public sealed class CodeGenerator
             }
         }
 
-        // Apply indentation only to template lines (not to already-indented child code)
-        // Template lines have no leading spaces; child lines already have their indentation
+        // Apply indentation to each line
         string[] lines = code.Split('\n');
         for (int i = 0; i < lines.Length; i++)
         {
-            string line = lines[i];
-            if (string.IsNullOrWhiteSpace(line))
+            if (!string.IsNullOrWhiteSpace(lines[i]))
             {
-                sb.AppendLine();
+                sb.AppendLine(GenerateIndent(indent) + lines[i]);
             }
             else
             {
-                int leadingSpaces = line.Length - line.TrimStart().Length;
-                if (leadingSpaces == 0)
-                {
-                    // Template line - needs indentation
-                    sb.AppendLine(GenerateIndent(indent) + line);
-                }
-                else
-                {
-                    // Already indented (from child node) - keep as-is
-                    sb.AppendLine(line);
-                }
+                sb.AppendLine();
             }
         }
 
         return sb.ToString();
-    }
-
-
-    /// <summary>
-    /// Migrates old property names to new ones for backwards compatibility with saved projects.
-    /// </summary>
-    private static Dictionary<string, object> MigratePropertyNames(string nodeType, Dictionary<string, object> config)
-    {
-        // Define property name migrations: nodeType -> (oldName -> newName)
-        var migrations = new Dictionary<string, Dictionary<string, string>>
-        {
-            ["cameraOrbitEntity"] = new()
-            {
-                ["distance"] = "offsetZ",
-                ["height"] = "offsetY",
-                // "speed" has no equivalent in new API, will use default
-            },
-            ["cameraOrbitPosition"] = new()
-            {
-                ["distance"] = "offsetZ",
-                ["height"] = "offsetY",
-            },
-            ["cameraLookAtEntity"] = new()
-            {
-                ["distance"] = "camZ",
-                ["height"] = "camY",
-            }
-        };
-
-        // If no migrations defined for this node type, return original config
-        if (!migrations.TryGetValue(nodeType, out var nodeMigrations))
-        {
-            return config;
-        }
-
-        // Create new dictionary with migrated property names
-        var result = new Dictionary<string, object>();
-        foreach (var prop in config)
-        {
-            if (nodeMigrations.TryGetValue(prop.Key, out var newName))
-            {
-                result[newName] = prop.Value;
-            }
-            else
-            {
-                result[prop.Key] = prop.Value;
-            }
-        }
-
-        return result;
     }
 
     private static string Escape(string text)

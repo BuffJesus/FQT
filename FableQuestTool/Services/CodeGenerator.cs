@@ -654,22 +654,41 @@ public sealed class CodeGenerator
 
     /// <summary>
     /// Processes a node's template, replacing placeholders with config values.
+    /// Text and string properties are escaped to prevent Lua syntax errors.
     /// </summary>
     private string ProcessNodeTemplate(NodeDefinition nodeDef, BehaviorNode node, string questName)
     {
         string code = nodeDef.CodeTemplate;
-        
-        code = code.Replace("{QUEST_NAME}", questName);
 
-        // Apply config values from the node
+        code = code.Replace("{QUEST_NAME}", Escape(questName));
+
+        // Build a lookup of property types for escaping decisions
+        var propertyTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (nodeDef.Properties != null)
+        {
+            foreach (var propDef in nodeDef.Properties)
+            {
+                propertyTypes[propDef.Name] = propDef.Type;
+            }
+        }
+
+        // Apply config values from the node (with proper escaping for text/string types)
         foreach (var prop in node.Config)
         {
             string placeholder = "{" + prop.Key + "}";
             string value = prop.Value?.ToString() ?? "";
+
+            // Escape text and string properties to prevent Lua syntax errors from quotes/special chars
+            if (propertyTypes.TryGetValue(prop.Key, out string? propType) &&
+                (propType == "text" || propType == "string"))
+            {
+                value = Escape(value);
+            }
+
             code = code.Replace(placeholder, value);
         }
 
-        // Apply default values for missing properties
+        // Apply default values for missing properties (with proper escaping)
         if (nodeDef.Properties != null)
         {
             foreach (var propDef in nodeDef.Properties)
@@ -678,6 +697,13 @@ public sealed class CodeGenerator
                 if (code.Contains(placeholder))
                 {
                     string defaultValue = propDef.DefaultValue?.ToString() ?? "";
+
+                    // Escape text and string default values
+                    if (propDef.Type == "text" || propDef.Type == "string")
+                    {
+                        defaultValue = Escape(defaultValue);
+                    }
+
                     code = code.Replace(placeholder, defaultValue);
                 }
             }
@@ -794,6 +820,15 @@ public sealed class CodeGenerator
 
     private static string Escape(string text)
     {
-        return text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        return text
+            .Replace("\\", "\\\\")  // Must be first to avoid double-escaping
+            .Replace("\"", "\\\"")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\t", "\\t")
+            .Replace("\0", "");     // Remove null characters
     }
 }

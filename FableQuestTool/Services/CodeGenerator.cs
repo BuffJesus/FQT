@@ -642,6 +642,19 @@ public sealed class CodeGenerator
         // Replace placeholders with actual values
         code = code.Replace("{QUEST_NAME}", questName);
 
+        // First, apply default values from node definition for all properties
+        // This ensures new properties have values even if the saved project uses old property names
+        if (nodeDef.Properties != null)
+        {
+            foreach (var propDef in nodeDef.Properties)
+            {
+                string placeholder = "{" + propDef.Name + "}";
+                string defaultValue = propDef.DefaultValue?.ToString() ?? "";
+                code = code.Replace(placeholder, defaultValue);
+            }
+        }
+
+        // Then, override with actual config values from the node
         foreach (var prop in node.Config)
         {
             string placeholder = "{" + prop.Key + "}";

@@ -253,11 +253,12 @@ public static class NodeDefinitions
                 Description = "Entity speaks with full audio and display options",
                 Properties = new() {
                     new NodeProperty { Name = "text", Type = "text", Label = "Text/Voice Key", DefaultValue = "Hello, hero!" },
-                    new NodeProperty { Name = "use2DSound", Type = "bool", Label = "Use 2D Sound", DefaultValue = "false" },
-                    new NodeProperty { Name = "useVoice", Type = "bool", Label = "Use Voice", DefaultValue = "false" },
-                    new NodeProperty { Name = "displayOnScreen", Type = "bool", Label = "Display On Screen", DefaultValue = "true" }
+                    new NodeProperty { Name = "method", Type = "int", Label = "Selection Method", DefaultValue = "0" },
+                    new NodeProperty { Name = "listen", Type = "bool", Label = "Listen Mode", DefaultValue = "false" },
+                    new NodeProperty { Name = "sound2D", Type = "bool", Label = "Use 2D Sound", DefaultValue = "true" },
+                    new NodeProperty { Name = "overFade", Type = "bool", Label = "Show Over Fade", DefaultValue = "false" }
                 },
-                CodeTemplate = "Me:Speak(hero, \"{text}\", {use2DSound}, {useVoice}, {displayOnScreen})\n{CHILDREN}" },
+                CodeTemplate = "Me:Speak(hero, \"{text}\", {method}, {listen}, {sound2D}, {overFade})\n{CHILDREN}" },
 
             // ===== CAMERA (Just pause for timing, no frame checks during cinematics) =====
             new() { Type = "cameraOrbitEntity", Label = "Camera Orbit Entity", Category = "action", Icon = "🎥", IsAdvanced = false,

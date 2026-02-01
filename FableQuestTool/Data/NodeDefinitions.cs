@@ -278,7 +278,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "camZ", Type = "float", Label = "Camera Z Offset", DefaultValue = "5.0" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:CameraLookAtThing(Me, {x={camX}, y={camY}, z={camZ}}, {duration})\nQuest:Pause(0.5)\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraMoveToPosAndLookAtThing({x={camX}, y={camY}, z={camZ}}, Me, {duration})\nQuest:Pause(0.5)\n{CHILDREN}" },
 
             new() { Type = "cameraResetToHero", Label = "Reset Camera To Hero", Category = "action", Icon = "🔄🎥", IsAdvanced = false,
                 Description = "Return camera to default third-person view behind hero",
@@ -320,37 +320,43 @@ public static class NodeDefinitions
                 CodeTemplate = "Quest:EndCutFade()\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "radialBlur", Label = "Radial Blur", Category = "action", Icon = "🌀", IsAdvanced = true,
-                Description = "Apply radial blur effect",
+                Description = "Apply radial blur effect (intensity 0-1, inner/outer radius, fade params)",
                 Properties = new() {
-                    new NodeProperty { Name = "intensity", Type = "float", Label = "Intensity (0-1)", DefaultValue = "0.3" },
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "0.5" }
+                    new NodeProperty { Name = "intensity", Type = "float", Label = "Intensity (0-1)", DefaultValue = "0.5" },
+                    new NodeProperty { Name = "innerRadius", Type = "float", Label = "Inner Radius", DefaultValue = "0.0" },
+                    new NodeProperty { Name = "outerRadius", Type = "float", Label = "Outer Radius", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "fadeIn", Type = "float", Label = "Fade In Time", DefaultValue = "0.5" },
+                    new NodeProperty { Name = "hold", Type = "float", Label = "Hold Time", DefaultValue = "0.0" },
+                    new NodeProperty { Name = "fadeOut", Type = "float", Label = "Fade Out Time", DefaultValue = "0.0" },
+                    new NodeProperty { Name = "unknown", Type = "float", Label = "Unknown Param", DefaultValue = "0.0" }
                 },
-                CodeTemplate = "Quest:RadialBlurFadeTo({intensity}, {duration})\nQuest:Pause({duration})\n{CHILDREN}" },
+                CodeTemplate = "Quest:RadialBlurFadeTo({intensity}, {innerRadius}, {outerRadius}, {fadeIn}, {hold}, {fadeOut}, {unknown})\nQuest:Pause({fadeIn})\n{CHILDREN}" },
 
             new() { Type = "radialBlurOff", Label = "Radial Blur Off", Category = "action", Icon = "🌀❌", IsAdvanced = true,
-                Description = "Remove radial blur effect",
-                Properties = new() {
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "0.5" }
-                },
-                CodeTemplate = "Quest:RadialBlurFadeOut({duration})\nQuest:Pause({duration})\n{CHILDREN}" },
+                Description = "Cancel any active radial blur effect",
+                Properties = new(),
+                CodeTemplate = "Quest:CancelRadialBlurFade()\n{CHILDREN}" },
 
             new() { Type = "colorFilter", Label = "Color Filter", Category = "action", Icon = "🎨", IsAdvanced = true,
-                Description = "Apply color filter to screen",
+                Description = "Apply color filter to screen (5 params + color: saturation, brightness, contrast, intensity, fade)",
                 Properties = new() {
+                    new NodeProperty { Name = "saturation", Type = "float", Label = "Saturation", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "brightness", Type = "float", Label = "Brightness", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "contrast", Type = "float", Label = "Contrast", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "intensity", Type = "float", Label = "Intensity (0-1)", DefaultValue = "0.5" },
+                    new NodeProperty { Name = "fadeTime", Type = "float", Label = "Fade Time", DefaultValue = "0.5" },
                     new NodeProperty { Name = "r", Type = "float", Label = "Red (0-1)", DefaultValue = "1.0" },
                     new NodeProperty { Name = "g", Type = "float", Label = "Green (0-1)", DefaultValue = "1.0" },
-                    new NodeProperty { Name = "b", Type = "float", Label = "Blue (0-1)", DefaultValue = "1.0" },
-                    new NodeProperty { Name = "a", Type = "float", Label = "Alpha (0-1)", DefaultValue = "0.3" },
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Fade Duration", DefaultValue = "0.5" }
+                    new NodeProperty { Name = "b", Type = "float", Label = "Blue (0-1)", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:ScreenFilterFadeTo({r}, {g}, {b}, {a}, {duration})\nQuest:Pause({duration})\n{CHILDREN}" },
+                CodeTemplate = "Quest:ScreenFilterFadeTo({saturation}, {brightness}, {contrast}, {intensity}, {fadeTime}, {r={r}, g={g}, b={b}})\nQuest:Pause({fadeTime})\n{CHILDREN}" },
 
             new() { Type = "colorFilterOff", Label = "Color Filter Off", Category = "action", Icon = "🔲🎨", IsAdvanced = true,
-                Description = "Remove color filter from screen",
+                Description = "Reset color filter to neutral (requires handle from FadeTo - use neutral values instead)",
                 Properties = new() {
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Fade Duration", DefaultValue = "0.5" }
+                    new NodeProperty { Name = "fadeTime", Type = "float", Label = "Fade Time", DefaultValue = "0.5" }
                 },
-                CodeTemplate = "Quest:ScreenFilterFadeOut({duration})\nQuest:Pause({duration})\n{CHILDREN}" },
+                CodeTemplate = "-- Reset to neutral filter (intensity 0)\nQuest:ScreenFilterFadeTo(1.0, 1.0, 1.0, 0.0, {fadeTime}, {r=1.0, g=1.0, b=1.0})\nQuest:Pause({fadeTime})\n{CHILDREN}" },
 
             // ===== MUSIC (Just pause for timing) =====
             new() { Type = "overrideMusic", Label = "Override Music", Category = "action", Icon = "🎵", IsAdvanced = false,
@@ -372,7 +378,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "enabled", Type = "bool", Label = "Enabled", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:EnableDangerMusicForHero({enabled})\n{CHILDREN}" },
+                CodeTemplate = "Quest:EnableDangerMusic({enabled})\n{CHILDREN}" },
 
             new() { Type = "playMovie", Label = "Play Movie", Category = "action", Icon = "🎞️", IsAdvanced = true,
                 Description = "Play an AVI movie file",
@@ -385,17 +391,17 @@ public static class NodeDefinitions
             new() { Type = "makeHostile", Label = "Make Hostile", Category = "action", Icon = "😡", IsAdvanced = false,
                 Description = "Make this entity hostile to the hero",
                 Properties = new(),
-                CodeTemplate = "Quest:EntitySetAsEnemy(Me)\n{CHILDREN}" },
+                CodeTemplate = "Quest:EntitySetThingAsEnemyOfThing(Me, hero)\n{CHILDREN}" },
 
             new() { Type = "makeFriendly", Label = "Make Friendly", Category = "action", Icon = "😊", IsAdvanced = false,
                 Description = "Make this entity friendly to the hero",
                 Properties = new(),
-                CodeTemplate = "Quest:EntitySetAsFriend(Me)\n{CHILDREN}" },
+                CodeTemplate = "Me:SetFriendsWithEverythingFlag(true)\n{CHILDREN}" },
 
             new() { Type = "killEntity", Label = "Kill Entity", Category = "action", Icon = "💀", IsAdvanced = false,
                 Description = "Kill this entity",
                 Properties = new(),
-                CodeTemplate = "Quest:EntitySetDead(Me)\n{CHILDREN}" },
+                CodeTemplate = "Quest:SetThingAsKilled(Me)\n{CHILDREN}" },
 
             new() { Type = "teleportEntity", Label = "Teleport Entity", Category = "action", Icon = "⚡", IsAdvanced = true,
                 Description = "Teleport this entity to a marker",
@@ -409,12 +415,12 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "distance", Type = "float", Label = "Follow Distance", DefaultValue = "3.0" }
                 },
-                CodeTemplate = "Me:FollowHero({distance})\n{CHILDREN}" },
+                CodeTemplate = "Me:FollowThing(hero, {distance}, true)\n{CHILDREN}" },
 
             new() { Type = "stopFollowing", Label = "Stop Following", Category = "action", Icon = "🛑", IsAdvanced = false,
                 Description = "Stop following the hero",
                 Properties = new(),
-                CodeTemplate = "Me:StopFollowing()\n{CHILDREN}" },
+                CodeTemplate = "Me:StopFollowingThing(hero)\n{CHILDREN}" },
 
             new() { Type = "sheatheWeapons", Label = "Sheathe Weapons", Category = "action", Icon = "🔒🗡️", IsAdvanced = true,
                 Description = "Put weapons away",
@@ -574,9 +580,10 @@ public static class NodeDefinitions
             new() { Type = "checkBoastTaken", Label = "Boast Taken", Category = "condition", Icon = "?🏆", IsAdvanced = true, HasBranching = true,
                 Description = "Check if hero has taken a specific boast",
                 Properties = new() {
-                    new NodeProperty { Name = "boastName", Type = "string", Label = "Boast Name", DefaultValue = "BOAST_NAME" }
+                    new NodeProperty { Name = "boastID", Type = "int", Label = "Boast ID", DefaultValue = "1" },
+                    new NodeProperty { Name = "questName", Type = "string", Label = "Quest Name", DefaultValue = "QUEST_NAME" }
                 },
-                CodeTemplate = "if Quest:HasHeroTakenBoast(\"{boastName}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
+                CodeTemplate = "if Quest:IsBoastTaken({boastID}, \"{questName}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
 
             new() { Type = "checkCameraScripted", Label = "Camera Scripted", Category = "condition", Icon = "?🎥", IsAdvanced = true, HasBranching = true,
                 Description = "Check if camera is currently in scripted mode",

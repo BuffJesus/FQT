@@ -70,7 +70,6 @@
             <Setter Property="Background" Value="#1A1A1A" />
             <Setter Property="BorderBrush" Value="#3A3A3A" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.4" Color="Black" />

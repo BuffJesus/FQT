@@ -618,7 +618,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "condition", Type = "text", Label = "Condition (Lua)", DefaultValue = "Me:IsAlive()" }
                 },
-                CodeTemplate = "while {condition} do\n{CHILDREN}\nif not Quest:Wait(0) then break end\nend" },
+                CodeTemplate = "while {condition} do\n{CHILDREN}\nQuest:Pause(0)\nif not Quest:NewScriptFrame() then break end\nend" },
             
             new() { Type = "delay", Label = "Delay", Category = "flow", Icon = "⏱️", IsAdvanced = false,
                 Description = "Wait before continuing",

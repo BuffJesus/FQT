@@ -49,7 +49,7 @@ public class TemplateService
         {
             Id = "npc_villager",
             ScriptName = "TalkNPC",
-            DefName = "VILLAGER_MALE",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
             EntityType = EntityType.Creature,
             MakeBehavioral = true,
             ExclusiveControl = true
@@ -174,13 +174,13 @@ public class TemplateService
         // Add connections between nodes
         npc.Connections = new List<NodeConnection>
         {
-            new NodeConnection { FromNodeId = talkNodeId, FromPort = "output", ToNodeId = cameraNodeId, ToPort = "input" },
-            new NodeConnection { FromNodeId = cameraNodeId, FromPort = "output", ToNodeId = startConvoNodeId, ToPort = "input" },
-            new NodeConnection { FromNodeId = startConvoNodeId, FromPort = "output", ToNodeId = line1NodeId, ToPort = "input" },
-            new NodeConnection { FromNodeId = line1NodeId, FromPort = "output", ToNodeId = line2NodeId, ToPort = "input" },
-            new NodeConnection { FromNodeId = line2NodeId, FromPort = "output", ToNodeId = endConvoNodeId, ToPort = "input" },
-            new NodeConnection { FromNodeId = endConvoNodeId, FromPort = "output", ToNodeId = resetCameraNodeId, ToPort = "input" },
-            new NodeConnection { FromNodeId = resetCameraNodeId, FromPort = "output", ToNodeId = completeNodeId, ToPort = "input" }
+            new NodeConnection { FromNodeId = talkNodeId, FromPort = "Output", ToNodeId = cameraNodeId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = cameraNodeId, FromPort = "Output", ToNodeId = startConvoNodeId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = startConvoNodeId, FromPort = "Output", ToNodeId = line1NodeId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = line1NodeId, FromPort = "Output", ToNodeId = line2NodeId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = line2NodeId, FromPort = "Output", ToNodeId = endConvoNodeId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = endConvoNodeId, FromPort = "Output", ToNodeId = resetCameraNodeId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = resetCameraNodeId, FromPort = "Output", ToNodeId = completeNodeId, ToPort = "Input" }
         };
 
         project.Entities.Add(npc);
@@ -425,20 +425,20 @@ public class TemplateService
         stranger.Nodes = nodes;
         stranger.Connections = new List<NodeConnection>
         {
-            new NodeConnection { FromNodeId = triggerId, FromPort = "output", ToNodeId = letterboxOnId, ToPort = "input" },
-            new NodeConnection { FromNodeId = letterboxOnId, FromPort = "output", ToNodeId = fadeOutId, ToPort = "input" },
-            new NodeConnection { FromNodeId = fadeOutId, FromPort = "output", ToNodeId = musicId, ToPort = "input" },
-            new NodeConnection { FromNodeId = musicId, FromPort = "output", ToNodeId = fadeInId, ToPort = "input" },
-            new NodeConnection { FromNodeId = fadeInId, FromPort = "output", ToNodeId = cameraOrbitId, ToPort = "input" },
-            new NodeConnection { FromNodeId = cameraOrbitId, FromPort = "output", ToNodeId = startConvoId, ToPort = "input" },
-            new NodeConnection { FromNodeId = startConvoId, FromPort = "output", ToNodeId = line1Id, ToPort = "input" },
-            new NodeConnection { FromNodeId = line1Id, FromPort = "output", ToNodeId = line2Id, ToPort = "input" },
-            new NodeConnection { FromNodeId = line2Id, FromPort = "output", ToNodeId = line3Id, ToPort = "input" },
-            new NodeConnection { FromNodeId = line3Id, FromPort = "output", ToNodeId = endConvoId, ToPort = "input" },
-            new NodeConnection { FromNodeId = endConvoId, FromPort = "output", ToNodeId = stopMusicId, ToPort = "input" },
-            new NodeConnection { FromNodeId = stopMusicId, FromPort = "output", ToNodeId = letterboxOffId, ToPort = "input" },
-            new NodeConnection { FromNodeId = letterboxOffId, FromPort = "output", ToNodeId = cameraResetId, ToPort = "input" },
-            new NodeConnection { FromNodeId = cameraResetId, FromPort = "output", ToNodeId = completeId, ToPort = "input" }
+            new NodeConnection { FromNodeId = triggerId, FromPort = "Output", ToNodeId = letterboxOnId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = letterboxOnId, FromPort = "Output", ToNodeId = fadeOutId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = fadeOutId, FromPort = "Output", ToNodeId = musicId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = musicId, FromPort = "Output", ToNodeId = fadeInId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = fadeInId, FromPort = "Output", ToNodeId = cameraOrbitId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = cameraOrbitId, FromPort = "Output", ToNodeId = startConvoId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = startConvoId, FromPort = "Output", ToNodeId = line1Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = line1Id, FromPort = "Output", ToNodeId = line2Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = line2Id, FromPort = "Output", ToNodeId = line3Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = line3Id, FromPort = "Output", ToNodeId = endConvoId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = endConvoId, FromPort = "Output", ToNodeId = stopMusicId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = stopMusicId, FromPort = "Output", ToNodeId = letterboxOffId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = letterboxOffId, FromPort = "Output", ToNodeId = cameraResetId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = cameraResetId, FromPort = "Output", ToNodeId = completeId, ToPort = "Input" }
         };
 
         project.Entities.Add(stranger);
@@ -488,7 +488,7 @@ public class TemplateService
         {
             Id = "arena_champion",
             ScriptName = "ArenaChampion",
-            DefName = "BANDIT_LEADER",
+            DefName = "CREATURE_BANDIT_CHIEF",
             EntityType = EntityType.Creature,
             MakeBehavioral = true,
             ExclusiveControl = true,
@@ -536,7 +536,7 @@ public class TemplateService
             new BehaviorNode { Id = letterboxOffId, Type = "letterboxOff", Category = "action", Label = "Letterbox Off", Icon = "📺", X = 1100, Y = 100 },
             new BehaviorNode { Id = cameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1250, Y = 100,
                 Config = new Dictionary<string, object> { { "duration", "1.0" } } },
-            new BehaviorNode { Id = hostileId, Type = "becomeHostile", Category = "action", Label = "Attack!", Icon = "😡", X = 1400, Y = 100 },
+            new BehaviorNode { Id = hostileId, Type = "makeHostile", Category = "action", Label = "Attack!", Icon = "😡", X = 1400, Y = 100 },
 
             // Death/Victory sequence
             new BehaviorNode { Id = deathTriggerId, Type = "onKilledByHero", Category = "trigger", Label = "When Killed", Icon = "⚰️", X = 50, Y = 300 },
@@ -557,23 +557,23 @@ public class TemplateService
         boss.Connections = new List<NodeConnection>
         {
             // Intro chain
-            new NodeConnection { FromNodeId = proximityId, FromPort = "output", ToNodeId = letterboxId, ToPort = "input" },
-            new NodeConnection { FromNodeId = letterboxId, FromPort = "output", ToNodeId = dangerMusicId, ToPort = "input" },
-            new NodeConnection { FromNodeId = dangerMusicId, FromPort = "output", ToNodeId = cameraLookId, ToPort = "input" },
-            new NodeConnection { FromNodeId = cameraLookId, FromPort = "output", ToNodeId = blurId, ToPort = "input" },
-            new NodeConnection { FromNodeId = blurId, FromPort = "output", ToNodeId = dialogueId, ToPort = "input" },
-            new NodeConnection { FromNodeId = dialogueId, FromPort = "output", ToNodeId = blurOffId, ToPort = "input" },
-            new NodeConnection { FromNodeId = blurOffId, FromPort = "output", ToNodeId = letterboxOffId, ToPort = "input" },
-            new NodeConnection { FromNodeId = letterboxOffId, FromPort = "output", ToNodeId = cameraResetId, ToPort = "input" },
-            new NodeConnection { FromNodeId = cameraResetId, FromPort = "output", ToNodeId = hostileId, ToPort = "input" },
+            new NodeConnection { FromNodeId = proximityId, FromPort = "Output", ToNodeId = letterboxId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = letterboxId, FromPort = "Output", ToNodeId = dangerMusicId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = dangerMusicId, FromPort = "Output", ToNodeId = cameraLookId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = cameraLookId, FromPort = "Output", ToNodeId = blurId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = blurId, FromPort = "Output", ToNodeId = dialogueId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = dialogueId, FromPort = "Output", ToNodeId = blurOffId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = blurOffId, FromPort = "Output", ToNodeId = letterboxOffId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = letterboxOffId, FromPort = "Output", ToNodeId = cameraResetId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = cameraResetId, FromPort = "Output", ToNodeId = hostileId, ToPort = "Input" },
 
             // Victory chain
-            new NodeConnection { FromNodeId = deathTriggerId, FromPort = "output", ToNodeId = colorFilterId, ToPort = "input" },
-            new NodeConnection { FromNodeId = colorFilterId, FromPort = "output", ToNodeId = victoryMusicId, ToPort = "input" },
-            new NodeConnection { FromNodeId = victoryMusicId, FromPort = "output", ToNodeId = victoryMsgId, ToPort = "input" },
-            new NodeConnection { FromNodeId = victoryMsgId, FromPort = "output", ToNodeId = filterOffId, ToPort = "input" },
-            new NodeConnection { FromNodeId = filterOffId, FromPort = "output", ToNodeId = stopMusicId, ToPort = "input" },
-            new NodeConnection { FromNodeId = stopMusicId, FromPort = "output", ToNodeId = completeId, ToPort = "input" }
+            new NodeConnection { FromNodeId = deathTriggerId, FromPort = "Output", ToNodeId = colorFilterId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = colorFilterId, FromPort = "Output", ToNodeId = victoryMusicId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = victoryMusicId, FromPort = "Output", ToNodeId = victoryMsgId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = victoryMsgId, FromPort = "Output", ToNodeId = filterOffId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = filterOffId, FromPort = "Output", ToNodeId = stopMusicId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = stopMusicId, FromPort = "Output", ToNodeId = completeId, ToPort = "Input" }
         };
 
         project.Entities.Add(boss);
@@ -619,7 +619,7 @@ public class TemplateService
         {
             Id = "witness_1",
             ScriptName = "Witness1",
-            DefName = "VILLAGER_FEMALE",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
             EntityType = EntityType.Creature,
             MakeBehavioral = true,
             ExclusiveControl = true,
@@ -664,18 +664,18 @@ public class TemplateService
 
         witness1.Connections = new List<NodeConnection>
         {
-            new NodeConnection { FromNodeId = w1TalkId, FromPort = "output", ToNodeId = w1CameraId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1CameraId, FromPort = "output", ToNodeId = w1ConvoId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1ConvoId, FromPort = "output", ToNodeId = w1Line1Id, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1Line1Id, FromPort = "output", ToNodeId = w1QuestionId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1QuestionId, FromPort = "output", ToNodeId = w1CheckId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1CheckId, FromPort = "Yes", ToNodeId = w1YesLineId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1CheckId, FromPort = "No", ToNodeId = w1NoLineId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1CheckId, FromPort = "Unsure", ToNodeId = w1NoLineId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1YesLineId, FromPort = "output", ToNodeId = w1EndConvoId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1NoLineId, FromPort = "output", ToNodeId = w1EndConvoId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1EndConvoId, FromPort = "output", ToNodeId = w1SetStateId, ToPort = "input" },
-            new NodeConnection { FromNodeId = w1SetStateId, FromPort = "output", ToNodeId = w1CameraResetId, ToPort = "input" }
+            new NodeConnection { FromNodeId = w1TalkId, FromPort = "Output", ToNodeId = w1CameraId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1CameraId, FromPort = "Output", ToNodeId = w1ConvoId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1ConvoId, FromPort = "Output", ToNodeId = w1Line1Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1Line1Id, FromPort = "Output", ToNodeId = w1QuestionId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1QuestionId, FromPort = "Output", ToNodeId = w1CheckId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1CheckId, FromPort = "Yes", ToNodeId = w1YesLineId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1CheckId, FromPort = "No", ToNodeId = w1NoLineId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1CheckId, FromPort = "Unsure", ToNodeId = w1NoLineId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1YesLineId, FromPort = "Output", ToNodeId = w1EndConvoId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1NoLineId, FromPort = "Output", ToNodeId = w1EndConvoId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1EndConvoId, FromPort = "Output", ToNodeId = w1SetStateId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = w1SetStateId, FromPort = "Output", ToNodeId = w1CameraResetId, ToPort = "Input" }
         };
 
         project.Entities.Add(witness1);

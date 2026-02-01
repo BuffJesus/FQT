@@ -420,11 +420,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
             if (sourceNode != null && targetNode != null)
             {
-                // Find the correct output connector by FromPort name
+                // Find the correct output connector by FromPort name (case-insensitive)
                 ConnectorViewModel? sourceConnector = null;
                 if (!string.IsNullOrEmpty(conn.FromPort))
                 {
-                    sourceConnector = sourceNode.Output.FirstOrDefault(o => o.Title == conn.FromPort);
+                    sourceConnector = sourceNode.Output.FirstOrDefault(o =>
+                        string.Equals(o.Title, conn.FromPort, StringComparison.OrdinalIgnoreCase));
                 }
                 // Fallback to first output if not found or no FromPort specified
                 if (sourceConnector == null)
@@ -432,11 +433,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
                     sourceConnector = sourceNode.Output.FirstOrDefault();
                 }
 
-                // Find the correct input connector by ToPort name
+                // Find the correct input connector by ToPort name (case-insensitive)
                 ConnectorViewModel? targetConnector = null;
                 if (!string.IsNullOrEmpty(conn.ToPort))
                 {
-                    targetConnector = targetNode.Input.FirstOrDefault(i => i.Title == conn.ToPort);
+                    targetConnector = targetNode.Input.FirstOrDefault(i =>
+                        string.Equals(i.Title, conn.ToPort, StringComparison.OrdinalIgnoreCase));
                 }
                 // Fallback to first input if not found or no ToPort specified
                 if (targetConnector == null)

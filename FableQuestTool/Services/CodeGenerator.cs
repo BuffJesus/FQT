@@ -371,12 +371,16 @@ public sealed class CodeGenerator
         return $@"    local marker_{entity.ScriptName} = Quest:GetThingWithScriptName(""{entity.SpawnMarker}"")
     if marker_{entity.ScriptName} ~= nil then
         local pos_{entity.ScriptName} = marker_{entity.ScriptName}:GetPos()
-        Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
+        local {entity.ScriptName} = Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
     else
         local hero = Quest:GetHero()
         local heroPos = hero:GetPos()
-        Quest:CreateCreature(""{entity.DefName}"", heroPos, ""{entity.ScriptName}"")
-    end";
+        local {entity.ScriptName} = Quest:CreateCreature(""{entity.DefName}"", heroPos, ""{entity.ScriptName}"")
+    end
+
+    -- Brief pause to allow entity to fully spawn
+    Quest:Pause(0.1)
+    if not Quest:NewScriptFrame() then return end";
     }
 
     private string GenerateCreateCreatureAtPosition(QuestEntity entity)
@@ -386,15 +390,23 @@ public sealed class CodeGenerator
         string z = entity.SpawnZ.ToString(CultureInfo.InvariantCulture);
 
         return $@"    local pos_{entity.ScriptName} = {{x={x}, y={y}, z={z}}}
-    Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")";
+    local {entity.ScriptName} = Quest:CreateCreature(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
+
+    -- Brief pause to allow entity to fully spawn
+    Quest:Pause(0.1)
+    if not Quest:NewScriptFrame() then return end";
     }
 
     private string GenerateCreateCreatureOnEntity(QuestEntity entity)
     {
         return $@"    local targetEntity_{entity.ScriptName} = Quest:GetThingWithScriptName(""{entity.SpawnMarker}"")
     if targetEntity_{entity.ScriptName} ~= nil then
-        Quest:CreateCreatureOnEntity(""{entity.DefName}"", targetEntity_{entity.ScriptName}, ""{entity.ScriptName}"")
-    end";
+        local {entity.ScriptName} = Quest:CreateCreatureOnEntity(""{entity.DefName}"", targetEntity_{entity.ScriptName}, ""{entity.ScriptName}"")
+    end
+
+    -- Brief pause to allow entity to fully spawn
+    Quest:Pause(0.1)
+    if not Quest:NewScriptFrame() then return end";
     }
 
     private void GenerateMonitorQuestCompletion(StringBuilder sb, QuestProject quest)

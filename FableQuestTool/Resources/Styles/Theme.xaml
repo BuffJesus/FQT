@@ -1,13 +1,29 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Color x:Key="BackgroundPrimaryColor">#1A1A2E</Color>
-    <Color x:Key="BackgroundSecondaryColor">#16213E</Color>
-    <Color x:Key="PanelBackgroundColor">#1E2746</Color>
-    <Color x:Key="SurfaceBackgroundColor">#0F3460</Color>
-    <Color x:Key="AccentPrimaryColor">#E94560</Color>
-    <Color x:Key="TextPrimaryColor">#E8E8E8</Color>
-    <Color x:Key="TextSecondaryColor">#A0A0A0</Color>
-    <Color x:Key="BorderColor">#2A2A4A</Color>
+    <!-- UE5 Blueprint-inspired Dark Theme Colors -->
+    <Color x:Key="BackgroundPrimaryColor">#0D1117</Color>
+    <Color x:Key="BackgroundSecondaryColor">#161B22</Color>
+    <Color x:Key="PanelBackgroundColor">#1C2128</Color>
+    <Color x:Key="SurfaceBackgroundColor">#141824</Color>
+    <Color x:Key="AccentPrimaryColor">#58A6FF</Color>
+    <Color x:Key="TextPrimaryColor">#E6EDF3</Color>
+    <Color x:Key="TextSecondaryColor">#8B949E</Color>
+    <Color x:Key="BorderColor">#30363D</Color>
+
+    <!-- UE5 Blueprint Node Category Colors -->
+    <Color x:Key="TriggerNodeColor">#CC0000</Color>
+    <Color x:Key="ActionNodeColor">#0066CC</Color>
+    <Color x:Key="ConditionNodeColor">#668800</Color>
+    <Color x:Key="FlowNodeColor">#666666</Color>
+    <Color x:Key="CustomNodeColor">#8800AA</Color>
+
+    <!-- Blueprint Wire Colors -->
+    <Color x:Key="ExecWireColor">#FFFFFF</Color>
+    <Color x:Key="BoolWireColor">#CC0000</Color>
+    <Color x:Key="IntWireColor">#1CC4AF</Color>
+    <Color x:Key="FloatWireColor">#9EEF5A</Color>
+    <Color x:Key="StringWireColor">#F0A1D4</Color>
+    <Color x:Key="ObjectWireColor">#0099DB</Color>
 
     <SolidColorBrush x:Key="BackgroundPrimary" Color="{StaticResource BackgroundPrimaryColor}" />
     <SolidColorBrush x:Key="BackgroundSecondary" Color="{StaticResource BackgroundSecondaryColor}" />

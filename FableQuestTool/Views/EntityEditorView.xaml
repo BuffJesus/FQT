@@ -13,45 +13,95 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibility" />
         <converters:InvertedNullToVisibilityConverter x:Key="InvertedNullToVisibility" />
+        <converters:StringToColorBrushConverter x:Key="StringToColorBrush" />
+        <converters:StringToColorConverter x:Key="StringToColor" />
+        <converters:HeaderGradientConverter x:Key="HeaderGradient" />
+
+        <!-- UE5 Blueprint Colors -->
+        <SolidColorBrush x:Key="BlueprintGridColor" Color="#1A1F2E" />
+        <SolidColorBrush x:Key="BlueprintGridLineColor" Color="#252B3B" />
+        <SolidColorBrush x:Key="BlueprintNodeBackground" Color="#1A1A1A" />
+        <SolidColorBrush x:Key="BlueprintNodeBorder" Color="#3A3A3A" />
+        <SolidColorBrush x:Key="BlueprintExecWire" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="BlueprintPendingWire" Color="#FFA500" />
+
+        <!-- UE5-style Node Icon Style -->
         <Style x:Key="NodeIconStyle" TargetType="Border">
             <Setter Property="Background" Value="#3498DB" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Category}" Value="trigger">
-                    <Setter Property="Background" Value="#27AE60" />
+                    <Setter Property="Background" Value="#CC0000" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="action">
-                    <Setter Property="Background" Value="#3498DB" />
+                    <Setter Property="Background" Value="#0066CC" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="condition">
-                    <Setter Property="Background" Value="#F39C12" />
+                    <Setter Property="Background" Value="#668800" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="flow">
-                    <Setter Property="Background" Value="#9B59B6" />
+                    <Setter Property="Background" Value="#666666" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="custom">
-                    <Setter Property="Background" Value="#7F8C8D" />
+                    <Setter Property="Background" Value="#8800AA" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- UE5-style Reroute Node Style -->
+        <Style x:Key="RerouteNodeStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Fill" Value="#1A1A1A" />
+            <Setter Property="Stroke" Value="#FFFFFF" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <!-- UE5-style Exec Pin (Arrow shape) -->
+        <Style x:Key="ExecConnectorStyle" TargetType="Polygon">
+            <Setter Property="Fill" Value="Transparent" />
+            <Setter Property="Stroke" Value="#FFFFFF" />
+            <Setter Property="StrokeThickness" Value="1.5" />
+            <Setter Property="Points" Value="0,0 8,5 0,10 0,7 4,5 0,3" />
+        </Style>
+
+        <!-- UE5-style Node Base Style -->
         <Style TargetType="nodify:Node">
-            <Setter Property="Background" Value="{DynamicResource PanelBackground}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Background" Value="#1A1A1A" />
+            <Setter Property="BorderBrush" Value="#3A3A3A" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.4" Color="Black" />
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Category}" Value="trigger">
-                    <Setter Property="BorderBrush" Value="#27AE60" />
+                    <Setter Property="BorderBrush" Value="#CC0000" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="action">
-                    <Setter Property="BorderBrush" Value="#3498DB" />
+                    <Setter Property="BorderBrush" Value="#0066CC" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="condition">
-                    <Setter Property="BorderBrush" Value="#F39C12" />
+                    <Setter Property="BorderBrush" Value="#668800" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="flow">
-                    <Setter Property="BorderBrush" Value="#9B59B6" />
+                    <Setter Property="BorderBrush" Value="#666666" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="custom">
-                    <Setter Property="BorderBrush" Value="#E91E63" />
+                    <Setter Property="BorderBrush" Value="#8800AA" />
+                </DataTrigger>
+                <!-- Make reroute/redirection nodes invisible (only show the center dot) -->
+                <DataTrigger Binding="{Binding IsRerouteNode}" Value="True">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Setter Property="Effect" Value="{x:Null}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Setter Property="Effect" Value="{x:Null}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -257,9 +307,29 @@
                             </ScrollViewer>
                         </Border>
 
-                        <!-- Center Panel: Node Graph Canvas -->
-                        <Border Grid.Column="1" Background="{DynamicResource SurfaceBackground}" Margin="8">
+                        <!-- Center Panel: Node Graph Canvas (UE5 Blueprint Style) -->
+                        <Border Grid.Column="1" Background="#141824" Margin="8" CornerRadius="4">
                             <Grid>
+                                <!-- Blueprint-style grid background -->
+                                <Canvas ClipToBounds="True">
+                                    <Canvas.Background>
+                                        <DrawingBrush TileMode="Tile" Viewport="0,0,40,40" ViewportUnits="Absolute">
+                                            <DrawingBrush.Drawing>
+                                                <GeometryDrawing>
+                                                    <GeometryDrawing.Geometry>
+                                                        <GeometryGroup>
+                                                            <RectangleGeometry Rect="0,0,40,40" />
+                                                        </GeometryGroup>
+                                                    </GeometryDrawing.Geometry>
+                                                    <GeometryDrawing.Pen>
+                                                        <Pen Brush="#1E2636" Thickness="1" />
+                                                    </GeometryDrawing.Pen>
+                                                </GeometryDrawing>
+                                            </DrawingBrush.Drawing>
+                                        </DrawingBrush>
+                                    </Canvas.Background>
+                                </Canvas>
+
                                 <nodify:NodifyEditor ItemsSource="{Binding Nodes}"
                                                      Connections="{Binding Connections}"
                                                      PendingConnection="{Binding PendingConnection, Mode=TwoWay}"
@@ -274,45 +344,110 @@
                                             <Setter Property="Location" Value="{Binding Location, Mode=TwoWay}" />
                                         </Style>
                                     </nodify:NodifyEditor.ItemContainerStyle>
+
+                                    <!-- UE5-style Wire Connections -->
                                     <nodify:NodifyEditor.ConnectionTemplate>
                                         <DataTemplate>
                                             <nodify:Connection Source="{Binding Source.Anchor}"
                                                              Target="{Binding Target.Anchor}"
-                                                             Stroke="#666666"
-                                                             StrokeThickness="2" />
+                                                             Stroke="{Binding WireColor, Converter={StaticResource StringToColorBrush}}"
+                                                             StrokeThickness="3"
+                                                             SourceOffset="12,0"
+                                                             TargetOffset="-12,0">
+                                                <nodify:Connection.Effect>
+                                                    <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.3" Color="White" />
+                                                </nodify:Connection.Effect>
+                                            </nodify:Connection>
                                         </DataTemplate>
                                     </nodify:NodifyEditor.ConnectionTemplate>
+
+                                    <!-- UE5-style Pending Connection (orange while dragging) -->
                                     <nodify:NodifyEditor.PendingConnectionTemplate>
                                         <DataTemplate>
                                             <nodify:PendingConnection Source="{Binding Source.Anchor}"
                                                                     Target="{Binding Target}"
-                                                                    Stroke="#E94560"
-                                                                    StrokeThickness="2"
-                                                                    StrokeDashArray="5 2"
-                                                                    AllowOnlyConnectors="True" />
+                                                                    Stroke="#FFA500"
+                                                                    StrokeThickness="3"
+                                                                    StrokeDashArray="4 2"
+                                                                    AllowOnlyConnectors="True">
+                                                <nodify:PendingConnection.Effect>
+                                                    <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.5" Color="Orange" />
+                                                </nodify:PendingConnection.Effect>
+                                            </nodify:PendingConnection>
                                         </DataTemplate>
                                     </nodify:NodifyEditor.PendingConnectionTemplate>
+                                    <!-- UE5-style Node Template -->
                                     <nodify:NodifyEditor.ItemTemplate>
                                         <DataTemplate>
                                             <nodify:Node Input="{Binding Input}"
                                                        Output="{Binding Output}"
                                                        Padding="0">
+                                                <!-- UE5-style Input Connector (exec arrow pointing in) -->
                                                 <nodify:Node.InputConnectorTemplate>
                                                     <DataTemplate>
-                                                        <nodify:Connector Anchor="{Binding Anchor, Mode=OneWayToSource}"
-                                                                        IsConnected="True" />
+                                                        <Grid Margin="0,2">
+                                                            <nodify:Connector Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                                                            IsConnected="True"
+                                                                            Background="Transparent">
+                                                                <Grid>
+                                                                    <!-- Exec pin arrow (pointing right/in) -->
+                                                                    <Path Data="M0,0 L6,4 L0,8 Z"
+                                                                          Fill="{Binding ConnectorColor, Converter={StaticResource StringToColorBrush}}"
+                                                                          Stroke="{Binding ConnectorColor, Converter={StaticResource StringToColorBrush}}"
+                                                                          StrokeThickness="1"
+                                                                          Margin="0,0,4,0"
+                                                                          VerticalAlignment="Center" />
+                                                                    <!-- Pin title -->
+                                                                    <TextBlock Text="{Binding Title}"
+                                                                             Foreground="#AAAAAA"
+                                                                             FontSize="10"
+                                                                             Margin="10,0,0,0"
+                                                                             VerticalAlignment="Center" />
+                                                                </Grid>
+                                                            </nodify:Connector>
+                                                        </Grid>
                                                     </DataTemplate>
                                                 </nodify:Node.InputConnectorTemplate>
+
+                                                <!-- UE5-style Output Connector (exec arrow pointing out) -->
                                                 <nodify:Node.OutputConnectorTemplate>
                                                     <DataTemplate>
-                                                        <nodify:Connector Anchor="{Binding Anchor, Mode=OneWayToSource}"
-                                                                        IsConnected="True" />
+                                                        <Grid Margin="0,2">
+                                                            <nodify:Connector Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                                                            IsConnected="True"
+                                                                            Background="Transparent"
+                                                                            HorizontalContentAlignment="Right">
+                                                                <Grid HorizontalAlignment="Right">
+                                                                    <!-- Pin title -->
+                                                                    <TextBlock Text="{Binding Title}"
+                                                                             Foreground="#AAAAAA"
+                                                                             FontSize="10"
+                                                                             Margin="0,0,10,0"
+                                                                             HorizontalAlignment="Right"
+                                                                             VerticalAlignment="Center" />
+                                                                    <!-- Exec pin arrow (pointing right/out) -->
+                                                                    <Path Data="M0,0 L6,4 L0,8 Z"
+                                                                          Fill="{Binding ConnectorColor, Converter={StaticResource StringToColorBrush}}"
+                                                                          Stroke="{Binding ConnectorColor, Converter={StaticResource StringToColorBrush}}"
+                                                                          StrokeThickness="1"
+                                                                          HorizontalAlignment="Right"
+                                                                          VerticalAlignment="Center" />
+                                                                </Grid>
+                                                            </nodify:Connector>
+                                                        </Grid>
                                                     </DataTemplate>
                                                 </nodify:Node.OutputConnectorTemplate>
+
                                                 <nodify:Node.Style>
                                                     <Style TargetType="nodify:Node" BasedOn="{StaticResource {x:Type nodify:Node}}">
-                                                        <Setter Property="MinWidth" Value="160" />
+                                                        <Setter Property="MinWidth" Value="180" />
                                                         <Style.Triggers>
+                                                            <!-- Reroute nodes are minimal -->
+                                                            <DataTrigger Binding="{Binding IsRerouteNode}" Value="True">
+                                                                <Setter Property="MinWidth" Value="0" />
+                                                                <Setter Property="MinHeight" Value="0" />
+                                                                <Setter Property="Padding" Value="0" />
+                                                            </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
                                                                 <Setter Property="MinWidth" Value="0" />
                                                                 <Setter Property="MinHeight" Value="0" />
@@ -321,39 +456,59 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </nodify:Node.Style>
+
+                                                <!-- UE5-style Node Header with Gradient -->
                                                 <nodify:Node.Header>
-                                                    <Border Padding="8,6" Background="{DynamicResource BackgroundSecondary}">
+                                                    <Border Padding="10,8" CornerRadius="4,4,0,0">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="Visibility" Value="Visible" />
                                                                 <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsRerouteNode}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                    </DataTrigger>
                                                                     <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Border.Style>
+                                                        <Border.Background>
+                                                            <MultiBinding Converter="{StaticResource HeaderGradient}">
+                                                                <Binding Path="HeaderColor" />
+                                                                <Binding Path="HeaderColorDark" />
+                                                            </MultiBinding>
+                                                        </Border.Background>
                                                         <StackPanel Orientation="Horizontal">
-                                                            <Border Width="20" Height="20" CornerRadius="4" Margin="0,0,8,0"
-                                                                    Style="{StaticResource NodeIconStyle}">
+                                                            <!-- Category Icon -->
+                                                            <Border Width="22" Height="22" CornerRadius="3" Margin="0,0,10,0"
+                                                                    Background="#00000040">
                                                                 <TextBlock Text="{Binding Icon}"
                                                                          HorizontalAlignment="Center"
                                                                          VerticalAlignment="Center"
-                                                                         FontSize="12" />
+                                                                         FontSize="13" />
                                                             </Border>
+                                                            <!-- Node Title -->
                                                             <TextBlock Text="{Binding Title}"
                                                                      VerticalAlignment="Center"
-                                                                     FontWeight="Medium" />
+                                                                     FontWeight="SemiBold"
+                                                                     FontSize="12"
+                                                                     Foreground="White" />
                                                         </StackPanel>
                                                     </Border>
                                                 </nodify:Node.Header>
 
+                                                <!-- Node Body Content -->
                                                 <Grid>
-                                                    <StackPanel Margin="8">
+                                                    <!-- Regular node content -->
+                                                    <StackPanel Margin="10,6">
                                                         <StackPanel.Style>
                                                             <Style TargetType="StackPanel">
                                                                 <Setter Property="Visibility" Value="Visible" />
                                                                 <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsRerouteNode}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                    </DataTrigger>
                                                                     <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed" />
                                                                     </DataTrigger>
@@ -362,27 +517,38 @@
                                                         </StackPanel.Style>
                                                         <TextBlock Text="{Binding Type}"
                                                                  FontSize="10"
-                                                                 Opacity="0.7"
+                                                                 Foreground="#888888"
                                                                  TextWrapping="Wrap" />
                                                     </StackPanel>
 
-                                                    <Ellipse Width="6" Height="8"
-                                                           Fill="{DynamicResource BorderBrush}"
-                                                           Stroke="#9B59B6"
-                                                           StrokeThickness="2"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center">
-                                                        <Ellipse.Style>
-                                                            <Style TargetType="Ellipse">
+                                                    <!-- UE5-style Reroute Node (small diamond) -->
+                                                    <Grid HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center">
+                                                        <Grid.Style>
+                                                            <Style TargetType="Grid">
                                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                                 <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsRerouteNode}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                    </DataTrigger>
                                                                     <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
                                                                         <Setter Property="Visibility" Value="Visible" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
-                                                        </Ellipse.Style>
-                                                    </Ellipse>
+                                                        </Grid.Style>
+                                                        <!-- Diamond shape for reroute -->
+                                                        <Path Data="M6,0 L12,6 L6,12 L0,6 Z"
+                                                              Fill="#1A1A1A"
+                                                              Stroke="#FFFFFF"
+                                                              StrokeThickness="2"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center">
+                                                            <Path.Effect>
+                                                                <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.5" Color="White" />
+                                                            </Path.Effect>
+                                                        </Path>
+                                                    </Grid>
                                                 </Grid>
                                             </nodify:Node>
                                         </DataTemplate>

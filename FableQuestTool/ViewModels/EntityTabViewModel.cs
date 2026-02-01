@@ -798,6 +798,15 @@ public sealed partial class EntityTabViewModel : ObservableObject
     [RelayCommand]
     private void CreateRedirectionNode(System.Windows.Point location)
     {
+        CreateRerouteNode(location);
+    }
+
+    /// <summary>
+    /// Creates a UE5-style reroute node - a small circular node for organizing wires
+    /// </summary>
+    [RelayCommand]
+    private void CreateRerouteNode(System.Windows.Point location)
+    {
         if (PendingConnection?.Source == null)
         {
             return;
@@ -805,27 +814,43 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         var sourceConnector = PendingConnection.Source;
 
-        var flowDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == "sequence");
-        if (flowDef == null)
+        // Create a minimal reroute node (UE5 style)
+        var rerouteNode = new NodeViewModel
         {
-            return;
-        }
+            Id = Guid.NewGuid().ToString(),
+            Title = "",  // No title for reroute nodes
+            Category = "flow",
+            Icon = "◆",  // Diamond icon
+            Type = "reroute",
+            IsRerouteNode = true,
+            IsRedirectionNode = true,  // Keep for backwards compatibility
+            Location = location
+        };
 
-        var redirectNode = CreateNode(flowDef, location.X, location.Y);
-        redirectNode.IsRedirectionNode = true;
+        // Clear default connectors and add single input/output
+        rerouteNode.Input.Clear();
+        rerouteNode.Output.Clear();
 
-        if (redirectNode.Input.Count == 0)
+        // Match the connector type from the source
+        var connType = sourceConnector.ConnectorType;
+
+        rerouteNode.Input.Add(new ConnectorViewModel
         {
-            redirectNode.Input.Add(new ConnectorViewModel { Title = "Input" });
-        }
-        if (redirectNode.Output.Count == 0)
+            Title = "",
+            ConnectorType = connType,
+            IsInput = true
+        });
+        rerouteNode.Output.Add(new ConnectorViewModel
         {
-            redirectNode.Output.Add(new ConnectorViewModel { Title = "Output" });
-        }
+            Title = "",
+            ConnectorType = connType,
+            IsInput = false
+        });
 
-        Nodes.Add(redirectNode);
+        Nodes.Add(rerouteNode);
 
-        var targetConnector = redirectNode.Input.FirstOrDefault();
+        // Connect from source to the reroute node
+        var targetConnector = rerouteNode.Input.FirstOrDefault();
         if (targetConnector != null)
         {
             var connection = new ConnectionViewModel

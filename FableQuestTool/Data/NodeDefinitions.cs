@@ -191,7 +191,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_DESTINATION" }
                 },
-                CodeTemplate = "local marker = Quest:GetNamedThing(\"{marker}\")\nMe:MoveToThing(marker, 1.0, 1)\n{CHILDREN}" },
+                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nMe:MoveToThing(marker, 1.0, 1)\n{CHILDREN}" },
 
             new() { Type = "moveToPosition", Label = "Move To Position", Category = "action", Icon = "🎯", IsAdvanced = true,
                 Description = "Move to specific coordinates",
@@ -207,23 +207,35 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_SPAWN" }
                 },
-                CodeTemplate = "local marker = Quest:GetNamedThing(\"{marker}\")\nQuest:EntityTeleportToThing(Me, marker)\n{CHILDREN}" },
+                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nQuest:EntityTeleportToThing(Me, marker)\n{CHILDREN}" },
 
             new() { Type = "playAnimation", Label = "Play Animation", Category = "action", Icon = "🎬", IsAdvanced = true,
-                Description = "Play an animation",
+                Description = "Play an animation (non-blocking)",
                 Properties = new() {
                     new NodeProperty { Name = "anim", Type = "string", Label = "Animation", DefaultValue = "idle" },
-                    new NodeProperty { Name = "wait", Type = "bool", Label = "Wait for Completion", DefaultValue = "true" }
+                    new NodeProperty { Name = "stayOnLastFrame", Type = "bool", Label = "Stay On Last Frame", DefaultValue = "false" },
+                    new NodeProperty { Name = "allowLooking", Type = "bool", Label = "Allow Looking", DefaultValue = "true" }
                 },
-                CodeTemplate = "Me:PlayAnimation(\"{anim}\", {wait})\n{CHILDREN}" },
+                CodeTemplate = "Me:PlayAnimation(\"{anim}\", {stayOnLastFrame}, {allowLooking})\n{CHILDREN}" },
+
+            new() { Type = "playAnimationBlocking", Label = "Play Animation (Wait)", Category = "action", Icon = "🎬⏳", IsAdvanced = true,
+                Description = "Play an animation and wait for completion",
+                Properties = new() {
+                    new NodeProperty { Name = "anim", Type = "string", Label = "Animation", DefaultValue = "idle" },
+                    new NodeProperty { Name = "stayOnLastFrame", Type = "bool", Label = "Stay On Last Frame", DefaultValue = "false" },
+                    new NodeProperty { Name = "allowLooking", Type = "bool", Label = "Allow Looking", DefaultValue = "true" }
+                },
+                CodeTemplate = "Me:GainControlAndPlayAnimation(\"{anim}\", true, {stayOnLastFrame}, {allowLooking})\n{CHILDREN}" },
 
             new() { Type = "playLoopingAnim", Label = "Play Looping Anim", Category = "action", Icon = "🔁", IsAdvanced = true,
                 Description = "Play animation multiple times",
                 Properties = new() {
                     new NodeProperty { Name = "anim", Type = "string", Label = "Animation", DefaultValue = "idle" },
-                    new NodeProperty { Name = "loops", Type = "int", Label = "Loop Count", DefaultValue = "1" }
+                    new NodeProperty { Name = "loops", Type = "int", Label = "Loop Count", DefaultValue = "1" },
+                    new NodeProperty { Name = "useMovement", Type = "bool", Label = "Use Movement", DefaultValue = "false" },
+                    new NodeProperty { Name = "allowLooking", Type = "bool", Label = "Allow Looking", DefaultValue = "true" }
                 },
-                CodeTemplate = "Me:PlayLoopingAnimation(\"{anim}\", {loops})\n{CHILDREN}" },
+                CodeTemplate = "Me:PlayLoopingAnimation(\"{anim}\", {loops}, {useMovement}, {allowLooking})\n{CHILDREN}" },
             
             new() { Type = "completeQuest", Label = "Complete Quest", Category = "action", Icon = "✅", IsAdvanced = false,
                 Description = "Mark quest as completed and give rewards (Note: Rewards must be configured in quest settings)",
@@ -282,12 +294,12 @@ public static class NodeDefinitions
             new() { Type = "sheatheWeapons", Label = "Sheathe Weapons", Category = "action", Icon = "⚔️", IsAdvanced = true,
                 Description = "Put away weapons",
                 Properties = new(),
-                CodeTemplate = "Me:SheatheWeapons()\n{CHILDREN}" },
-            
+                CodeTemplate = "Quest:EntitySheatheWeapons(Me)\n{CHILDREN}" },
+
             new() { Type = "unsheatheWeapons", Label = "Unsheathe Weapons", Category = "action", Icon = "🗡️", IsAdvanced = true,
                 Description = "Draw weapons",
                 Properties = new(),
-                CodeTemplate = "Me:UnsheatheWeapons()\n{CHILDREN}" },
+                CodeTemplate = "Quest:EntityUnsheatheWeapons(Me)\n{CHILDREN}" },
             
             new() { Type = "showMessage", Label = "Show Message", Category = "action", Icon = "📨", IsAdvanced = false,
                 Description = "Display on-screen message",
@@ -491,11 +503,13 @@ public static class NodeDefinitions
 
             // ===== MUSIC SYSTEM =====
             new() { Type = "overrideMusic", Label = "Override Music", Category = "action", Icon = "🎵", IsAdvanced = false,
-                Description = "Override background music with specified track",
+                Description = "Override background music with specified track (0=None, 1=Combat, 2=Peaceful, etc.)",
                 Properties = new() {
-                    new NodeProperty { Name = "musicSet", Type = "string", Label = "Music Set", DefaultValue = "MUSIC_COMBAT" }
+                    new NodeProperty { Name = "musicSetType", Type = "int", Label = "Music Set Type", DefaultValue = "1" },
+                    new NodeProperty { Name = "isCutscene", Type = "bool", Label = "Is Cutscene", DefaultValue = "false" },
+                    new NodeProperty { Name = "forcePlay", Type = "bool", Label = "Force Play", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:OverrideMusic(\"{musicSet}\")\n{CHILDREN}" },
+                CodeTemplate = "Quest:OverrideMusic({musicSetType}, {isCutscene}, {forcePlay})\n{CHILDREN}" },
 
             new() { Type = "stopMusicOverride", Label = "Stop Music Override", Category = "action", Icon = "⏹️🎵", IsAdvanced = false,
                 Description = "Stop music override and return to normal",
@@ -505,9 +519,10 @@ public static class NodeDefinitions
             new() { Type = "transitionMusic", Label = "Transition Music", Category = "action", Icon = "🎼", IsAdvanced = true,
                 Description = "Smoothly transition to different music theme",
                 Properties = new() {
-                    new NodeProperty { Name = "theme", Type = "string", Label = "Theme Name", DefaultValue = "THEME_PEACEFUL" }
+                    new NodeProperty { Name = "theme", Type = "string", Label = "Theme Name", DefaultValue = "THEME_PEACEFUL" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Transition Duration", DefaultValue = "2.0" }
                 },
-                CodeTemplate = "Quest:TransitionToTheme(\"{theme}\")\n{CHILDREN}" },
+                CodeTemplate = "Quest:TransitionToTheme(\"{theme}\", {duration})\n{CHILDREN}" },
 
             new() { Type = "enableDangerMusic", Label = "Danger Music", Category = "action", Icon = "⚠️🎵", IsAdvanced = true,
                 Description = "Enable or disable combat/danger music",
@@ -566,16 +581,19 @@ public static class NodeDefinitions
             new() { Type = "cameraUseCameraPoint", Label = "Use Camera Point", Category = "action", Icon = "📷", IsAdvanced = true,
                 Description = "Use a predefined camera point from the level",
                 Properties = new() {
-                    new NodeProperty { Name = "cameraPoint", Type = "string", Label = "Camera Point Name", DefaultValue = "CAMERA_POINT_1" }
+                    new NodeProperty { Name = "cameraPoint", Type = "string", Label = "Camera Point Name", DefaultValue = "CAMERA_POINT_1" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Transition Duration", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "easeIn", Type = "int", Label = "Ease In Type", DefaultValue = "0" },
+                    new NodeProperty { Name = "easeOut", Type = "int", Label = "Ease Out Type", DefaultValue = "0" }
                 },
-                CodeTemplate = "local camPoint = Quest:GetNamedThing(\"{cameraPoint}\")\nQuest:CameraUseCameraPoint(camPoint)\n{CHILDREN}" },
+                CodeTemplate = "local camPoint = Quest:GetThingWithScriptName(\"{cameraPoint}\")\nQuest:CameraUseCameraPoint(camPoint, Me, {duration}, {easeIn}, {easeOut})\n{CHILDREN}" },
 
             new() { Type = "cameraConversation", Label = "Conversation Camera", Category = "action", Icon = "🎬💬", IsAdvanced = true,
-                Description = "Set up camera for dialogue scene",
+                Description = "Set up camera for dialogue scene (0=Default, 1=Close, 2=OTS_Speaker, 3=OTS_Listener)",
                 Properties = new() {
-                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "2.0" }
+                    new NodeProperty { Name = "cameraOp", Type = "int", Label = "Camera Type", DefaultValue = "0" }
                 },
-                CodeTemplate = "Quest:CameraDoConversation(Me, hero, {distance})\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraDoConversation(Me, hero, {cameraOp})\n{CHILDREN}" },
 
             // ===== SCREEN EFFECTS =====
             new() { Type = "screenFadeOut", Label = "Screen Fade Out", Category = "action", Icon = "⬛", IsAdvanced = false,
@@ -587,10 +605,8 @@ public static class NodeDefinitions
 
             new() { Type = "screenFadeIn", Label = "Screen Fade In", Category = "action", Icon = "⬜", IsAdvanced = false,
                 Description = "Fade screen back in from black",
-                Properties = new() {
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
-                },
-                CodeTemplate = "Quest:EndCutFade({duration})\n{CHILDREN}" },
+                Properties = new(),
+                CodeTemplate = "Quest:EndCutFade()\n{CHILDREN}" },
 
             new() { Type = "radialBlur", Label = "Radial Blur", Category = "action", Icon = "🌀", IsAdvanced = true,
                 Description = "Apply radial blur effect from center",
@@ -625,10 +641,10 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "Quest:ScreenFilterFadeOut({duration})\n{CHILDREN}" },
 
-            new() { Type = "letterbox", Label = "Letterbox On (Auto)", Category = "action", Icon = "🎬", IsAdvanced = true,
-                Description = "Letterbox starts automatically with StartMovieSequence() or FadeScreenOut() - this node is just a placeholder",
+            new() { Type = "letterbox", Label = "Start Cinematic", Category = "action", Icon = "🎬", IsAdvanced = true,
+                Description = "Start cinematic mode with letterbox bars (use EndLetterBox to remove)",
                 Properties = new(),
-                CodeTemplate = "-- Letterbox starts automatically with StartMovieSequence() or FadeScreenOut()\n{CHILDREN}" },
+                CodeTemplate = "Quest:StartMovieSequence()\n{CHILDREN}" },
 
             new() { Type = "letterboxOff", Label = "Letterbox Off", Category = "action", Icon = "📺", IsAdvanced = true,
                 Description = "Remove cinematic letterbox bars",
@@ -721,7 +737,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "questName", Type = "string", Label = "Quest Name", DefaultValue = "QUEST_NAME" }
                 },
-                CodeTemplate = "if Quest:IsQuestComplete(\"{questName}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
+                CodeTemplate = "if Quest:IsQuestCompleted(\"{questName}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
 
             new() { Type = "checkBoastTaken", Label = "Boast Taken", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check if boast was accepted",
@@ -751,24 +767,12 @@ public static class NodeDefinitions
                 Properties = new(),
                 CodeTemplate = "if Quest:IsCameraInScriptedMode() then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkEntityInCombat", Label = "Entity In Combat", Category = "condition", Icon = "?⚔️", IsAdvanced = false, HasBranching = true,
-                Description = "Check if this entity is in combat",
-                Properties = new(),
-                CodeTemplate = "if Me:IsInCombat() then\n{TRUE}\nelse\n{FALSE}\nend" },
-
-            new() { Type = "checkHeroInCombat", Label = "Hero In Combat", Category = "condition", Icon = "?🗡️", IsAdvanced = false, HasBranching = true,
-                Description = "Check if hero is in combat",
-                Properties = new(),
-                CodeTemplate = "if hero:IsInCombat() then\n{TRUE}\nelse\n{FALSE}\nend" },
-
             new() { Type = "checkDistanceToHero", Label = "Distance To Hero", Category = "condition", Icon = "?📏", IsAdvanced = false, HasBranching = true,
-                Description = "Check distance between entity and hero",
+                Description = "Check if distance between entity and hero is under threshold",
                 Properties = new() {
-                    new NodeProperty { Name = "operator", Type = "select", Label = "Operator", DefaultValue = "<",
-                        Options = new List<string> { "<", "<=", ">", ">=" } },
                     new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "5.0" }
                 },
-                CodeTemplate = "if Quest:GetDistanceBetweenThings(Me, hero) {operator} {distance} then\n{TRUE}\nelse\n{FALSE}\nend" }
+                CodeTemplate = "if Quest:IsDistanceBetweenThingsUnder(Me, hero, {distance}) then\n{TRUE}\nelse\n{FALSE}\nend" }
         };
     }
 

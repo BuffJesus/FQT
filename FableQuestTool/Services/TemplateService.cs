@@ -87,7 +87,7 @@ public class TemplateService
                 Icon = "🎬💬",
                 X = 300,
                 Y = 150,
-                Config = new Dictionary<string, object> { { "distance", "2.0" } }
+                Config = new Dictionary<string, object> { { "cameraOp", "0" } }
             },
             new BehaviorNode
             {
@@ -395,14 +395,12 @@ public class TemplateService
         var nodes = new List<BehaviorNode>
         {
             new BehaviorNode { Id = triggerId, Type = "onHeroTalks", Category = "trigger", Label = "When Hero Talks", Icon = "💬", X = 50, Y = 200 },
-            new BehaviorNode { Id = letterboxOnId, Type = "letterbox", Category = "action", Label = "Letterbox On", Icon = "🎬", X = 200, Y = 200,
-                Config = new Dictionary<string, object> { { "fadeIn", "true" } } },
+            new BehaviorNode { Id = letterboxOnId, Type = "letterbox", Category = "action", Label = "Start Cinematic", Icon = "🎬", X = 200, Y = 200 },
             new BehaviorNode { Id = fadeOutId, Type = "screenFadeOut", Category = "action", Label = "Fade Out", Icon = "⬛", X = 350, Y = 200,
                 Config = new Dictionary<string, object> { { "duration", "0.5" } } },
             new BehaviorNode { Id = musicId, Type = "overrideMusic", Category = "action", Label = "Mystery Music", Icon = "🎵", X = 500, Y = 200,
-                Config = new Dictionary<string, object> { { "musicSet", "MUSIC_MYSTERIOUS" } } },
-            new BehaviorNode { Id = fadeInId, Type = "screenFadeIn", Category = "action", Label = "Fade In", Icon = "⬜", X = 650, Y = 200,
-                Config = new Dictionary<string, object> { { "duration", "1.0" } } },
+                Config = new Dictionary<string, object> { { "musicSetType", "2" }, { "isCutscene", "true" }, { "forcePlay", "true" } } },
+            new BehaviorNode { Id = fadeInId, Type = "screenFadeIn", Category = "action", Label = "Fade In", Icon = "⬜", X = 650, Y = 200 },
             new BehaviorNode { Id = cameraOrbitId, Type = "cameraOrbitEntity", Category = "action", Label = "Camera Orbit", Icon = "🎥", X = 800, Y = 200,
                 Config = new Dictionary<string, object> { { "distance", "4.0" }, { "height", "1.5" }, { "speed", "0.3" }, { "duration", "3.0" } } },
             new BehaviorNode { Id = startConvoId, Type = "startConversation", Category = "action", Label = "Start Conversation", Icon = "🎭", X = 950, Y = 200,
@@ -522,8 +520,7 @@ public class TemplateService
             // Intro sequence
             new BehaviorNode { Id = proximityId, Type = "onProximity", Category = "trigger", Label = "Hero Nearby", Icon = "📍", X = 50, Y = 100,
                 Config = new Dictionary<string, object> { { "distance", "10.0" } } },
-            new BehaviorNode { Id = letterboxId, Type = "letterbox", Category = "action", Label = "Letterbox", Icon = "🎬", X = 200, Y = 100,
-                Config = new Dictionary<string, object> { { "fadeIn", "true" } } },
+            new BehaviorNode { Id = letterboxId, Type = "letterbox", Category = "action", Label = "Start Cinematic", Icon = "🎬", X = 200, Y = 100 },
             new BehaviorNode { Id = dangerMusicId, Type = "enableDangerMusic", Category = "action", Label = "Danger Music", Icon = "⚠️🎵", X = 350, Y = 100,
                 Config = new Dictionary<string, object> { { "enabled", "true" } } },
             new BehaviorNode { Id = cameraLookId, Type = "cameraLookAtEntity", Category = "action", Label = "Camera Look", Icon = "👁️🎥", X = 500, Y = 100,
@@ -543,7 +540,7 @@ public class TemplateService
             new BehaviorNode { Id = colorFilterId, Type = "colorFilter", Category = "action", Label = "Gold Filter", Icon = "🎨", X = 200, Y = 300,
                 Config = new Dictionary<string, object> { { "r", "1.0" }, { "g", "0.9" }, { "b", "0.5" }, { "a", "0.3" }, { "duration", "0.5" } } },
             new BehaviorNode { Id = victoryMusicId, Type = "overrideMusic", Category = "action", Label = "Victory Music", Icon = "🎵", X = 350, Y = 300,
-                Config = new Dictionary<string, object> { { "musicSet", "MUSIC_VICTORY" } } },
+                Config = new Dictionary<string, object> { { "musicSetType", "3" }, { "isCutscene", "false" }, { "forcePlay", "true" } } },
             new BehaviorNode { Id = victoryMsgId, Type = "showTitleMessage", Category = "action", Label = "Victory!", Icon = "📢", X = 500, Y = 300,
                 Config = new Dictionary<string, object> { { "text", "VICTORY!" }, { "duration", "3.0" } } },
             new BehaviorNode { Id = filterOffId, Type = "colorFilterOff", Category = "action", Label = "Filter Off", Icon = "🔲🎨", X = 650, Y = 300,
@@ -642,7 +639,7 @@ public class TemplateService
         {
             new BehaviorNode { Id = w1TalkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "💬", X = 50, Y = 150 },
             new BehaviorNode { Id = w1CameraId, Type = "cameraConversation", Category = "action", Label = "Camera", Icon = "🎬💬", X = 200, Y = 150,
-                Config = new Dictionary<string, object> { { "distance", "2.0" } } },
+                Config = new Dictionary<string, object> { { "cameraOp", "0" } } },
             new BehaviorNode { Id = w1ConvoId, Type = "startConversation", Category = "action", Label = "Start Convo", Icon = "🎭", X = 350, Y = 150,
                 Config = new Dictionary<string, object> { { "use2DSound", "true" }, { "playInCutscene", "false" } } },
             new BehaviorNode { Id = w1Line1Id, Type = "addConversationLine", Category = "action", Label = "Intro", Icon = "💭", X = 500, Y = 150,

@@ -649,7 +649,7 @@ public sealed class CodeGenerator
             foreach (var propDef in nodeDef.Properties)
             {
                 string placeholder = "{" + propDef.Name + "}";
-                string defaultValue = propDef.DefaultValue ?? "";
+                string defaultValue = propDef.DefaultValue?.ToString() ?? "";
                 code = code.Replace(placeholder, defaultValue);
             }
         }

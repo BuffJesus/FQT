@@ -61,18 +61,16 @@ public static class GameData
 
     public static ObservableCollection<string> Creatures { get; } = new()
     {
-        // Villagers & NPCs
-        "CREATURE_VILLAGER_MALE",
-        "CREATURE_VILLAGER_FEMALE",
+        // Villagers & NPCs (Verified from working samples)
         "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
         "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
-        "CREATURE_TRADER",
-        "CREATURE_GUARD",
-        "CREATURE_CHILD_MALE",
-        "CREATURE_CHILD_FEMALE",
+        "CREATURE_GHOST_VILLAGER_FEMALE",
+        "CREATURE_BS_GUARD_RED",
+        "CREATURE_BS_GUARD_BLUE",
 
-        // Bandits & Enemies
+        // Bandits & Enemies (Verified from working samples)
         "CREATURE_BANDIT",
+        "CREATURE_BANDIT_LIEUTENANT",
         "CREATURE_BANDIT_CHIEF",
         "CREATURE_WASP",
         "CREATURE_BALVERINE",

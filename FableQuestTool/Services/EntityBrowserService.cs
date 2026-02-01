@@ -153,4 +153,21 @@ public sealed class EntityBrowserService
     {
         catalogService.ExportCatalogToFile(outputPath);
     }
+
+    /// <summary>
+    /// Gets all unique creature definition types from the game files.
+    /// Returns sorted list of creature DefinitionType values (e.g. "CREATURE_BANDIT", "CREATURE_VILLAGER_MALE").
+    /// </summary>
+    public List<string> GetAllCreatureDefinitions()
+    {
+        var allEntities = GetAllEntities();
+        var creatureDefinitions = allEntities
+            .Where(e => e.Category == EntityCategory.Creature && !string.IsNullOrWhiteSpace(e.DefinitionType))
+            .Select(e => e.DefinitionType!)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        return creatureDefinitions;
+    }
 }

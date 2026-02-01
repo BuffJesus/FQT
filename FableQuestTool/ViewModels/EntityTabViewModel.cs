@@ -110,12 +110,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
     private void OnEntityPropertyChangedForDropdowns(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(QuestEntity.EntityType))
+        if (e.PropertyName == nameof(QuestEntity.EntityType) ||
+            e.PropertyName == nameof(QuestEntity.SpawnRegion))
         {
             UpdateAvailableDefinitions();
         }
-        else if (e.PropertyName == nameof(QuestEntity.SpawnRegion) ||
-                 e.PropertyName == nameof(QuestEntity.SpawnMethod))
+        else if (e.PropertyName == nameof(QuestEntity.SpawnMethod))
         {
             UpdateAvailableMarkers();
         }
@@ -131,6 +131,14 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
 
         IEnumerable<TngEntity> filteredEntities = allEntities;
+
+        // Filter by spawn region if specified
+        if (!string.IsNullOrWhiteSpace(entity.SpawnRegion))
+        {
+            filteredEntities = filteredEntities.Where(e =>
+                e.RegionName != null &&
+                e.RegionName.Equals(entity.SpawnRegion, StringComparison.OrdinalIgnoreCase));
+        }
 
         // Filter by entity type
         switch (entity.EntityType)

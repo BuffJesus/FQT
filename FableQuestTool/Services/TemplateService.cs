@@ -153,7 +153,8 @@ public class TemplateService
                 Label = "Reset Camera",
                 Icon = "🔄🎥",
                 X = 1100,
-                Y = 150
+                Y = 150,
+                Config = new Dictionary<string, object> { { "duration", "1.0" } }
             },
             new BehaviorNode
             {
@@ -402,7 +403,7 @@ public class TemplateService
                 Config = new Dictionary<string, object> { { "musicSetType", "2" }, { "isCutscene", "true" }, { "forcePlay", "true" } } },
             new BehaviorNode { Id = fadeInId, Type = "screenFadeIn", Category = "action", Label = "Fade In", Icon = "⬜", X = 650, Y = 200 },
             new BehaviorNode { Id = cameraOrbitId, Type = "cameraOrbitEntity", Category = "action", Label = "Camera Orbit", Icon = "🎥", X = 800, Y = 200,
-                Config = new Dictionary<string, object> { { "distance", "4.0" }, { "height", "1.5" }, { "speed", "0.3" }, { "duration", "3.0" } } },
+                Config = new Dictionary<string, object> { { "offsetX", "0" }, { "offsetY", "1.5" }, { "offsetZ", "4.0" }, { "duration", "3.0" } } },
             new BehaviorNode { Id = startConvoId, Type = "startConversation", Category = "action", Label = "Start Conversation", Icon = "🎭", X = 950, Y = 200,
                 Config = new Dictionary<string, object> { { "use2DSound", "true" }, { "playInCutscene", "true" } } },
             new BehaviorNode { Id = line1Id, Type = "addConversationLine", Category = "action", Label = "Line 1", Icon = "💭", X = 1100, Y = 100,
@@ -415,7 +416,8 @@ public class TemplateService
                 Config = new Dictionary<string, object> { { "immediate", "false" } } },
             new BehaviorNode { Id = stopMusicId, Type = "stopMusicOverride", Category = "action", Label = "Stop Music", Icon = "⏹️🎵", X = 1400, Y = 200 },
             new BehaviorNode { Id = letterboxOffId, Type = "letterboxOff", Category = "action", Label = "Letterbox Off", Icon = "📺", X = 1550, Y = 200 },
-            new BehaviorNode { Id = cameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1700, Y = 200 },
+            new BehaviorNode { Id = cameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1700, Y = 200,
+                Config = new Dictionary<string, object> { { "duration", "1.0" } } },
             new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete", Icon = "✅", X = 1850, Y = 200,
                 Config = new Dictionary<string, object> { { "showScreen", "true" } } }
         };
@@ -524,7 +526,7 @@ public class TemplateService
             new BehaviorNode { Id = dangerMusicId, Type = "enableDangerMusic", Category = "action", Label = "Danger Music", Icon = "⚠️🎵", X = 350, Y = 100,
                 Config = new Dictionary<string, object> { { "enabled", "true" } } },
             new BehaviorNode { Id = cameraLookId, Type = "cameraLookAtEntity", Category = "action", Label = "Camera Look", Icon = "👁️🎥", X = 500, Y = 100,
-                Config = new Dictionary<string, object> { { "distance", "5.0" }, { "height", "2.0" }, { "duration", "1.5" } } },
+                Config = new Dictionary<string, object> { { "camX", "0" }, { "camY", "2.0" }, { "camZ", "5.0" }, { "duration", "1.5" } } },
             new BehaviorNode { Id = blurId, Type = "radialBlur", Category = "action", Label = "Radial Blur", Icon = "🌀", X = 650, Y = 100,
                 Config = new Dictionary<string, object> { { "intensity", "0.3" }, { "duration", "0.5" } } },
             new BehaviorNode { Id = dialogueId, Type = "showDialogue", Category = "action", Label = "Boss Taunt", Icon = "💬", X = 800, Y = 100,
@@ -532,7 +534,8 @@ public class TemplateService
             new BehaviorNode { Id = blurOffId, Type = "radialBlurOff", Category = "action", Label = "Blur Off", Icon = "🔲", X = 950, Y = 100,
                 Config = new Dictionary<string, object> { { "duration", "0.3" } } },
             new BehaviorNode { Id = letterboxOffId, Type = "letterboxOff", Category = "action", Label = "Letterbox Off", Icon = "📺", X = 1100, Y = 100 },
-            new BehaviorNode { Id = cameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1250, Y = 100 },
+            new BehaviorNode { Id = cameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1250, Y = 100,
+                Config = new Dictionary<string, object> { { "duration", "1.0" } } },
             new BehaviorNode { Id = hostileId, Type = "becomeHostile", Category = "action", Label = "Attack!", Icon = "😡", X = 1400, Y = 100 },
 
             // Death/Victory sequence
@@ -655,7 +658,8 @@ public class TemplateService
                 Config = new Dictionary<string, object> { { "immediate", "false" } } },
             new BehaviorNode { Id = w1SetStateId, Type = "setState", Category = "action", Label = "Mark Talked", Icon = "💾", X = 1250, Y = 150,
                 Config = new Dictionary<string, object> { { "name", "witness1Talked" }, { "value", "true" } } },
-            new BehaviorNode { Id = w1CameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1400, Y = 150 }
+            new BehaviorNode { Id = w1CameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1400, Y = 150,
+                Config = new Dictionary<string, object> { { "duration", "1.0" } } }
         };
 
         witness1.Connections = new List<NodeConnection>

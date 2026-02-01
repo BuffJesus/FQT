@@ -68,7 +68,7 @@ public sealed partial class QuestEntity : ObservableObject
 
     [ObservableProperty]
     [property: JsonPropertyName("SpawnMethod")]
-    private SpawnMethod spawnMethod = SpawnMethod.BindExisting;
+    private SpawnMethod spawnMethod = SpawnMethod.AtMarker;
 
     [ObservableProperty]
     [property: JsonPropertyName("SpawnRegion")]
@@ -76,7 +76,7 @@ public sealed partial class QuestEntity : ObservableObject
 
     [ObservableProperty]
     [property: JsonPropertyName("SpawnMarker")]
-    private string spawnMarker = string.Empty;
+    private string spawnMarker = "MK_OVID_DAD";
 
     [ObservableProperty]
     [property: JsonPropertyName("SpawnX")]

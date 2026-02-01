@@ -368,7 +368,7 @@ public class TemplateService
         {
             Id = "mysterious_stranger",
             ScriptName = "MysteriousStranger",
-            DefName = "VILLAGER_MALE",
+            DefName = "CREATURE_VILLAGER_MALE",
             EntityType = EntityType.Creature,
             MakeBehavioral = true,
             ExclusiveControl = true,

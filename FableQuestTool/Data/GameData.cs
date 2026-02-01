@@ -59,6 +59,47 @@ public static class GameData
         "Chamber"
     };
 
+    public static ObservableCollection<string> Creatures { get; } = new()
+    {
+        // Villagers & NPCs
+        "CREATURE_VILLAGER_MALE",
+        "CREATURE_VILLAGER_FEMALE",
+        "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
+        "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
+        "CREATURE_TRADER",
+        "CREATURE_GUARD",
+        "CREATURE_CHILD_MALE",
+        "CREATURE_CHILD_FEMALE",
+
+        // Bandits & Enemies
+        "CREATURE_BANDIT",
+        "CREATURE_BANDIT_CHIEF",
+        "CREATURE_WASP",
+        "CREATURE_BALVERINE",
+        "CREATURE_HOBBE",
+        "CREATURE_UNDEAD",
+        "CREATURE_ZOMBIE",
+        "CREATURE_TROLL",
+        "CREATURE_SCORPION",
+        "CREATURE_EARTH_TROLL",
+        "CREATURE_ICE_TROLL",
+        "CREATURE_ROCK_TROLL",
+
+        // Special NPCs
+        "CREATURE_WHISPER",
+        "CREATURE_THERESA",
+        "CREATURE_MAZE",
+        "CREATURE_JACK_OF_BLADES",
+        "CREATURE_TWIN_BLADE",
+        "CREATURE_THUNDER",
+        "CREATURE_BRIAR_ROSE",
+
+        // Animals
+        "CREATURE_CHICKEN",
+        "CREATURE_DOG",
+        "CREATURE_BEETLE"
+    };
+
     public static ObservableCollection<string> QuestCards { get; } = new()
     {
         "OBJECT_QUEST_CARD_GENERIC",

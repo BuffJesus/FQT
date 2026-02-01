@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FableQuestTool.Data;
 using FableQuestTool.Models;
 using FableQuestTool.ViewModels;
 
@@ -13,6 +14,8 @@ public sealed partial class EntityEditorViewModel : ObservableObject
     private readonly MainViewModel mainViewModel;
 
     public ObservableCollection<EntityTabViewModel> EntityTabs { get; } = new();
+
+    public ObservableCollection<string> AvailableDefinitions => GameData.Creatures;
 
     [ObservableProperty]
     private int selectedTabIndex;
@@ -52,7 +55,8 @@ public sealed partial class EntityEditorViewModel : ObservableObject
             ScriptName = $"Entity{mainViewModel.Project.Entities.Count + 1}",
             DefName = "CREATURE_VILLAGER_MALE",
             EntityType = EntityType.Creature,
-            SpawnMethod = SpawnMethod.BindExisting
+            SpawnMethod = SpawnMethod.AtMarker,
+            SpawnMarker = "MK_OVID_DAD"
         };
 
         mainViewModel.Project.Entities.Add(newEntity);

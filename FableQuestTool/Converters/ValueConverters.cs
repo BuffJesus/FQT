@@ -14,7 +14,7 @@ public class NullToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("NullToVisibilityConverter is one-way only.");
     }
 }
 
@@ -27,7 +27,7 @@ public class InvertedNullToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("InvertedNullToVisibilityConverter is one-way only.");
     }
 }
 
@@ -40,6 +40,6 @@ public class NullToBoolConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("NullToBoolConverter is one-way only.");
     }
 }

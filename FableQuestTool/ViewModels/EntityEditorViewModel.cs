@@ -14,11 +14,8 @@ namespace FableQuestTool.ViewModels;
 public sealed partial class EntityEditorViewModel : ObservableObject
 {
     private readonly MainViewModel mainViewModel;
-    private readonly EntityBrowserService? entityBrowserService;
 
     public ObservableCollection<EntityTabViewModel> EntityTabs { get; } = new();
-
-    public ObservableCollection<string> AvailableDefinitions { get; } = new();
 
     [ObservableProperty]
     private int selectedTabIndex;
@@ -30,31 +27,6 @@ public sealed partial class EntityEditorViewModel : ObservableObject
     {
         this.mainViewModel = mainViewModel;
         LoadExistingEntities();
-        LoadCreatureDefinitions();
-    }
-
-    private void LoadCreatureDefinitions()
-    {
-        try
-        {
-            var config = FableConfig.Load();
-            var entityBrowser = new EntityBrowserService(config);
-            var creatures = entityBrowser.GetAllCreatureDefinitions();
-
-            AvailableDefinitions.Clear();
-            foreach (var creature in creatures)
-            {
-                AvailableDefinitions.Add(creature);
-            }
-        }
-        catch
-        {
-            // Fallback to static list if dynamic loading fails
-            foreach (var creature in GameData.Creatures)
-            {
-                AvailableDefinitions.Add(creature);
-            }
-        }
     }
 
     private void LoadExistingEntities()

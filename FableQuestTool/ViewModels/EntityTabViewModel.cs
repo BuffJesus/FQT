@@ -85,6 +85,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
             // Initial definition load
             UpdateAvailableDefinitions();
 
+            System.Diagnostics.Debug.WriteLine($"EntityTabViewModel: Loaded {allEntities.Count} entities, {AvailableDefinitions.Count} definitions available");
+
             // Get unique region names
             var regions = RegionTngMapping.GetAllRegionNames()
                 .OrderBy(r => r)
@@ -102,9 +104,22 @@ public sealed partial class EntityTabViewModel : ObservableObject
             // Listen for property changes to update dropdowns
             entity.PropertyChanged += OnEntityPropertyChangedForDropdowns;
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently handle errors - dropdowns will allow text entry even if loading fails
+            // If loading fails, populate with fallback static data
+            System.Diagnostics.Debug.WriteLine($"EntityTabViewModel: Failed to load dropdown data: {ex.Message}");
+
+            // Fallback to static creature list
+            if (entity.EntityType == EntityType.Creature)
+            {
+                AvailableDefinitions.Clear();
+                foreach (var creature in GameData.Creatures)
+                {
+                    AvailableDefinitions.Add(creature);
+                }
+            }
+
+            // Still allow text entry even if loading fails
         }
     }
 

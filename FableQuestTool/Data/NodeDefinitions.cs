@@ -385,17 +385,17 @@ public static class NodeDefinitions
             new() { Type = "makeHostile", Label = "Make Hostile", Category = "action", Icon = "😡", IsAdvanced = false,
                 Description = "Make this entity hostile to the hero",
                 Properties = new(),
-                CodeTemplate = "Quest:EntitySetAsEnemy(Me)\n{CHILDREN}" },
+                CodeTemplate = "Quest:EntitySetThingAsEnemyOfThing(Me, hero)\n{CHILDREN}" },
 
             new() { Type = "makeFriendly", Label = "Make Friendly", Category = "action", Icon = "😊", IsAdvanced = false,
                 Description = "Make this entity friendly to the hero",
                 Properties = new(),
-                CodeTemplate = "Quest:EntitySetAsFriend(Me)\n{CHILDREN}" },
+                CodeTemplate = "Me:SetFriendsWithEverythingFlag(true)\n{CHILDREN}" },
 
             new() { Type = "killEntity", Label = "Kill Entity", Category = "action", Icon = "💀", IsAdvanced = false,
                 Description = "Kill this entity",
                 Properties = new(),
-                CodeTemplate = "Quest:EntitySetDead(Me)\n{CHILDREN}" },
+                CodeTemplate = "Quest:SetThingAsKilled(Me)\n{CHILDREN}" },
 
             new() { Type = "teleportEntity", Label = "Teleport Entity", Category = "action", Icon = "⚡", IsAdvanced = true,
                 Description = "Teleport this entity to a marker",
@@ -409,12 +409,12 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "distance", Type = "float", Label = "Follow Distance", DefaultValue = "3.0" }
                 },
-                CodeTemplate = "Me:FollowHero({distance})\n{CHILDREN}" },
+                CodeTemplate = "Me:FollowThing(hero, {distance}, true)\n{CHILDREN}" },
 
             new() { Type = "stopFollowing", Label = "Stop Following", Category = "action", Icon = "🛑", IsAdvanced = false,
                 Description = "Stop following the hero",
                 Properties = new(),
-                CodeTemplate = "Me:StopFollowing()\n{CHILDREN}" },
+                CodeTemplate = "Me:StopFollowingThing(hero)\n{CHILDREN}" },
 
             new() { Type = "sheatheWeapons", Label = "Sheathe Weapons", Category = "action", Icon = "🔒🗡️", IsAdvanced = true,
                 Description = "Put weapons away",

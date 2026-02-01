@@ -22,7 +22,7 @@ function Main(questObject, meObject)
     while true do
         -- Talk trigger
         if Me:IsTalkedToByHero() then
-            if Quest:DoesHeroHaveObject("OBJECT_TEDDY_BEAR") then
+            if Quest:IsPlayerCarryingItemOfType("OBJECT_TEDDY_BEAR") then
                 -- Has teddy bear - complete quest
                 Me:SpeakAndWait("Hey, give me that bear!")
                 Quest:TakeObjectFromHero("OBJECT_TEDDY_BEAR")

@@ -601,6 +601,10 @@ public sealed class CodeGenerator
         return new string(' ', level * 4);
     }
 
+    /// <summary>
+    /// Generates Lua code for a behavior node and its children.
+    /// Handles both structured nodes (triggers, conditions) and linear action sequences.
+    /// </summary>
     private string GenerateNodeCode(BehaviorNode node, QuestEntity entity, string questName, int indent)
     {
         var nodeDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == node.Type);
@@ -610,12 +614,58 @@ public sealed class CodeGenerator
         }
 
         StringBuilder sb = new StringBuilder();
-        string code = nodeDef.CodeTemplate;
 
-        // Replace placeholders with actual values
+        // Check if this is a linear action (non-branching action node)
+        bool isLinearAction = nodeDef.Category == "action" && !nodeDef.HasBranching;
+
+        if (isLinearAction)
+        {
+            // For linear actions, emit THIS node's code at current indent,
+            // then emit children at SAME indent (not nested)
+            string code = ProcessNodeTemplate(nodeDef, node, questName);
+            
+            // Remove {CHILDREN} - we handle sequencing explicitly
+            code = code.Replace("{CHILDREN}", "").TrimEnd();
+
+            // Emit this node's code lines
+            foreach (string line in code.Split('\n'))
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    sb.AppendLine(GenerateIndent(indent) + line);
+                }
+            }
+
+            // Process children at SAME indent level (linear sequence, not nested)
+            var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
+            foreach (var conn in connections)
+            {
+                var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
+                if (childNode != null)
+                {
+                    sb.Append(GenerateNodeCode(childNode, entity, questName, indent)); // Same indent!
+                }
+            }
+        }
+        else
+        {
+            // For structured nodes (triggers, conditions, flow), use template substitution
+            sb.Append(GenerateStructuredNode(node, nodeDef, entity, questName, indent));
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Processes a node's template, replacing placeholders with config values.
+    /// </summary>
+    private string ProcessNodeTemplate(NodeDefinition nodeDef, BehaviorNode node, string questName)
+    {
+        string code = nodeDef.CodeTemplate;
+        
         code = code.Replace("{QUEST_NAME}", questName);
 
-        // Apply actual config values from the node (these take priority)
+        // Apply config values from the node
         foreach (var prop in node.Config)
         {
             string placeholder = "{" + prop.Key + "}";
@@ -623,7 +673,7 @@ public sealed class CodeGenerator
             code = code.Replace(placeholder, value);
         }
 
-        // Fill in remaining placeholders with default values
+        // Apply default values for missing properties
         if (nodeDef.Properties != null)
         {
             foreach (var propDef in nodeDef.Properties)
@@ -637,72 +687,76 @@ public sealed class CodeGenerator
             }
         }
 
+        return code;
+    }
+
+    /// <summary>
+    /// Generates code for structured nodes (triggers, conditions, flow control).
+    /// Children are indented inside the control structure.
+    /// </summary>
+    private string GenerateStructuredNode(BehaviorNode node, NodeDefinition nodeDef, QuestEntity entity, string questName, int indent)
+    {
+        StringBuilder sb = new StringBuilder();
+        string code = ProcessNodeTemplate(nodeDef, node, questName);
+
         // Handle children (connected nodes)
         var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
-        if (connections.Count > 0)
+        
+        if (nodeDef.HasBranching)
         {
-            bool hasBranching = nodeDef.HasBranching;
+            // Branching nodes (if/else) - children go into specific branches at indent+1
+            var branchLabels = nodeDef.BranchLabels ?? new List<string> { "True", "False" };
+            var branchCode = new Dictionary<string, StringBuilder>();
 
-            if (hasBranching)
+            foreach (var label in branchLabels)
             {
-                // Branching nodes (if/else) - children get indented
-                var branchLabels = nodeDef.BranchLabels ?? new List<string> { "True", "False" };
-                var branchCode = new Dictionary<string, StringBuilder>();
+                branchCode[label] = new StringBuilder();
+            }
 
-                foreach (var label in branchLabels)
+            foreach (var conn in connections)
+            {
+                var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
+                if (childNode != null && !string.IsNullOrEmpty(conn.FromPort))
                 {
-                    branchCode[label] = new StringBuilder();
-                }
-
-                foreach (var conn in connections)
-                {
-                    var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
-                    if (childNode != null && !string.IsNullOrEmpty(conn.FromPort))
+                    string childCode = GenerateNodeCode(childNode, entity, questName, indent + 1);
+                    if (branchCode.ContainsKey(conn.FromPort))
                     {
-                        // FIX: Branch children get indented (indent + 1)
-                        string childCode = GenerateNodeCode(childNode, entity, questName, indent + 1);
-
-                        if (branchCode.ContainsKey(conn.FromPort))
-                        {
-                            branchCode[conn.FromPort].Append(childCode);
-                        }
+                        branchCode[conn.FromPort].Append(childCode);
                     }
                 }
-
-                foreach (var label in branchLabels)
-                {
-                    string placeholder = "{" + label + "}";
-                    string placeholderUpper = "{" + label.ToUpper() + "}";
-                    string branchContent = branchCode[label].Length > 0
-                        ? branchCode[label].ToString().TrimEnd('\n')
-                        : GenerateIndent(indent + 1) + $"-- {label.ToLower()} branch";
-
-                    code = code.Replace(placeholder, branchContent);
-                    code = code.Replace(placeholderUpper, branchContent);
-                }
             }
-            else
+
+            foreach (var label in branchLabels)
             {
-                // FIX: Linear flow - children stay at SAME indent level (no indent + 1)
-                // This prevents the pyramid indentation bug
-                StringBuilder childrenCode = new StringBuilder();
-                foreach (var conn in connections)
-                {
-                    var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
-                    if (childNode != null)
-                    {
-                        // Same indent level for linear sequences
-                        childrenCode.Append(GenerateNodeCode(childNode, entity, questName, indent));
-                    }
-                }
-                code = code.Replace("{CHILDREN}", childrenCode.ToString().TrimEnd('\n'));
+                string placeholder = "{" + label + "}";
+                string placeholderUpper = "{" + label.ToUpper() + "}";
+                string branchContent = branchCode[label].Length > 0
+                    ? branchCode[label].ToString().TrimEnd('\n')
+                    : GenerateIndent(indent + 1) + $"-- {label.ToLower()} branch";
+
+                code = code.Replace(placeholder, branchContent);
+                code = code.Replace(placeholderUpper, branchContent);
             }
+        }
+        else if (connections.Count > 0)
+        {
+            // Non-branching structured node (trigger) - children go inside at indent+1
+            StringBuilder childrenCode = new StringBuilder();
+            foreach (var conn in connections)
+            {
+                var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
+                if (childNode != null)
+                {
+                    childrenCode.Append(GenerateNodeCode(childNode, entity, questName, indent + 1));
+                }
+            }
+            code = code.Replace("{CHILDREN}", childrenCode.ToString().TrimEnd('\n'));
         }
         else
         {
-            // No connections - replace placeholders
+            // No connections - clear placeholders
             code = code.Replace("{CHILDREN}", "");
-
+            
             if (nodeDef.HasBranching)
             {
                 var branchLabels = nodeDef.BranchLabels ?? new List<string> { "True", "False" };
@@ -715,24 +769,27 @@ public sealed class CodeGenerator
                     code = code.Replace(placeholderUpper, comment);
                 }
             }
-            else
-            {
-                code = code.Replace("{TRUE}", "");
-                code = code.Replace("{FALSE}", "");
-            }
         }
 
-        // Apply indentation to each line
-        string[] lines = code.Split('\n');
-        for (int i = 0; i < lines.Length; i++)
+        // Emit code with proper indentation
+        // Lines that are already indented (from child substitution) are emitted as-is
+        foreach (string line in code.Split('\n'))
         {
-            if (!string.IsNullOrWhiteSpace(lines[i]))
+            if (string.IsNullOrWhiteSpace(line))
             {
-                sb.AppendLine(GenerateIndent(indent) + lines[i]);
+                continue;
+            }
+            
+            // Check if line is already indented (from child code substitution)
+            bool alreadyIndented = line.Length > 0 && (line[0] == ' ' || line[0] == '\t');
+            
+            if (alreadyIndented)
+            {
+                sb.AppendLine(line);
             }
             else
             {
-                sb.AppendLine();
+                sb.AppendLine(GenerateIndent(indent) + line);
             }
         }
 

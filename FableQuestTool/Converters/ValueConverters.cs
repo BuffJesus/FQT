@@ -4,6 +4,11 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
+// Alias to resolve ambiguity with System.Drawing (WinForms)
+using WpfColor = System.Windows.Media.Color;
+using WpfColorConverter = System.Windows.Media.ColorConverter;
+using WpfPoint = System.Windows.Point;
+
 namespace FableQuestTool.Converters;
 
 /// <summary>
@@ -17,7 +22,7 @@ public class StringToColorBrushConverter : IValueConverter
         {
             try
             {
-                var color = (Color)ColorConverter.ConvertFromString(colorString);
+                var color = (WpfColor)WpfColorConverter.ConvertFromString(colorString);
                 return new SolidColorBrush(color);
             }
             catch
@@ -45,7 +50,7 @@ public class StringToColorConverter : IValueConverter
         {
             try
             {
-                return (Color)ColorConverter.ConvertFromString(colorString);
+                return (WpfColor)WpfColorConverter.ConvertFromString(colorString);
             }
             catch
             {
@@ -72,13 +77,13 @@ public class HeaderGradientConverter : IMultiValueConverter
         {
             try
             {
-                var color1 = (Color)ColorConverter.ConvertFromString(startColor);
-                var color2 = (Color)ColorConverter.ConvertFromString(endColor);
+                var color1 = (WpfColor)WpfColorConverter.ConvertFromString(startColor);
+                var color2 = (WpfColor)WpfColorConverter.ConvertFromString(endColor);
 
                 var brush = new LinearGradientBrush
                 {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(0, 1)
+                    StartPoint = new WpfPoint(0, 0),
+                    EndPoint = new WpfPoint(0, 1)
                 };
                 brush.GradientStops.Add(new GradientStop(color1, 0.0));
                 brush.GradientStops.Add(new GradientStop(color2, 1.0));

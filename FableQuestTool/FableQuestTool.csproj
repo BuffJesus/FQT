@@ -20,4 +20,10 @@
         </None>
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="tools\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>

@@ -29,7 +29,7 @@ public sealed class GameDataCatalogService
     }
 
     /// <summary>
-    /// Scans ALL TNGs (loose files + BIG archives) and builds complete entity catalog.
+    /// Scans ALL TNGs (WAD extraction + loose files + BIG archives) and builds complete entity catalog.
     /// This is the main method to get a comprehensive list of everything in the game.
     /// </summary>
     public List<TngEntity> BuildCompleteCatalog(bool forceRefresh = false)
@@ -42,11 +42,14 @@ public sealed class GameDataCatalogService
 
         var allEntities = new List<TngEntity>();
 
-        // 1. Scan loose TNG files (from data/Levels/FinalAlbion/*.tng)
+        // 1. Extract TNG files from WAD archives (for vanilla Fable installs)
+        ExtractTngFilesFromWad();
+
+        // 2. Scan loose TNG files (from data/Levels/FinalAlbion/*.tng or temp cache)
         var looseTngs = ScanLooseTngFiles();
         allEntities.AddRange(looseTngs);
 
-        // 2. Scan TNG files inside BIG archives
+        // 3. Scan TNG files inside BIG archives (for modded installs)
         var archivedTngs = ScanBigArchiveTngs();
         allEntities.AddRange(archivedTngs);
 
@@ -186,6 +189,85 @@ public sealed class GameDataCatalogService
     /// <summary>
     /// Scans loose TNG files from data/Levels/FinalAlbion/*.tng
     /// </summary>
+    /// <summary>
+    /// Extracts TNG files from FinalAlbion.wad to a temporary cache directory.
+    /// This allows reading TNG data from vanilla Fable installations.
+    /// </summary>
+    private void ExtractTngFilesFromWad()
+    {
+        if (string.IsNullOrWhiteSpace(config.FablePath))
+        {
+            return;
+        }
+
+        string wadPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion.wad");
+        if (!File.Exists(wadPath))
+        {
+            System.Diagnostics.Debug.WriteLine("GameDataCatalogService: FinalAlbion.wad not found");
+            return;
+        }
+
+        // Create cache directory in temp
+        string cacheDir = Path.Combine(Path.GetTempPath(), "FQT_TngCache");
+        Directory.CreateDirectory(cacheDir);
+
+        // Check if already extracted
+        if (Directory.Exists(cacheDir) && Directory.GetFiles(cacheDir, "*.tng").Length > 0)
+        {
+            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Using cached TNG files from {cacheDir}");
+
+            // Copy cached TNGs to FinalAlbion directory for compatibility
+            string finalAlbionPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion");
+            Directory.CreateDirectory(finalAlbionPath);
+
+            foreach (string cachedTng in Directory.GetFiles(cacheDir, "*.tng"))
+            {
+                string targetPath = Path.Combine(finalAlbionPath, Path.GetFileName(cachedTng));
+                if (!File.Exists(targetPath))
+                {
+                    try
+                    {
+                        File.Copy(cachedTng, targetPath, overwrite: false);
+                    }
+                    catch
+                    {
+                        // Ignore copy errors - cache files still work
+                    }
+                }
+            }
+            return;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Extracting TNG files from {wadPath}...");
+
+        // Extract all files from WAD
+        if (!WadBridgeClient.TryExtractAll(wadPath, cacheDir, out string? error))
+        {
+            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: WAD extraction failed: {error}");
+            return;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: TNG files extracted to {cacheDir}");
+
+        // Copy extracted TNGs to FinalAlbion directory
+        string levelsPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion");
+        Directory.CreateDirectory(levelsPath);
+
+        foreach (string tngFile in Directory.GetFiles(cacheDir, "*.tng"))
+        {
+            string targetPath = Path.Combine(levelsPath, Path.GetFileName(tngFile));
+            try
+            {
+                File.Copy(tngFile, targetPath, overwrite: true);
+                System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Copied {Path.GetFileName(tngFile)} to FinalAlbion");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Failed to copy {Path.GetFileName(tngFile)}: {ex.Message}");
+            }
+        }
+    }
+
     private List<TngEntity> ScanLooseTngFiles()
     {
         var entities = new List<TngEntity>();

@@ -308,9 +308,10 @@ public static class NodeDefinitions
             new() { Type = "screenFadeOut", Label = "Screen Fade Out", Category = "action", Icon = "⬛", IsAdvanced = false,
                 Description = "Fade screen to black",
                 Properties = new() {
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "0.5" }
+                    new NodeProperty { Name = "fadeTime", Type = "float", Label = "Fade Time", DefaultValue = "0.5" },
+                    new NodeProperty { Name = "holdTime", Type = "float", Label = "Hold Time", DefaultValue = "0.0" }
                 },
-                CodeTemplate = "Quest:FadeScreenOutUntilNextCallToFadeScreenIn({duration})\nQuest:Pause({duration})\n{CHILDREN}" },
+                CodeTemplate = "Quest:FadeScreenOutUntilNextCallToFadeScreenIn({fadeTime}, {holdTime})\nQuest:Pause({fadeTime})\n{CHILDREN}" },
 
             new() { Type = "screenFadeIn", Label = "Screen Fade In", Category = "action", Icon = "⬜", IsAdvanced = false,
                 Description = "Fade screen back from black",
@@ -370,8 +371,10 @@ public static class NodeDefinitions
 
             new() { Type = "stopMusicOverride", Label = "Stop Music Override", Category = "action", Icon = "⏹️🎵", IsAdvanced = false,
                 Description = "Stop overriding music and return to normal",
-                Properties = new(),
-                CodeTemplate = "Quest:StopOverrideMusic()\n{CHILDREN}" },
+                Properties = new() {
+                    new NodeProperty { Name = "isCutscene", Type = "bool", Label = "Is Cutscene Music", DefaultValue = "false" }
+                },
+                CodeTemplate = "Quest:StopOverrideMusic({isCutscene})\n{CHILDREN}" },
 
             new() { Type = "enableDangerMusic", Label = "Enable Danger Music", Category = "action", Icon = "⚠️🎵", IsAdvanced = true,
                 Description = "Enable or disable danger/combat music",
@@ -436,9 +439,10 @@ public static class NodeDefinitions
             new() { Type = "moveToMarker", Label = "Move To Marker", Category = "action", Icon = "🚶📍", IsAdvanced = false,
                 Description = "Walk to specified marker",
                 Properties = new() {
-                    new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_1" }
+                    new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_1" },
+                    new NodeProperty { Name = "radius", Type = "float", Label = "Stop Radius", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nMe:MoveToThing(marker)\n{CHILDREN}" },
+                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nMe:MoveToThing(marker, {radius})\n{CHILDREN}" },
 
             new() { Type = "moveToPosition", Label = "Move To Position", Category = "action", Icon = "🎯", IsAdvanced = true,
                 Description = "Move to specific coordinates",

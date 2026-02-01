@@ -507,12 +507,13 @@ public sealed class CodeGenerator
     private string RenderStateInit(QuestState state)
     {
         string value = state.DefaultValue?.ToString() ?? GetDefaultForType(state.Type);
-        
+
+        // Note: FSE API doesn't have SetStateFloat, so floats are stored as strings
         return state.Type.ToLowerInvariant() switch
         {
             "bool" => $"    Quest:SetStateBool(\"{state.Name}\", {value.ToLowerInvariant()})",
             "int" => $"    Quest:SetStateInt(\"{state.Name}\", {value})",
-            "float" => $"    Quest:SetStateFloat(\"{state.Name}\", {value})",
+            "float" => $"    Quest:SetStateString(\"{state.Name}\", \"{value}\") -- float stored as string",
             "string" => $"    Quest:SetStateString(\"{state.Name}\", \"{value}\")",
             _ => $"    Quest:SetStateBool(\"{state.Name}\", false) -- Unknown type: {state.Type}"
         };

@@ -642,8 +642,11 @@ public sealed class CodeGenerator
         // Replace placeholders with actual values
         code = code.Replace("{QUEST_NAME}", questName);
 
+        // Migrate old property names to new ones for backwards compatibility
+        var migratedConfig = MigratePropertyNames(node.Type, node.Config);
+
         // First, apply actual config values from the node (these take priority)
-        foreach (var prop in node.Config)
+        foreach (var prop in migratedConfig)
         {
             string placeholder = "{" + prop.Key + "}";
             string value = prop.Value?.ToString() ?? "";
@@ -754,23 +757,84 @@ public sealed class CodeGenerator
             }
         }
 
-        // Apply indentation
+        // Apply indentation only to template lines (not to already-indented child code)
+        // Template lines have no leading spaces; child lines already have their indentation
         string[] lines = code.Split('\n');
         for (int i = 0; i < lines.Length; i++)
         {
-            if (!string.IsNullOrWhiteSpace(lines[i]))
+            string line = lines[i];
+            if (string.IsNullOrWhiteSpace(line))
             {
-                sb.AppendLine(GenerateIndent(indent) + lines[i]);
+                sb.AppendLine();
             }
             else
             {
-                sb.AppendLine();
+                int leadingSpaces = line.Length - line.TrimStart().Length;
+                if (leadingSpaces == 0)
+                {
+                    // Template line - needs indentation
+                    sb.AppendLine(GenerateIndent(indent) + line);
+                }
+                else
+                {
+                    // Already indented (from child node) - keep as-is
+                    sb.AppendLine(line);
+                }
             }
         }
 
         return sb.ToString();
     }
 
+
+    /// <summary>
+    /// Migrates old property names to new ones for backwards compatibility with saved projects.
+    /// </summary>
+    private static Dictionary<string, object> MigratePropertyNames(string nodeType, Dictionary<string, object> config)
+    {
+        // Define property name migrations: nodeType -> (oldName -> newName)
+        var migrations = new Dictionary<string, Dictionary<string, string>>
+        {
+            ["cameraOrbitEntity"] = new()
+            {
+                ["distance"] = "offsetZ",
+                ["height"] = "offsetY",
+                // "speed" has no equivalent in new API, will use default
+            },
+            ["cameraOrbitPosition"] = new()
+            {
+                ["distance"] = "offsetZ",
+                ["height"] = "offsetY",
+            },
+            ["cameraLookAtEntity"] = new()
+            {
+                ["distance"] = "camZ",
+                ["height"] = "camY",
+            }
+        };
+
+        // If no migrations defined for this node type, return original config
+        if (!migrations.TryGetValue(nodeType, out var nodeMigrations))
+        {
+            return config;
+        }
+
+        // Create new dictionary with migrated property names
+        var result = new Dictionary<string, object>();
+        foreach (var prop in config)
+        {
+            if (nodeMigrations.TryGetValue(prop.Key, out var newName))
+            {
+                result[newName] = prop.Value;
+            }
+            else
+            {
+                result[prop.Key] = prop.Value;
+            }
+        }
+
+        return result;
+    }
 
     private static string Escape(string text)
     {

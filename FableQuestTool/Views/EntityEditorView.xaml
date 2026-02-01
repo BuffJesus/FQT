@@ -65,6 +65,12 @@
             <Setter Property="Points" Value="0,0 8,5 0,10 0,7 4,5 0,3" />
         </Style>
 
+        <!-- UE5-style Connector Style -->
+        <Style TargetType="nodify:Connector">
+            <Setter Property="MinWidth" Value="8" />
+            <Setter Property="MinHeight" Value="8" />
+        </Style>
+
         <!-- UE5-style Node Base Style -->
         <Style TargetType="nodify:Node">
             <Setter Property="Background" Value="#1A1A1A" />

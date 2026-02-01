@@ -533,50 +533,57 @@ public static class NodeDefinitions
 
             // ===== CAMERA SYSTEM =====
             new() { Type = "cameraOrbitEntity", Label = "Camera Orbit Entity", Category = "action", Icon = "🎥", IsAdvanced = false,
-                Description = "Orbit camera around an entity",
+                Description = "Orbit camera around an entity (offset is camera position relative to entity)",
                 Properties = new() {
-                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "5.0" },
-                    new NodeProperty { Name = "height", Type = "float", Label = "Height", DefaultValue = "2.0" },
-                    new NodeProperty { Name = "speed", Type = "float", Label = "Speed", DefaultValue = "1.0" },
+                    new NodeProperty { Name = "offsetX", Type = "float", Label = "Offset X", DefaultValue = "0" },
+                    new NodeProperty { Name = "offsetY", Type = "float", Label = "Offset Y (Height)", DefaultValue = "2.0" },
+                    new NodeProperty { Name = "offsetZ", Type = "float", Label = "Offset Z (Distance)", DefaultValue = "4.0" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "3.0" }
                 },
-                CodeTemplate = "Quest:CameraCircleAroundThing(Me, {distance}, {height}, {speed}, {duration})\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraCircleAroundThing(Me, {x={offsetX}, y={offsetY}, z={offsetZ}}, {duration})\n{CHILDREN}" },
 
             new() { Type = "cameraOrbitPosition", Label = "Camera Orbit Position", Category = "action", Icon = "🎥📍", IsAdvanced = true,
                 Description = "Orbit camera around world position",
                 Properties = new() {
-                    new NodeProperty { Name = "x", Type = "float", Label = "X", DefaultValue = "0" },
-                    new NodeProperty { Name = "y", Type = "float", Label = "Y", DefaultValue = "0" },
-                    new NodeProperty { Name = "z", Type = "float", Label = "Z", DefaultValue = "0" },
-                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "5.0" },
-                    new NodeProperty { Name = "height", Type = "float", Label = "Height", DefaultValue = "2.0" },
-                    new NodeProperty { Name = "speed", Type = "float", Label = "Speed", DefaultValue = "1.0" }
+                    new NodeProperty { Name = "posX", Type = "float", Label = "Position X", DefaultValue = "0" },
+                    new NodeProperty { Name = "posY", Type = "float", Label = "Position Y", DefaultValue = "0" },
+                    new NodeProperty { Name = "posZ", Type = "float", Label = "Position Z", DefaultValue = "0" },
+                    new NodeProperty { Name = "offsetX", Type = "float", Label = "Offset X", DefaultValue = "0" },
+                    new NodeProperty { Name = "offsetY", Type = "float", Label = "Offset Y (Height)", DefaultValue = "2.0" },
+                    new NodeProperty { Name = "offsetZ", Type = "float", Label = "Offset Z (Distance)", DefaultValue = "4.0" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "3.0" }
                 },
-                CodeTemplate = "Quest:CameraCircleAroundPos({x={x}, y={y}, z={z}}, {distance}, {height}, {speed})\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraCircleAroundPos({x={posX}, y={posY}, z={posZ}}, {x={offsetX}, y={offsetY}, z={offsetZ}}, {duration})\n{CHILDREN}" },
 
             new() { Type = "cameraLookAtEntity", Label = "Camera Look At Entity", Category = "action", Icon = "👁️🎥", IsAdvanced = false,
-                Description = "Move camera to look at entity",
+                Description = "Move camera to position and look at entity",
                 Properties = new() {
-                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "3.0" },
-                    new NodeProperty { Name = "height", Type = "float", Label = "Height", DefaultValue = "1.5" },
+                    new NodeProperty { Name = "camX", Type = "float", Label = "Camera X", DefaultValue = "0" },
+                    new NodeProperty { Name = "camY", Type = "float", Label = "Camera Y", DefaultValue = "2.0" },
+                    new NodeProperty { Name = "camZ", Type = "float", Label = "Camera Z", DefaultValue = "4.0" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:CameraMoveToPosAndLookAtThing(Me:GetPos(), Me, {distance}, {height}, {duration})\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraMoveToPosAndLookAtThing({x={camX}, y={camY}, z={camZ}}, Me, {duration})\n{CHILDREN}" },
 
             new() { Type = "cameraLookAtPosition", Label = "Camera Look At Position", Category = "action", Icon = "👁️📍", IsAdvanced = true,
-                Description = "Move camera to look at world position",
+                Description = "Move camera to position and look at world position",
                 Properties = new() {
+                    new NodeProperty { Name = "camX", Type = "float", Label = "Camera X", DefaultValue = "0" },
+                    new NodeProperty { Name = "camY", Type = "float", Label = "Camera Y", DefaultValue = "2.0" },
+                    new NodeProperty { Name = "camZ", Type = "float", Label = "Camera Z", DefaultValue = "4.0" },
                     new NodeProperty { Name = "lookX", Type = "float", Label = "Look At X", DefaultValue = "0" },
                     new NodeProperty { Name = "lookY", Type = "float", Label = "Look At Y", DefaultValue = "0" },
                     new NodeProperty { Name = "lookZ", Type = "float", Label = "Look At Z", DefaultValue = "0" },
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:CameraMoveToPosAndLookAtPos(Me:GetPos(), {x={lookX}, y={lookY}, z={lookZ}}, {duration})\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraMoveToPosAndLookAtPos({x={camX}, y={camY}, z={camZ}}, {x={lookX}, y={lookY}, z={lookZ}}, {duration})\n{CHILDREN}" },
 
             new() { Type = "cameraResetToHero", Label = "Reset Camera To Hero", Category = "action", Icon = "🔄🎥", IsAdvanced = false,
                 Description = "Return camera to default third-person view behind hero",
-                Properties = new(),
-                CodeTemplate = "Quest:CameraResetToViewBehindHero()\n{CHILDREN}" },
+                Properties = new() {
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
+                },
+                CodeTemplate = "Quest:CameraResetToViewBehindHero({duration})\n{CHILDREN}" },
 
             new() { Type = "cameraUseCameraPoint", Label = "Use Camera Point", Category = "action", Icon = "📷", IsAdvanced = true,
                 Description = "Use a predefined camera point from the level",

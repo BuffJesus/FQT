@@ -22,6 +22,12 @@ public sealed class ProjectFileService
             Project = project
         };
 
+        string? directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
         string json = JsonSerializer.Serialize(data, options);
         File.WriteAllText(path, json);
     }

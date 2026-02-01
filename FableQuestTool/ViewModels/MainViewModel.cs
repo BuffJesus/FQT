@@ -110,8 +110,18 @@ public sealed partial class MainViewModel : ObservableObject
             int totalConnections = Project.Entities.Sum(e => e.Connections.Count);
 
             fileService.Save(ProjectPath, Project);
+            if (!File.Exists(ProjectPath))
+            {
+                StatusText = "Save failed: file not found after write.";
+                System.Windows.MessageBox.Show(
+                    $"Save completed without errors, but the file was not found at:\n{ProjectPath}",
+                    "Save Project",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+                return;
+            }
             IsModified = false;
-            StatusText = $"Project saved. ({Project.Entities.Count} entities, {totalNodes} nodes, {totalConnections} connections)";
+            StatusText = $"Project saved to: {ProjectPath} ({Project.Entities.Count} entities, {totalNodes} nodes, {totalConnections} connections)";
         }
         catch (Exception ex)
         {

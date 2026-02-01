@@ -625,12 +625,10 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "Quest:ScreenFilterFadeOut({duration})\n{CHILDREN}" },
 
-            new() { Type = "letterbox", Label = "Letterbox On", Category = "action", Icon = "🎬", IsAdvanced = true,
-                Description = "Enable cinematic letterbox bars",
-                Properties = new() {
-                    new NodeProperty { Name = "fadeIn", Type = "bool", Label = "Fade In", DefaultValue = "true" }
-                },
-                CodeTemplate = "Quest:StartLetterBox({fadeIn})\n{CHILDREN}" },
+            new() { Type = "letterbox", Label = "Letterbox On (Auto)", Category = "action", Icon = "🎬", IsAdvanced = true,
+                Description = "Letterbox starts automatically with StartMovieSequence() or FadeScreenOut() - this node is just a placeholder",
+                Properties = new(),
+                CodeTemplate = "-- Letterbox starts automatically with StartMovieSequence() or FadeScreenOut()\n{CHILDREN}" },
 
             new() { Type = "letterboxOff", Label = "Letterbox Off", Category = "action", Icon = "📺", IsAdvanced = true,
                 Description = "Remove cinematic letterbox bars",

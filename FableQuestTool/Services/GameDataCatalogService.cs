@@ -222,6 +222,9 @@ public sealed class GameDataCatalogService
 
     /// <summary>
     /// Scans TNG files inside BIG archives (Graphics.big, CompiledLevel.big, etc.)
+    /// NOTE: Vanilla Fable stores TNG data in LEV/WAD files, NOT as loose .tng files in BIG archives.
+    /// This method will only work with modded installations that have extracted TNG files.
+    /// For vanilla installs, use the static fallback data in GameData.Creatures.
     /// </summary>
     private List<TngEntity> ScanBigArchiveTngs()
     {
@@ -229,7 +232,19 @@ public sealed class GameDataCatalogService
 
         try
         {
+            System.Diagnostics.Debug.WriteLine("GameDataCatalogService: Scanning BIG archives for TNG files...");
+            System.Diagnostics.Debug.WriteLine("GameDataCatalogService: NOTE - Vanilla Fable TNG data is in LEV/WAD files, not BIG archives");
+            System.Diagnostics.Debug.WriteLine("GameDataCatalogService: TNG extraction from LEV files requires FableMod libraries (not implemented)");
+
             var tngEntries = levelDataService.FindTngEntries();
+            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Found {tngEntries.Count} TNG entries in BIG archives");
+
+            if (tngEntries.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("GameDataCatalogService: No TNG files found (expected for vanilla Fable)");
+                System.Diagnostics.Debug.WriteLine("GameDataCatalogService: Using static fallback creature definitions from GameData.Creatures");
+                return entities;
+            }
 
             foreach (var tngEntry in tngEntries)
             {
@@ -252,10 +267,13 @@ public sealed class GameDataCatalogService
 
                 entities.AddRange(parsed);
             }
+
+            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Parsed {entities.Count} total entities from BIG archives");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error scanning BIG archives: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Error scanning BIG archives: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"GameDataCatalogService: Stack trace: {ex.StackTrace}");
         }
 
         return entities;

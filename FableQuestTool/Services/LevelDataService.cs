@@ -74,22 +74,32 @@ public sealed class LevelDataService
     {
         if (cachedArchives != null)
         {
+            System.Diagnostics.Debug.WriteLine($"LevelDataService: Using cached archives ({cachedArchives.Count} archives)");
             return cachedArchives;
         }
 
         cachedArchives = new Dictionary<string, BigArchive>(StringComparer.OrdinalIgnoreCase);
         var bigFiles = GetBigFiles();
+        System.Diagnostics.Debug.WriteLine($"LevelDataService: Found {bigFiles.Count} BIG files in data directory");
 
         foreach (var bigFile in bigFiles)
         {
+            System.Diagnostics.Debug.WriteLine($"LevelDataService: Loading {Path.GetFileName(bigFile)}...");
             var archive = LoadBigArchive(bigFile);
             if (archive != null)
             {
                 string fileName = Path.GetFileName(bigFile);
                 cachedArchives[fileName] = archive;
+                int entryCount = archive.GetAllEntries().Count;
+                System.Diagnostics.Debug.WriteLine($"LevelDataService: Loaded {fileName} with {entryCount} entries");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"LevelDataService: Failed to load {Path.GetFileName(bigFile)}");
             }
         }
 
+        System.Diagnostics.Debug.WriteLine($"LevelDataService: Successfully loaded {cachedArchives.Count} archives");
         return cachedArchives;
     }
 
@@ -101,15 +111,26 @@ public sealed class LevelDataService
         var archives = LoadAllBigArchives();
         var tngEntries = new List<BigEntry>();
 
-        foreach (var archive in archives.Values)
+        System.Diagnostics.Debug.WriteLine($"LevelDataService.FindTngEntries: Searching {archives.Count} archives for TNG files");
+
+        foreach (var kvp in archives)
         {
-            var entries = archive.GetAllEntries()
+            var allEntries = kvp.Value.GetAllEntries();
+            System.Diagnostics.Debug.WriteLine($"LevelDataService.FindTngEntries: Archive '{kvp.Key}' has {allEntries.Count} total entries");
+
+            // Sample first 10 entries to see what's in the archive
+            var sample = allEntries.Take(10).Select(e => e.SymbolName).ToList();
+            System.Diagnostics.Debug.WriteLine($"LevelDataService.FindTngEntries: Sample entries from '{kvp.Key}': {string.Join(", ", sample)}");
+
+            var entries = allEntries
                 .Where(e => e.SymbolName.EndsWith(".tng", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
+            System.Diagnostics.Debug.WriteLine($"LevelDataService.FindTngEntries: Found {entries.Count} TNG entries in '{kvp.Key}'");
             tngEntries.AddRange(entries);
         }
 
+        System.Diagnostics.Debug.WriteLine($"LevelDataService.FindTngEntries: Total TNG entries found: {tngEntries.Count}");
         return tngEntries;
     }
 

@@ -61,6 +61,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         this.entity = entity;
         var config = FableConfig.Load();
         this.entityBrowserService = new EntityBrowserService(config);
+
+        System.Diagnostics.Debug.WriteLine($"EntityTabViewModel Constructor: FablePath = {config.FablePath ?? "NULL"}");
+
         tabTitle = string.IsNullOrWhiteSpace(entity.ScriptName) ? "New Entity" : entity.ScriptName;
         entityIcon = GetEntityIcon(entity.EntityType);
 
@@ -69,18 +72,48 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         LoadNodePalette();
         LoadExistingNodes();
-        LoadDropdownData();
+        LoadDropdownData(config);
 
         // Listen for node collection changes to update available events
         Nodes.CollectionChanged += (s, e) => UpdateAvailableEvents();
     }
 
-    private void LoadDropdownData()
+    private void LoadDropdownData(FableConfig config)
     {
         try
         {
+            // Check if Fable path is configured
+            if (string.IsNullOrWhiteSpace(config.FablePath))
+            {
+                System.Diagnostics.Debug.WriteLine("EntityTabViewModel: Fable path not configured, using fallback static data");
+                LoadFallbackDefinitions();
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"EntityTabViewModel: Loading entities from {config.FablePath}");
+
             // Load all entities to populate dropdowns
             allEntities = entityBrowserService.GetAllEntities();
+
+            if (allEntities == null || allEntities.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("EntityTabViewModel: No entities loaded from game files, using fallback static data");
+                LoadFallbackDefinitions();
+                return;
+            }
+
+            // Debug: Show sample of loaded entities
+            var sampleEntities = allEntities.Take(5).ToList();
+            System.Diagnostics.Debug.WriteLine($"EntityTabViewModel: Sample entities loaded:");
+            foreach (var e in sampleEntities)
+            {
+                System.Diagnostics.Debug.WriteLine($"  - DefType: {e.DefinitionType}, Region: {e.RegionName}, Category: {e.Category}");
+            }
+
+            // Debug: Show unique regions
+            var uniqueRegions = allEntities.Where(e => !string.IsNullOrWhiteSpace(e.RegionName))
+                .Select(e => e.RegionName).Distinct().OrderBy(r => r).Take(10).ToList();
+            System.Diagnostics.Debug.WriteLine($"EntityTabViewModel: Sample regions found: {string.Join(", ", uniqueRegions)}");
 
             // Initial definition load
             UpdateAvailableDefinitions();
@@ -108,27 +141,54 @@ public sealed partial class EntityTabViewModel : ObservableObject
         {
             // If loading fails, populate with fallback static data
             System.Diagnostics.Debug.WriteLine($"EntityTabViewModel: Failed to load dropdown data: {ex.Message}");
+            LoadFallbackDefinitions();
+        }
+    }
 
-            // Fallback to static creature list
-            if (entity.EntityType == EntityType.Creature)
-            {
-                AvailableDefinitions.Clear();
+    private void LoadFallbackDefinitions()
+    {
+        AvailableDefinitions.Clear();
+
+        // Populate based on entity type
+        switch (entity.EntityType)
+        {
+            case EntityType.Creature:
                 foreach (var creature in GameData.Creatures)
                 {
                     AvailableDefinitions.Add(creature);
                 }
-            }
-
-            // Still allow text entry even if loading fails
+                break;
+            case EntityType.Object:
+                foreach (var obj in GameData.Objects)
+                {
+                    AvailableDefinitions.Add(obj);
+                }
+                break;
         }
+
+        // Populate regions
+        AvailableRegions.Clear();
+        foreach (var region in GameData.Regions)
+        {
+            AvailableRegions.Add(region);
+        }
+
+        System.Diagnostics.Debug.WriteLine($"EntityTabViewModel: Loaded fallback definitions - {AvailableDefinitions.Count} definitions");
     }
 
     private void OnEntityPropertyChangedForDropdowns(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(QuestEntity.EntityType) ||
-            e.PropertyName == nameof(QuestEntity.SpawnRegion))
+        if (e.PropertyName == nameof(QuestEntity.EntityType))
         {
             UpdateAvailableDefinitions();
+        }
+        else if (e.PropertyName == nameof(QuestEntity.SpawnRegion))
+        {
+            // Only update definitions if we have game data (not using fallback)
+            if (allEntities != null && allEntities.Count > 0)
+            {
+                UpdateAvailableDefinitions();
+            }
         }
         else if (e.PropertyName == nameof(QuestEntity.SpawnMethod))
         {
@@ -142,6 +202,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         if (allEntities == null || allEntities.Count == 0)
         {
+            // If no entities loaded from game files, use fallback static data
+            LoadFallbackDefinitions();
             return;
         }
 
@@ -150,9 +212,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
         // Filter by spawn region if specified
         if (!string.IsNullOrWhiteSpace(entity.SpawnRegion))
         {
+            int beforeCount = filteredEntities.Count();
             filteredEntities = filteredEntities.Where(e =>
                 e.RegionName != null &&
                 e.RegionName.Equals(entity.SpawnRegion, StringComparison.OrdinalIgnoreCase));
+            int afterCount = filteredEntities.Count();
+            System.Diagnostics.Debug.WriteLine($"Region filter '{entity.SpawnRegion}': {beforeCount} -> {afterCount} entities");
         }
 
         // Filter by entity type
@@ -196,6 +261,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
         {
             AvailableDefinitions.Add(def);
         }
+
+        System.Diagnostics.Debug.WriteLine($"UpdateAvailableDefinitions: Region={entity.SpawnRegion}, Type={entity.EntityType}, Found {definitions.Count} definitions");
     }
 
     private void UpdateAvailableMarkers()

@@ -320,7 +320,17 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "no", Type = "text", Label = "No Text", DefaultValue = "No" },
                     new NodeProperty { Name = "unsure", Type = "text", Label = "Unsure Text", DefaultValue = "I'm not sure" }
                 },
-                CodeTemplate = "local answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")\n{CHILDREN}" },
+                CodeTemplate = "local answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")\nQuest:EndMovieSequence()\nif answer ~= nil then\n{CHILDREN}\nend" },
+
+            new() { Type = "startMovieSequence", Label = "Start Movie Sequence", Category = "action", Icon = "🎬", IsAdvanced = false,
+                Description = "Begin cinematic mode (prevents interruptions during cutscenes/conversations)",
+                Properties = new(),
+                CodeTemplate = "Quest:StartMovieSequence()\n{CHILDREN}" },
+
+            new() { Type = "endMovieSequence", Label = "End Movie Sequence", Category = "action", Icon = "🎬✅", IsAdvanced = false,
+                Description = "End cinematic mode and return control to player",
+                Properties = new(),
+                CodeTemplate = "Quest:EndMovieSequence()\n{CHILDREN}" },
             
             new() { Type = "giveAbility", Label = "Give Ability", Category = "action", Icon = "✨", IsAdvanced = false,
                 Description = "Grant hero a combat ability",
@@ -696,7 +706,7 @@ public static class NodeDefinitions
                 CodeTemplate = "if Me:IsAlive() then\n{TRUE}\nelse\n{FALSE}\nend" },
 
             new() { Type = "checkYesNoAnswer", Label = "Check Answer", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
-                Description = "Check yes/no question answer and branch (Yes/No/Unsure)",
+                Description = "Check yes/no question answer and branch (Yes/No/Unsure) - Use as child of Yes/No Question node",
                 Properties = new(),
                 BranchLabels = new List<string> { "Yes", "No", "Unsure" },
                 CodeTemplate = "if answer == 0 then\n{Yes}\nelseif answer == 1 then\n{No}\nelse\n{Unsure}\nend" },

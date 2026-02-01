@@ -441,16 +441,16 @@
                                                     <Style TargetType="nodify:Node" BasedOn="{StaticResource {x:Type nodify:Node}}">
                                                         <Setter Property="MinWidth" Value="180" />
                                                         <Style.Triggers>
-                                                            <!-- Reroute nodes are minimal -->
+                                                            <!-- Reroute nodes are minimal (use small positive values) -->
                                                             <DataTrigger Binding="{Binding IsRerouteNode}" Value="True">
-                                                                <Setter Property="MinWidth" Value="0" />
-                                                                <Setter Property="MinHeight" Value="0" />
-                                                                <Setter Property="Padding" Value="0" />
+                                                                <Setter Property="MinWidth" Value="20" />
+                                                                <Setter Property="MinHeight" Value="20" />
+                                                                <Setter Property="Padding" Value="2" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsRedirectionNode}" Value="True">
-                                                                <Setter Property="MinWidth" Value="0" />
-                                                                <Setter Property="MinHeight" Value="0" />
-                                                                <Setter Property="Padding" Value="0" />
+                                                                <Setter Property="MinWidth" Value="20" />
+                                                                <Setter Property="MinHeight" Value="20" />
+                                                                <Setter Property="Padding" Value="2" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>

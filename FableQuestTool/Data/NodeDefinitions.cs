@@ -59,11 +59,11 @@ public static class NodeDefinitions
                 CodeTemplate = "if Quest:IsDistanceBetweenThingsUnder(hero, Me, {distance}) then\n{CHILDREN}\nend" },
             
             new() { Type = "onItemPresented", Label = "When Item Given", Category = "trigger", Icon = "🎁", IsAdvanced = false,
-                Description = "Triggered when hero presents an item to this entity",
+                Description = "Triggered when hero presents the specified item to this entity",
                 Properties = new() {
                     new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
-                CodeTemplate = "if Me:MsgIsPresentedWithItem() then\n{CHILDREN}\nend" },
+                CodeTemplate = "if Me:MsgIsPresentedWithItem(\"{item}\") then\n{CHILDREN}\nend" },
             
             new() { Type = "onHeroUsed", Label = "When Used By Hero", Category = "trigger", Icon = "🔧", IsAdvanced = false,
                 Description = "Triggered when hero uses/activates this entity",
@@ -131,9 +131,10 @@ public static class NodeDefinitions
                 Description = "Give gold and/or items to hero",
                 Properties = new() {
                     new NodeProperty { Name = "gold", Type = "int", Label = "Gold", DefaultValue = "100" },
-                    new NodeProperty { Name = "item", Type = "string", Label = "Item (optional)", DefaultValue = "", Options = new List<string>(GameData.Objects) }
+                    new NodeProperty { Name = "item", Type = "string", Label = "Item (optional)", DefaultValue = "", Options = new List<string>(GameData.Objects) },
+                    new NodeProperty { Name = "amount", Type = "int", Label = "Item Amount", DefaultValue = "1" }
                 },
-                CodeTemplate = "Quest:GiveHeroGold({gold})\nif \"{item}\" ~= \"\" then Quest:GiveHeroObject(\"{item}\") end\n{CHILDREN}" },
+                CodeTemplate = "if {gold} > 0 then Quest:GiveHeroGold({gold}) end\nlocal itemToGive = \"{item}\"\nif itemToGive ~= \"\" and itemToGive ~= nil then Quest:GiveHeroObject(\"{item}\", {amount}) end\n{CHILDREN}" },
 
             new() { Type = "giveItem", Label = "Give Item", Category = "action", Icon = "🎁", IsAdvanced = false,
                 Description = "Give specific item(s) to hero",
@@ -192,14 +193,14 @@ public static class NodeDefinitions
                 CodeTemplate = "Quest:HeroReceiveMessageFromGuildMaster(\"{key}\", \"Class\", true, true)\n{CHILDREN}" },
             
             new() { Type = "yesNoQuestion", Label = "Yes/No Question", Category = "action", Icon = "❓", IsAdvanced = false,
-                Description = "Ask hero a yes/no question",
+                Description = "Ask hero a yes/no question (use with Check Answer node to handle response)",
                 Properties = new() {
                     new NodeProperty { Name = "question", Type = "text", Label = "Question", DefaultValue = "Do you accept?" },
                     new NodeProperty { Name = "yes", Type = "text", Label = "Yes Text", DefaultValue = "Yes" },
                     new NodeProperty { Name = "no", Type = "text", Label = "No Text", DefaultValue = "No" },
                     new NodeProperty { Name = "unsure", Type = "text", Label = "Unsure Text", DefaultValue = "I'm not sure" }
                 },
-                CodeTemplate = "local answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")\nQuest:EndMovieSequence()\nif answer ~= nil then\n{CHILDREN}\nend" },
+                CodeTemplate = "answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")\nQuest:EndMovieSequence()\n{CHILDREN}" },
 
             // ===== CINEMATIC - Movie Sequence (No frame checks during movie mode!) =====
             new() { Type = "startMovieSequence", Label = "Start Movie Sequence", Category = "action", Icon = "🎬", IsAdvanced = false,
@@ -261,24 +262,23 @@ public static class NodeDefinitions
 
             // ===== CAMERA (Just pause for timing, no frame checks during cinematics) =====
             new() { Type = "cameraOrbitEntity", Label = "Camera Orbit Entity", Category = "action", Icon = "🎥", IsAdvanced = false,
-                Description = "Orbit camera around this entity",
+                Description = "Orbit camera around this entity for specified duration",
                 Properties = new() {
-                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "4.0" },
-                    new NodeProperty { Name = "height", Type = "float", Label = "Height", DefaultValue = "1.5" },
-                    new NodeProperty { Name = "speed", Type = "float", Label = "Speed", DefaultValue = "0.3" },
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "3.0" }
+                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance from Entity", DefaultValue = "4.0" },
+                    new NodeProperty { Name = "height", Type = "float", Label = "Camera Height", DefaultValue = "1.5" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Orbit Duration (seconds)", DefaultValue = "3.0" }
                 },
-                CodeTemplate = "Quest:CameraCircleAroundThing(Me, {x=0, y={height}, z={distance}}, {duration})\nQuest:Pause(0.5)\n{CHILDREN}" },
+                CodeTemplate = "Quest:CameraCircleAroundThing(Me, {x=0, y={height}, z={distance}}, {duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "cameraLookAtEntity", Label = "Camera Look At Entity", Category = "action", Icon = "👁️🎥", IsAdvanced = false,
-                Description = "Point camera at this entity",
+                Description = "Position camera relative to entity and look at it",
                 Properties = new() {
                     new NodeProperty { Name = "camX", Type = "float", Label = "Camera X Offset", DefaultValue = "0" },
-                    new NodeProperty { Name = "camY", Type = "float", Label = "Camera Y Offset", DefaultValue = "2.0" },
-                    new NodeProperty { Name = "camZ", Type = "float", Label = "Camera Z Offset", DefaultValue = "5.0" },
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
+                    new NodeProperty { Name = "camY", Type = "float", Label = "Camera Y Offset (height)", DefaultValue = "2.0" },
+                    new NodeProperty { Name = "camZ", Type = "float", Label = "Camera Z Offset (distance)", DefaultValue = "5.0" },
+                    new NodeProperty { Name = "duration", Type = "float", Label = "Transition Duration", DefaultValue = "1.0" }
                 },
-                CodeTemplate = "Quest:CameraMoveToPosAndLookAtThing({x={camX}, y={camY}, z={camZ}}, Me, {duration})\nQuest:Pause(0.5)\n{CHILDREN}" },
+                CodeTemplate = "local entityPos = Me:GetPos()\nlocal camPos = {x=entityPos.x+{camX}, y=entityPos.y+{camY}, z=entityPos.z+{camZ}}\nQuest:CameraMoveToPosAndLookAtThing(camPos, Me, {duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "cameraResetToHero", Label = "Reset Camera To Hero", Category = "action", Icon = "🔄🎥", IsAdvanced = false,
                 Description = "Return camera to default third-person view behind hero",
@@ -295,7 +295,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "easeIn", Type = "int", Label = "Ease In Type", DefaultValue = "0" },
                     new NodeProperty { Name = "easeOut", Type = "int", Label = "Ease Out Type", DefaultValue = "0" }
                 },
-                CodeTemplate = "local camPoint = Quest:GetThingWithScriptName(\"{cameraPoint}\")\nQuest:CameraUseCameraPoint(camPoint, Me, {duration}, {easeIn}, {easeOut})\nQuest:Pause({duration})\n{CHILDREN}" },
+                CodeTemplate = "local camPoint = Quest:GetThingWithScriptName(\"{cameraPoint}\")\nif camPoint ~= nil then\n    Quest:CameraUseCameraPoint(camPoint, Me, {duration}, {easeIn}, {easeOut})\n    Quest:Pause({duration})\nelse\n    Quest:Log(\"Warning: Camera point '{cameraPoint}' not found\")\nend\n{CHILDREN}" },
 
             new() { Type = "cameraConversation", Label = "Conversation Camera", Category = "action", Icon = "🎬💬", IsAdvanced = true,
                 Description = "Set up camera for dialogue scene (0=Default, 1=Close, 2=OTS_Speaker, 3=OTS_Listener)",
@@ -408,7 +408,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_SPAWN" }
                 },
-                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nQuest:EntityTeleportToThing(Me, marker)\n{CHILDREN}" },
+                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nif marker ~= nil then\n    Quest:EntityTeleportToThing(Me, marker)\nelse\n    Quest:Log(\"Warning: Marker '{marker}' not found for teleport\")\nend\n{CHILDREN}" },
 
             new() { Type = "followHero", Label = "Follow Hero", Category = "action", Icon = "🚶", IsAdvanced = false,
                 Description = "Make entity follow the hero",
@@ -420,7 +420,7 @@ public static class NodeDefinitions
             new() { Type = "stopFollowing", Label = "Stop Following", Category = "action", Icon = "🛑", IsAdvanced = false,
                 Description = "Stop following the hero",
                 Properties = new(),
-                CodeTemplate = "Me:StopFollowingThing(hero)\n{CHILDREN}" },
+                CodeTemplate = "Me:StopFollowing()\n{CHILDREN}" },
 
             new() { Type = "sheatheWeapons", Label = "Sheathe Weapons", Category = "action", Icon = "🔒🗡️", IsAdvanced = true,
                 Description = "Put weapons away",
@@ -438,7 +438,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_1" }
                 },
-                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nMe:MoveToThing(marker)\n{CHILDREN}" },
+                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nif marker ~= nil then\n    Me:MoveToThing(marker)\nelse\n    Quest:Log(\"Warning: Marker '{marker}' not found\")\nend\n{CHILDREN}" },
 
             new() { Type = "moveToPosition", Label = "Move To Position", Category = "action", Icon = "🎯", IsAdvanced = true,
                 Description = "Move to specific coordinates",
@@ -454,7 +454,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_SPAWN" }
                 },
-                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nQuest:EntityTeleportToThing(Me, marker)\n{CHILDREN}" },
+                CodeTemplate = "local marker = Quest:GetThingWithScriptName(\"{marker}\")\nif marker ~= nil then\n    Quest:EntityTeleportToThing(Me, marker)\nelse\n    Quest:Log(\"Warning: Marker '{marker}' not found for teleport\")\nend\n{CHILDREN}" },
 
             // ===== ANIMATIONS =====
             new() { Type = "playAnimation", Label = "Play Animation", Category = "action", Icon = "🎬", IsAdvanced = true,
@@ -558,10 +558,10 @@ public static class NodeDefinitions
                 CodeTemplate = "if Me:IsAlive() then\n{TRUE}\nelse\n{FALSE}\nend" },
 
             new() { Type = "checkYesNoAnswer", Label = "Check Answer", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
-                Description = "Check yes/no question answer and branch (Yes/No/Unsure) - Use as child of Yes/No Question node",
+                Description = "Check yes/no question answer and branch (Yes/No/Unsure) - Use after Yes/No Question node",
                 Properties = new(),
                 BranchLabels = new List<string> { "Yes", "No", "Unsure" },
-                CodeTemplate = "if answer == 0 then\n{Yes}\nelseif answer == 1 then\n{No}\nelse\n{Unsure}\nend" },
+                CodeTemplate = "if answer ~= nil then\n    if answer == 0 then\n{Yes}\n    elseif answer == 1 then\n{No}\n    else\n{Unsure}\n    end\nend" },
             
             new() { Type = "checkRegionLoaded", Label = "Region Loaded", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check if region is currently loaded",
@@ -618,14 +618,14 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "count", Type = "int", Label = "Loop Count", DefaultValue = "3" }
                 },
-                CodeTemplate = "for i = 1, {count} do\n{CHILDREN}\nend" },
+                CodeTemplate = "for i = 1, {count} do\n{CHILDREN}\nif Me:IsNull() then break end\nif not Quest:NewScriptFrame(Me) then break end\nend" },
             
             new() { Type = "whileLoop", Label = "While Loop", Category = "flow", Icon = "⟳", IsAdvanced = true,
                 Description = "Repeat while condition is true",
                 Properties = new() {
                     new NodeProperty { Name = "condition", Type = "text", Label = "Condition (Lua)", DefaultValue = "Me:IsAlive()" }
                 },
-                CodeTemplate = "while {condition} do\n{CHILDREN}\nQuest:Pause(0)\nif not Quest:NewScriptFrame() then break end\nend" },
+                CodeTemplate = "while {condition} do\n{CHILDREN}\nQuest:Pause(0)\nif Me:IsNull() then break end\nif not Quest:NewScriptFrame(Me) then break end\nend" },
             
             new() { Type = "delay", Label = "Delay", Category = "flow", Icon = "⏱️", IsAdvanced = false,
                 Description = "Wait before continuing",
@@ -635,11 +635,11 @@ public static class NodeDefinitions
                 CodeTemplate = "Quest:Pause({seconds})\n{CHILDREN}" },
             
             new() { Type = "randomChoice", Label = "Random Choice", Category = "flow", Icon = "🎲", IsAdvanced = true,
-                Description = "Pick random branch based on weights",
+                Description = "Execute children with random selection (use multiple children for branching)",
                 Properties = new() {
-                    new NodeProperty { Name = "weights", Type = "text", Label = "Weights (comma separated)", DefaultValue = "1,1,1" }
+                    new NodeProperty { Name = "maxChoice", Type = "int", Label = "Number of Choices", DefaultValue = "3" }
                 },
-                CodeTemplate = "-- Random choice\nlocal choice = math.random(1, 3)\n{CHILDREN}" },
+                CodeTemplate = "-- Random choice (1 to {maxChoice})\nlocal randomChoice = math.random(1, {maxChoice})\n{CHILDREN}" },
             
             new() { Type = "callFunction", Label = "Call Function", Category = "flow", Icon = "📞", IsAdvanced = true,
                 Description = "Call a custom Lua function",

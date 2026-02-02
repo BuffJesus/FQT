@@ -124,6 +124,16 @@ public sealed class CodeGenerator
                                entity.ObjectReward != null &&
                                entity.ObjectReward.HasRewards;
 
+        // Generate event function definitions BEFORE the main loop
+        // These need to be at script scope, not inside the while loop
+        string eventDefinitions = GenerateEventDefinitions(entity, quest.Name, 1);
+        if (!string.IsNullOrEmpty(eventDefinitions))
+        {
+            sb.AppendLine("    -- Custom event functions");
+            sb.Append(eventDefinitions);
+            sb.AppendLine();
+        }
+
         if (entity.Nodes.Count > 0)
         {
             sb.AppendLine("    -- Main behavior loop");
@@ -1074,6 +1084,61 @@ public sealed class CodeGenerator
         foreach (var trigger in triggerNodes)
         {
             sb.Append(GenerateNodeCode(trigger, entity, questName, indent));
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Generates event function definitions from defineEvent nodes.
+    /// These functions need to be defined BEFORE the main behavior loop so they
+    /// can be called by callEvent nodes inside the loop.
+    /// </summary>
+    public string GenerateEventDefinitions(QuestEntity entity, string questName, int indent = 1)
+    {
+        // Find all defineEvent nodes
+        var eventNodes = entity.Nodes.Where(n => n.Type == "defineEvent").ToList();
+
+        if (eventNodes.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        foreach (var eventNode in eventNodes)
+        {
+            // Get the event name from config
+            string eventName = "MyCustomEvent";
+            if (eventNode.Config.TryGetValue("eventName", out object? value) && value != null)
+            {
+                eventName = value.ToString() ?? "MyCustomEvent";
+            }
+
+            // Generate the function definition
+            sb.AppendLine(GenerateIndent(indent) + $"-- Event: {eventName}");
+            sb.AppendLine(GenerateIndent(indent) + $"local function Event_{eventName}()");
+
+            // Generate code for child nodes (the event body)
+            var connections = entity.Connections.Where(c => c.FromNodeId == eventNode.Id).ToList();
+            if (connections.Count > 0)
+            {
+                foreach (var conn in connections)
+                {
+                    var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
+                    if (childNode != null)
+                    {
+                        sb.Append(GenerateNodeCode(childNode, entity, questName, indent + 1));
+                    }
+                }
+            }
+            else
+            {
+                sb.AppendLine(GenerateIndent(indent + 1) + "-- Event body (add child nodes)");
+            }
+
+            sb.AppendLine(GenerateIndent(indent) + "end");
+            sb.AppendLine();
         }
 
         return sb.ToString();

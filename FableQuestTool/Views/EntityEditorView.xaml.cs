@@ -261,6 +261,8 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 {
                     currentTab.OpenNodeMenuCommand.Execute((position, graphPosition));
                     FocusNodeSearchBox();
+                    // Mark as handled to prevent Nodify from clearing the pending connection
+                    e.Handled = true;
                 }
                 return;
             }

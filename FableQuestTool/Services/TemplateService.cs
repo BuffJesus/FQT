@@ -1,11 +1,43 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using FableQuestTool.Models;
 
 namespace FableQuestTool.Services;
 
+/// <summary>
+/// Provides built-in quest templates for common quest types.
+///
+/// TemplateService contains a library of pre-configured quest templates that serve
+/// as starting points for quest creation. Each template includes appropriate entities,
+/// behavior nodes, connections, states, and rewards for its quest type.
+///
+/// Available templates:
+/// - Simple Talk Quest: Basic dialogue with an NPC using conversation system
+/// - Cinematic Dialogue: Dramatic dialogue with camera work and effects
+/// - Kill Quest: Track enemy kills with state counter
+/// - Boss Fight: Combat with cinematic intro, effects, and victory sequence
+/// - Fetch Quest: Item collection and delivery
+/// - Escort Quest: Protect an NPC traveling to a destination
+/// - Delivery Quest: Multi-location delivery mission
+/// - Investigation Quest: Question witnesses with branching dialogue choices
+/// </summary>
+/// <remarks>
+/// Templates are designed to showcase FSE features and best practices:
+/// - Proper use of conversation system vs SpeakAndWait
+/// - Camera work and visual effects
+/// - State management for tracking progress
+/// - Branching dialogue with yes/no questions
+/// - Event triggers and response handling
+///
+/// Users can modify templates after creation to customize quest details
+/// while keeping the proven structure and behaviors.
+/// </remarks>
 public class TemplateService
 {
+    /// <summary>
+    /// Returns all available quest templates.
+    /// </summary>
+    /// <returns>List of QuestTemplate objects representing available templates</returns>
     public List<QuestTemplate> GetAllTemplates()
     {
         return new List<QuestTemplate>

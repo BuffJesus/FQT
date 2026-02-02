@@ -3,23 +3,73 @@ using System.Text.Json.Serialization;
 
 namespace FableQuestTool.Models;
 
+/// <summary>
+/// Defines rewards given to the player upon quest completion.
+///
+/// QuestRewards supports multiple reward types that can be combined:
+/// - Currency: Gold, experience points, renown
+/// - Morality: Alignment shift (positive = good, negative = evil)
+/// - Items: Single direct item or multiple items via container
+/// - Abilities: New spells or skills unlocked
+/// </summary>
+/// <remarks>
+/// Due to Fable engine limitations, only one item can be given directly.
+/// For multiple item rewards, use ContainerReward which spawns a chest
+/// containing all reward items for the player to collect.
+/// </remarks>
 public sealed class QuestRewards
 {
+    /// <summary>
+    /// Gold coins awarded to the player.
+    /// Added directly to player's inventory.
+    /// </summary>
     public int Gold { get; set; }
+
+    /// <summary>
+    /// General experience points awarded.
+    /// Contributes to hero's overall level and available upgrade points.
+    /// </summary>
     public int Experience { get; set; }
+
+    /// <summary>
+    /// Renown points awarded.
+    /// Renown affects how NPCs react to the hero and unlocks certain content.
+    /// </summary>
     public int Renown { get; set; }
+
+    /// <summary>
+    /// Morality alignment change.
+    /// Positive values shift toward good, negative toward evil.
+    /// Range typically -100 to +100.
+    /// </summary>
     public float Morality { get; set; }
 
-    // Simple single-item reward (limited by game engine)
+    /// <summary>
+    /// Single item reward given directly to player.
+    /// Use item definition names like "ITEM_SWORD_MASTER" or "ITEM_POTION_HEALTH".
+    /// Limited to one item due to Fable engine constraints.
+    /// For multiple items, use Container instead.
+    /// </summary>
     public string? DirectRewardItem { get; set; }
 
-    // Container-based rewards (for multiple items)
+    /// <summary>
+    /// Container-based rewards for giving multiple items.
+    /// Spawns a chest or other container with items inside.
+    /// Player must interact with container to receive items.
+    /// </summary>
     public ContainerReward? Container { get; set; }
 
+    /// <summary>
+    /// Abilities (spells/skills) unlocked upon quest completion.
+    /// Use ability definition names like "ABILITY_FIREBALL" or "ABILITY_FLOURISH".
+    /// </summary>
     public ObservableCollection<string> Abilities { get; set; } = new();
 
-    // Backward compatibility: old quest files have Items array
-    // This property handles migration during deserialization
+    /// <summary>
+    /// Legacy property for backward compatibility with old quest files.
+    /// Automatically migrates to DirectRewardItem (single) or Container (multiple).
+    /// Not serialized - only used during deserialization of old formats.
+    /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ObservableCollection<string>? Items
     {
@@ -48,40 +98,86 @@ public sealed class QuestRewards
     }
 }
 
+/// <summary>
+/// Configuration for spawning a container with multiple reward items.
+///
+/// Since Fable's engine can only give one item directly to the player,
+/// ContainerReward provides a workaround by spawning a container object
+/// (chest, barrel, etc.) filled with reward items.
+/// </summary>
 public sealed class ContainerReward
 {
-    // Container object definition (e.g., "OBJECT_CHEST", "OBJECT_BARREL", or any OBJECT_*)
+    /// <summary>
+    /// Definition name of the container object to spawn.
+    /// Common values: "OBJECT_CHEST", "OBJECT_BARREL", "OBJECT_CRATE"
+    /// Can use any valid OBJECT_* definition from the game.
+    /// </summary>
     public string ContainerDefName { get; set; } = "OBJECT_CHEST";
 
-    // Script name for the container instance
+    /// <summary>
+    /// Script name for the spawned container instance.
+    /// Used to reference the container in Lua code if needed.
+    /// </summary>
     public string ContainerScriptName { get; set; } = "QuestRewardContainer";
 
-    // Where to spawn the container
+    /// <summary>
+    /// Method for determining where to spawn the container.
+    /// </summary>
     public ContainerSpawnLocation SpawnLocation { get; set; } = ContainerSpawnLocation.NearMarker;
 
-    // Marker/entity to spawn near (if SpawnLocation = NearMarker or NearEntity)
+    /// <summary>
+    /// Reference for NearMarker or NearEntity spawn locations.
+    /// For NearMarker: marker name (e.g., "MK_REWARD_SPOT")
+    /// For NearEntity: entity script name (e.g., "QuestGiver")
+    /// </summary>
     public string? SpawnReference { get; set; }
 
-    // Position (if SpawnLocation = FixedPosition)
+    /// <summary>
+    /// X coordinate for FixedPosition spawn location.
+    /// </summary>
     public float X { get; set; }
+
+    /// <summary>
+    /// Y coordinate (height) for FixedPosition spawn location.
+    /// </summary>
     public float Y { get; set; }
+
+    /// <summary>
+    /// Z coordinate for FixedPosition spawn location.
+    /// </summary>
     public float Z { get; set; }
 
-    // Items to add to the container
+    /// <summary>
+    /// Collection of item definition names to place in the container.
+    /// Items are added to container's inventory for player to collect.
+    /// </summary>
     public ObservableCollection<string> Items { get; set; } = new();
 
-    // Whether to make container glow/highlighted
+    /// <summary>
+    /// Whether to make the container glow green (quest highlight).
+    /// Helps players locate the reward container in the world.
+    /// </summary>
     public bool HighlightContainer { get; set; } = true;
 
-    // Whether to auto-give items when quest completes or require player to open
+    /// <summary>
+    /// Whether to automatically give items when quest completes.
+    /// If true, items are transferred directly without player interaction.
+    /// If false, player must open the container manually.
+    /// </summary>
     public bool AutoGiveOnComplete { get; set; } = true;
 }
 
+/// <summary>
+/// Methods for determining container spawn location.
+/// </summary>
 public enum ContainerSpawnLocation
 {
-    NearMarker,      // Spawn near a marker (SpawnReference = marker name)
-    NearEntity,      // Spawn near an entity (SpawnReference = entity script name)
-    FixedPosition    // Spawn at fixed X,Y,Z coordinates
+    /// <summary>Spawn near a named marker (SpawnReference = marker name)</summary>
+    NearMarker,
+    /// <summary>Spawn near an entity (SpawnReference = entity script name)</summary>
+    NearEntity,
+    /// <summary>Spawn at fixed world coordinates (X, Y, Z)</summary>
+    FixedPosition
 }
 
 /// <summary>

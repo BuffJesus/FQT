@@ -8,12 +8,45 @@ using FableQuestTool.Models;
 
 namespace FableQuestTool.Services;
 
+/// <summary>
+/// Converts visual quest projects into executable Lua scripts for the FSE runtime.
+///
+/// CodeGenerator is the core transpiler that transforms the visual node graph representation
+/// of quest behaviors into Lua code that runs in Fable: The Lost Chapters via FSE (Fable Script Extender).
+///
+/// The generator produces several types of scripts:
+/// - Quest Script: Main quest logic including Init(), Main(), OnPersist() functions and thread definitions
+/// - Entity Scripts: Individual behavior scripts for each quest entity (NPCs, objects, etc.)
+/// - Container Scripts: Special scripts for reward containers that need manual interaction
+/// - Registration Snippets: Code to register the quest in the FSE quests.lua configuration
+///
+/// Generated code follows FSE conventions:
+/// - Quest object methods are called via Quest:MethodName() syntax
+/// - Entity methods are called via Me:MethodName() for the current entity or entity:MethodName() for others
+/// - All blocking operations must be followed by Quest:NewScriptFrame() checks to yield to the game loop
+/// - State persistence uses Quest:PersistTransfer*() methods in OnPersist()
+/// </summary>
+/// <remarks>
+/// The code generation process:
+/// 1. Parse the QuestProject model containing all quest configuration
+/// 2. Generate the main quest script with Init/Main/OnPersist functions
+/// 3. Generate thread functions (EntitySpawner, MonitorQuestCompletion, user threads)
+/// 4. For each entity, generate an entity script from its behavior node graph
+/// 5. Traverse node connections to produce sequential and branching Lua code
+///
+/// Node types are defined in NodeDefinitions.cs with code templates containing placeholders
+/// like {propertyName} that get replaced with actual configured values.
+/// </remarks>
 public sealed class CodeGenerator
 {
-    // Set of node types that are cinematic/async and need pauses after them
+    /// <summary>
+    /// Set of node types that are cinematic/async and need pauses after them.
+    /// These nodes trigger game engine operations that take time to complete,
+    /// so generated code must include appropriate waits after them.
+    /// </summary>
     private static readonly HashSet<string> CinematicNodeTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "letterbox", "letterboxOff", "screenFadeOut", "screenFadeIn", "overrideMusic", 
+        "letterbox", "letterboxOff", "screenFadeOut", "screenFadeIn", "overrideMusic",
         "stopMusicOverride", "cameraOrbitEntity", "cameraLookAtEntity", "cameraResetToHero",
         "cameraUseCameraPoint", "cameraConversation", "cameraCircleAroundThing",
         "startConversation", "addConversationLine", "endConversation",
@@ -21,6 +54,19 @@ public sealed class CodeGenerator
         "playMovie", "startMovieSequence", "endMovieSequence"
     };
 
+    /// <summary>
+    /// Generates the main quest Lua script containing all quest-level logic.
+    ///
+    /// The generated script includes:
+    /// - Init(): Called when quest is first loaded, initializes state variables and registers regions
+    /// - Main(): Called when quest starts, sets up entity bindings, quest cards, and starts threads
+    /// - OnPersist(): Called for save/load, handles state persistence
+    /// - EntitySpawner: Thread that spawns quest entities when regions load
+    /// - MonitorQuestCompletion: Thread that watches for QuestCompleted state and gives rewards
+    /// - User-defined threads from QuestProject.Threads
+    /// </summary>
+    /// <param name="quest">The quest project to generate code for</param>
+    /// <returns>Complete Lua script as a string</returns>
     public string GenerateQuestScript(QuestProject quest)
     {
         StringBuilder sb = new StringBuilder();
@@ -60,6 +106,24 @@ public sealed class CodeGenerator
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Generates a Lua script for an individual quest entity.
+    ///
+    /// Entity scripts control the behavior of NPCs, creatures, objects, and other
+    /// game entities managed by the quest. Each entity gets its own script that
+    /// receives two objects: Quest (the parent quest) and Me (the entity itself).
+    ///
+    /// The generated script includes:
+    /// - Init(): Called when entity is first bound, sets up control mode
+    /// - Main(): Contains the behavior loop generated from the visual node graph
+    /// - Event functions: Generated from defineEvent nodes, callable from other nodes
+    ///
+    /// The behavior loop continuously checks for triggers and executes actions
+    /// until the entity is destroyed or the quest ends.
+    /// </summary>
+    /// <param name="quest">Parent quest project (for context like quest name)</param>
+    /// <param name="entity">The entity to generate a script for</param>
+    /// <returns>Complete entity Lua script as a string</returns>
     public string GenerateEntityScript(QuestProject quest, QuestEntity entity)
     {
         StringBuilder sb = new StringBuilder();

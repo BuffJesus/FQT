@@ -9,6 +9,32 @@ using FableQuestTool.Services;
 
 namespace FableQuestTool.ViewModels;
 
+/// <summary>
+/// Main application ViewModel that coordinates all primary operations.
+///
+/// MainViewModel is the central hub of the FableQuestTool application, managing:
+/// - Project lifecycle (new, open, save, save-as)
+/// - Deployment to Fable installation
+/// - FSE launcher integration
+/// - Quest management (delete, toggle enable/disable)
+/// - Entity browser and catalog export
+/// - Fable path configuration
+///
+/// Uses CommunityToolkit.Mvvm for observable properties and relay commands.
+/// Commands are automatically generated for methods decorated with [RelayCommand].
+/// </summary>
+/// <remarks>
+/// The ViewModel follows MVVM pattern:
+/// - Properties are bound to UI elements in MainWindow.xaml
+/// - Commands are invoked by menu items and buttons
+/// - Services (fileService, codeGenerator, deploymentService) handle business logic
+///
+/// Project state is tracked via:
+/// - Project: The current QuestProject being edited
+/// - ProjectPath: File path if saved, null for new projects
+/// - IsModified: Whether unsaved changes exist
+/// - StatusText: Current status message shown in UI
+/// </remarks>
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly ProjectFileService fileService = new();

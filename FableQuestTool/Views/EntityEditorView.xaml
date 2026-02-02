@@ -336,7 +336,8 @@
                                     </Canvas.Background>
                                 </Canvas>
 
-                                <nodify:NodifyEditor ItemsSource="{Binding Nodes}"
+                                <nodify:NodifyEditor x:Name="NodeGraphEditor"
+                                                     ItemsSource="{Binding Nodes}"
                                                      Connections="{Binding Connections}"
                                                      PendingConnection="{Binding PendingConnection, Mode=TwoWay}"
                                                      SelectedItem="{Binding SelectedNode}"
@@ -562,17 +563,21 @@
                                 </nodify:NodifyEditor>
 
                                 <!-- UE5-Style Node Creation Context Menu -->
-                                <Border Background="#1E2530"
-                                        BorderBrush="#3A4555"
-                                        BorderThickness="1"
-                                        CornerRadius="6"
-                                        Padding="0"
-                                        Width="320"
-                                        MaxHeight="480"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Top"
-                                        Margin="{Binding NodeMenuPosition, Converter={StaticResource PointToThickness}}"
-                                        Visibility="{Binding IsNodeMenuOpen, Converter={StaticResource BoolToVisibility}}">
+                                <Popup IsOpen="{Binding IsNodeMenuOpen, Mode=TwoWay}"
+                                       PlacementTarget="{Binding ElementName=NodeGraphEditor}"
+                                       Placement="Relative"
+                                       HorizontalOffset="{Binding NodeMenuPosition.X}"
+                                       VerticalOffset="{Binding NodeMenuPosition.Y}"
+                                       StaysOpen="True"
+                                       AllowsTransparency="True"
+                                       PopupAnimation="Fade">
+                                    <Border Background="#1E2530"
+                                            BorderBrush="#3A4555"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="0"
+                                            Width="320"
+                                            MaxHeight="480">
                                     <Border.Effect>
                                         <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.5" Color="Black" />
                                     </Border.Effect>
@@ -822,6 +827,7 @@
                                         </Border>
                                     </Grid>
                                 </Border>
+                                </Popup>
                             </Grid>
                         </Border>
 

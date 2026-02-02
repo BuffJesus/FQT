@@ -16,6 +16,7 @@
         <converters:StringToColorBrushConverter x:Key="StringToColorBrush" />
         <converters:StringToColorConverter x:Key="StringToColor" />
         <converters:HeaderGradientConverter x:Key="HeaderGradient" />
+        <converters:PointToThicknessConverter x:Key="PointToThickness" />
 
         <!-- UE5 Blueprint Colors -->
         <SolidColorBrush x:Key="BlueprintGridColor" Color="#1A1F2E" />
@@ -570,7 +571,7 @@
                                         MaxHeight="480"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Top"
-                                        Margin="{Binding NodeMenuPosition}"
+                                        Margin="{Binding NodeMenuPosition, Converter={StaticResource PointToThickness}}"
                                         Visibility="{Binding IsNodeMenuOpen, Converter={StaticResource BoolToVisibility}}">
                                     <Border.Effect>
                                         <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.5" Color="Black" />

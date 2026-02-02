@@ -32,6 +32,7 @@ public sealed partial class QuestProject : ObservableObject
     private int worldMapOffsetY;
 
     public bool UseQuestStartScreen { get; set; }
+    public bool UseQuestEndScreen { get; set; }
     public bool IsStoryQuest { get; set; }
     public bool IsGoldQuest { get; set; }
     public bool GiveCardDirectly { get; set; }

@@ -85,14 +85,6 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 return;
             }
 
-            // Select first filtered node with Enter when menu is open
-            if (e.Key == Key.Enter && currentTab.IsNodeMenuOpen)
-            {
-                currentTab.SelectFirstFilteredNodeCommand.Execute(null);
-                e.Handled = true;
-                return;
-            }
-
             // Create redirection node immediately when Ctrl is pressed during drag
             if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
             {

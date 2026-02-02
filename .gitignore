@@ -17,10 +17,14 @@ bld/
 # Visual Studio cache/options directory
 .vs/
 
+# JetBrains Rider
+.idea/
+
 # Visual Studio auto-generated files
 *.user
 *.userosscache
 *.sln.docstates
+*.DotSettings.user
 
 # User-specific files
 *.rsuser
@@ -121,8 +125,8 @@ UpgradeLog*.htm
 ServiceFabricBackup/
 *.rptproj.bak
 
-# Local data directories
-Data/
+# Local data directories (keep source Data/ folders)
+# Data/
 
 # Windows image file caches
 Thumbs.db

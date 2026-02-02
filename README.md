@@ -22,16 +22,40 @@ FQT is a WPF-based visual editor that allows you to create quests for Fable: The
 ## Requirements
 
 - Windows OS (uses WPF)
-- .NET 8.0 or higher
 - Fable: The Lost Chapters (PC version)
 - [Fable Script Extender (FSE)](https://github.com/eeeeeAeoN/FableScriptExtender) by eeeeeAeoN
 
 ## Installation
 
-1. Clone or download this repository
-2. Open `FQT.sln` in Visual Studio or JetBrains Rider
-3. Build the solution (Debug or Release configuration)
-4. Run `FableQuestTool.exe` from the build output directory
+### For Users (Prebuilt Release)
+
+1. Download the latest release from the [Releases](https://github.com/YOUR_USERNAME/FQT/releases) page
+2. Extract the ZIP file to your preferred location
+3. Run `FableQuestTool.exe`
+
+No additional dependencies or .NET runtime installation required - everything is included in the standalone executable.
+
+### For Developers (Build from Source)
+
+**Requirements:**
+- .NET 8.0 SDK or higher
+- Visual Studio 2022 or JetBrains Rider
+
+**Steps:**
+1. Clone this repository
+2. Open `FQT.sln` in your IDE
+3. Build the solution in Debug or Release configuration
+4. Run from the IDE or execute `FableQuestTool.exe` from the build output directory
+
+**Creating a Release Build:**
+
+To create a standalone release that includes all dependencies:
+
+```bash
+dotnet publish FableQuestTool/FableQuestTool.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+```
+
+The output will be in `FableQuestTool/bin/Release/net8.0-windows/win-x64/publish/`
 
 ## Usage
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using FableQuestTool.Data;
 
 namespace FableQuestTool.ViewModels;
@@ -8,7 +9,7 @@ namespace FableQuestTool.ViewModels;
 /// </summary>
 public class NodeCategoryGroup
 {
-    public string DisplayName { get; }
+    public string Name { get; }
     public string Category { get; }
     public List<NodeOption> Nodes { get; }
     public bool IsExpanded { get; set; } = true;
@@ -23,6 +24,7 @@ public class NodeCategoryGroup
         "condition" => "#F39C12",  // Orange for conditions
         "flow" => "#9B59B6",       // Purple for flow control
         "custom" => "#E91E63",     // Pink for custom events
+        "variable" => "#00AA66",   // Teal for variables
         _ => "#808080"
     };
 
@@ -36,12 +38,26 @@ public class NodeCategoryGroup
         "condition" => "◆",
         "flow" => "↔",
         "custom" => "✦",
+        "variable" => "📦",
         _ => "●"
     };
 
-    public NodeCategoryGroup(string displayName, string category, List<NodeOption> nodes)
+    /// <summary>
+    /// Constructor with display name only (category derived from nodes)
+    /// </summary>
+    public NodeCategoryGroup(string name, List<NodeOption> nodes)
     {
-        DisplayName = displayName;
+        Name = name;
+        Category = nodes.FirstOrDefault()?.Category ?? "";
+        Nodes = nodes;
+    }
+
+    /// <summary>
+    /// Constructor with explicit category
+    /// </summary>
+    public NodeCategoryGroup(string name, string category, List<NodeOption> nodes)
+    {
+        Name = name;
         Category = category;
         Nodes = nodes;
     }

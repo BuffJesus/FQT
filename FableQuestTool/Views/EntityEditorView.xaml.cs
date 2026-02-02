@@ -85,6 +85,14 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 return;
             }
 
+            // Select first filtered node with Enter when menu is open
+            if (e.Key == Key.Enter && currentTab.IsNodeMenuOpen)
+            {
+                currentTab.SelectFirstFilteredNodeCommand.Execute(null);
+                e.Handled = true;
+                return;
+            }
+
             // Create redirection node immediately when Ctrl is pressed during drag
             if (e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
             {
@@ -196,6 +204,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 if (currentTab.OpenNodeMenuCommand.CanExecute((position, graphPosition)))
                 {
                     currentTab.OpenNodeMenuCommand.Execute((position, graphPosition));
+                    FocusNodeSearchBox();
                 }
                 return;
             }
@@ -254,6 +263,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             if (currentTab.OpenNodeMenuCommand.CanExecute((position, graphPosition)))
             {
                 currentTab.OpenNodeMenuCommand.Execute((position, graphPosition));
+                FocusNodeSearchBox();
                 e.Handled = true;
             }
         }
@@ -261,6 +271,55 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         {
             // Silently handle any errors
         }
+    }
+
+    private void FocusNodeSearchBox()
+    {
+        // Use dispatcher to focus the search box after the menu is rendered
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            try
+            {
+                // Find the NodeSearchTextBox within the visual tree
+                var searchBox = FindVisualChild<System.Windows.Controls.TextBox>(this, "NodeSearchTextBox");
+                if (searchBox != null)
+                {
+                    searchBox.Focus();
+                    Keyboard.Focus(searchBox);
+                }
+            }
+            catch
+            {
+                // Silently handle any focus errors
+            }
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
+    {
+        if (parent == null)
+        {
+            return null;
+        }
+
+        int childCount = System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < childCount; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+
+            if (child is T typedChild && typedChild.Name == name)
+            {
+                return typedChild;
+            }
+
+            var result = FindVisualChild<T>(child, name);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
     }
 
     private static System.Windows.Point GetGraphPosition(Nodify.NodifyEditor editor, System.Windows.Point viewPosition)

@@ -560,55 +560,266 @@
                                     </nodify:NodifyEditor.ItemTemplate>
                                 </nodify:NodifyEditor>
 
-                                <!-- Node Creation Menu -->
-                                <Border Background="{DynamicResource PanelBackground}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
+                                <!-- UE5-Style Node Creation Context Menu -->
+                                <Border Background="#1E2530"
+                                        BorderBrush="#3A4555"
                                         BorderThickness="1"
-                                        CornerRadius="4"
-                                        Padding="8"
-                                        Width="280"
-                                        MaxHeight="400"
+                                        CornerRadius="6"
+                                        Padding="0"
+                                        Width="320"
+                                        MaxHeight="480"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Top"
                                         Margin="{Binding NodeMenuPosition}"
                                         Visibility="{Binding IsNodeMenuOpen, Converter={StaticResource BoolToVisibility}}">
-                                    <StackPanel>
-                                        <TextBlock Text="Add Node" FontWeight="SemiBold" Margin="0,0,0,8" />
-                                        <TextBox Text="{Binding NodeSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                               Padding="4" Margin="0,0,0,8"
-                                               Tag="Search nodes..." />
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.5" Color="Black" />
+                                    </Border.Effect>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                                        <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto">
-                                            <ItemsControl ItemsSource="{Binding FilteredNodes}">
+                                        <!-- Header -->
+                                        <Border Grid.Row="0" Background="#252D38" Padding="12,10" CornerRadius="6,6,0,0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="📋" Margin="0,0,8,0" />
+                                                    <TextBlock Text="All Actions for this Blueprint"
+                                                             FontWeight="SemiBold"
+                                                             Foreground="#E8E8E8"
+                                                             FontSize="12" />
+                                                </StackPanel>
+                                                <Button Grid.Column="1"
+                                                        Content="✕"
+                                                        Command="{Binding CloseNodeMenuCommand}"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        Foreground="#888888"
+                                                        FontSize="14"
+                                                        Padding="4,0"
+                                                        Cursor="Hand"
+                                                        ToolTip="Close (Esc)" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Quick Add Reroute (only visible when dragging wire) -->
+                                        <Border Grid.Row="1"
+                                                Background="#2A3545"
+                                                Padding="8,6"
+                                                Visibility="{Binding HasPendingWire, Converter={StaticResource BoolToVisibility}}">
+                                            <Button Command="{Binding AddRerouteFromMenuCommand}"
+                                                    Background="#3A4555"
+                                                    BorderBrush="#4A5565"
+                                                    BorderThickness="1"
+                                                    Padding="8,6"
+                                                    Cursor="Hand"
+                                                    HorizontalContentAlignment="Left">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="M6,0 L12,6 L6,12 L0,6 Z"
+                                                          Fill="#FFA500"
+                                                          Stroke="#FFA500"
+                                                          StrokeThickness="1"
+                                                          Width="14" Height="14"
+                                                          Stretch="Uniform"
+                                                          Margin="0,0,8,0" />
+                                                    <TextBlock Text="Add Reroute Node"
+                                                             Foreground="#FFA500"
+                                                             FontWeight="SemiBold"
+                                                             VerticalAlignment="Center" />
+                                                    <TextBlock Text=" (Ctrl while dragging)"
+                                                             Foreground="#888888"
+                                                             FontSize="10"
+                                                             VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Border>
+
+                                        <!-- Search Box and Context Sensitive Toggle -->
+                                        <Border Grid.Row="2" Padding="8,8,8,4">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <!-- Search Box -->
+                                                <Border Grid.Row="0"
+                                                        Background="#141A24"
+                                                        BorderBrush="#3A4555"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Padding="8,6">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="🔍"
+                                                                 Foreground="#666666"
+                                                                 Margin="0,0,8,0"
+                                                                 VerticalAlignment="Center" />
+                                                        <Grid Grid.Column="1">
+                                                            <TextBlock Text="Search nodes..."
+                                                                     Foreground="#555555"
+                                                                     FontSize="12"
+                                                                     VerticalAlignment="Center"
+                                                                     IsHitTestVisible="False">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding NodeSearchText}" Value="">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <TextBox x:Name="NodeSearchTextBox"
+                                                                     Text="{Binding NodeSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Background="Transparent"
+                                                                     BorderThickness="0"
+                                                                     Foreground="#E8E8E8"
+                                                                     CaretBrush="#E8E8E8"
+                                                                     FontSize="12"
+                                                                     VerticalAlignment="Center" />
+                                                        </Grid>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Context Sensitive Toggle -->
+                                                <CheckBox Grid.Row="1"
+                                                          IsChecked="{Binding IsContextSensitive, Mode=TwoWay}"
+                                                          Margin="0,8,0,0"
+                                                          Foreground="#AAAAAA"
+                                                          FontSize="11">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="Context Sensitive" />
+                                                        <TextBlock Text=" (?)"
+                                                                 Foreground="#666666"
+                                                                 ToolTip="When enabled, only shows nodes compatible with the current connection" />
+                                                    </StackPanel>
+                                                </CheckBox>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Node List with Category Groups -->
+                                        <ScrollViewer Grid.Row="3"
+                                                      VerticalScrollBarVisibility="Auto"
+                                                      Padding="4,0"
+                                                      x:Name="NodeMenuScrollViewer">
+                                            <ItemsControl ItemsSource="{Binding GroupedFilteredNodes}"
+                                                          x:Name="NodeCategoryList">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                            <Button Margin="0,2"
-                                                              Command="{Binding DataContext.SelectNodeFromMenuCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                              CommandParameter="{Binding}"
-                                                              Background="Transparent"
-                                                              BorderThickness="0"
-                                                              HorizontalContentAlignment="Left"
-                                                              Padding="4">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <TextBlock Text="{Binding Icon}" Width="24" />
-                                                                <TextBlock Text="{Binding Label}"
-                                                                         VerticalAlignment="Center" />
-                                                                <TextBlock Text="{Binding Category, StringFormat=' ({0})'}"
-                                                                         VerticalAlignment="Center"
-                                                                         Opacity="0.6"
-                                                                         FontSize="10"
-                                                                         Margin="4,0,0,0" />
-                                                            </StackPanel>
-                                                        </Button>
+                                                        <Expander IsExpanded="True" Margin="0,2">
+                                                            <Expander.Style>
+                                                                <Style TargetType="Expander">
+                                                                    <Setter Property="Foreground" Value="#CCCCCC" />
+                                                                    <Setter Property="BorderThickness" Value="0" />
+                                                                </Style>
+                                                            </Expander.Style>
+                                                            <Expander.Header>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Border Width="16" Height="16"
+                                                                            CornerRadius="2"
+                                                                            Margin="0,0,8,0"
+                                                                            Background="{Binding CategoryColor, Converter={StaticResource StringToColorBrush}}">
+                                                                        <TextBlock Text="{Binding CategoryIcon}"
+                                                                                 HorizontalAlignment="Center"
+                                                                                 VerticalAlignment="Center"
+                                                                                 FontSize="10"
+                                                                                 Foreground="White" />
+                                                                    </Border>
+                                                                    <TextBlock Text="{Binding DisplayName}"
+                                                                             FontWeight="SemiBold"
+                                                                             Foreground="#CCCCCC"
+                                                                             VerticalAlignment="Center" />
+                                                                    <TextBlock Text="{Binding Nodes.Count, StringFormat=' ({0})'}"
+                                                                             Foreground="#666666"
+                                                                             FontSize="10"
+                                                                             VerticalAlignment="Center"
+                                                                             Margin="4,0,0,0" />
+                                                                </StackPanel>
+                                                            </Expander.Header>
+                                                            <ItemsControl ItemsSource="{Binding Nodes}" Margin="20,0,0,0">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Button Margin="0,1"
+                                                                                Command="{Binding DataContext.SelectNodeFromMenuCommand, ElementName=NodeCategoryList}"
+                                                                                CommandParameter="{Binding}"
+                                                                                Background="Transparent"
+                                                                                BorderThickness="0"
+                                                                                HorizontalContentAlignment="Left"
+                                                                                Padding="6,4"
+                                                                                Cursor="Hand">
+                                                                            <Button.Style>
+                                                                                <Style TargetType="Button">
+                                                                                    <Setter Property="Template">
+                                                                                        <Setter.Value>
+                                                                                            <ControlTemplate TargetType="Button">
+                                                                                                <Border x:Name="border"
+                                                                                                        Background="{TemplateBinding Background}"
+                                                                                                        Padding="{TemplateBinding Padding}"
+                                                                                                        CornerRadius="3">
+                                                                                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                                                                                                </Border>
+                                                                                                <ControlTemplate.Triggers>
+                                                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                                                        <Setter TargetName="border" Property="Background" Value="#3A4555" />
+                                                                                                    </Trigger>
+                                                                                                </ControlTemplate.Triggers>
+                                                                                            </ControlTemplate>
+                                                                                        </Setter.Value>
+                                                                                    </Setter>
+                                                                                </Style>
+                                                                            </Button.Style>
+                                                                            <Grid>
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="24" />
+                                                                                    <ColumnDefinition Width="*" />
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <TextBlock Text="{Binding Icon}"
+                                                                                         FontSize="12"
+                                                                                         VerticalAlignment="Center" />
+                                                                                <TextBlock Grid.Column="1"
+                                                                                         Text="{Binding Label}"
+                                                                                         Foreground="#E8E8E8"
+                                                                                         FontSize="11"
+                                                                                         VerticalAlignment="Center" />
+                                                                            </Grid>
+                                                                        </Button>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </Expander>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
                                         </ScrollViewer>
 
-                                        <Button Content="Cancel (Esc)"
-                                                Margin="0,8,0,0"
-                                                Command="{Binding CloseNodeMenuCommand}" />
-                                    </StackPanel>
+                                        <!-- Footer with hint -->
+                                        <Border Grid.Row="4"
+                                                Background="#1A2030"
+                                                Padding="12,8"
+                                                CornerRadius="0,0,6,6"
+                                                BorderBrush="#2A3545"
+                                                BorderThickness="0,1,0,0">
+                                            <TextBlock Text="Press Enter to add first match • Esc to cancel"
+                                                     Foreground="#666666"
+                                                     FontSize="10"
+                                                     HorizontalAlignment="Center" />
+                                        </Border>
+                                    </Grid>
                                 </Border>
                             </Grid>
                         </Border>

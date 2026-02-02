@@ -98,8 +98,9 @@ public sealed partial class NodeViewModel : ObservableObject
         Input.Clear();
         Output.Clear();
 
-        // Add input exec pin (all nodes have at least one input, except triggers)
-        if (Category != "trigger")
+        // Add input exec pin (all nodes have at least one input, except triggers and defineEvent)
+        // defineEvent nodes are entry points like triggers - they define a callable function
+        if (Category != "trigger" && Type != "defineEvent")
         {
             Input.Add(new ConnectorViewModel
             {

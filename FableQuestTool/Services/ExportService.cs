@@ -27,6 +27,14 @@ public sealed class ExportService
             File.WriteAllText(entityPath, codeGenerator.GenerateEntityScript(quest, entity));
         }
 
+        // Generate container entity script if needed (for manual-opening containers with multiple items)
+        if (codeGenerator.NeedsContainerEntityScript(quest))
+        {
+            var container = quest.Rewards.Container!;
+            string containerPath = Path.Combine(entitiesFolder, $"{container.ContainerScriptName}.lua");
+            File.WriteAllText(containerPath, codeGenerator.GenerateContainerEntityScript(quest, container));
+        }
+
         string registrationPath = Path.Combine(questFolder, "_quests_registration.lua");
         File.WriteAllText(registrationPath, codeGenerator.GenerateRegistrationSnippet(quest));
 

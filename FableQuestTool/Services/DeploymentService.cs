@@ -67,6 +67,14 @@ public sealed class DeploymentService
                 File.WriteAllText(entityPath, codeGenerator.GenerateEntityScript(quest, entity));
             }
 
+            // Generate container entity script if needed (for manual-opening containers with multiple items)
+            if (codeGenerator.NeedsContainerEntityScript(quest))
+            {
+                var container = quest.Rewards.Container!;
+                string containerPath = Path.Combine(entitiesFolder, $"{container.ContainerScriptName}.lua");
+                File.WriteAllText(containerPath, codeGenerator.GenerateContainerEntityScript(quest, container));
+            }
+
             // Register quest in quests.lua
             if (!RegisterInQuestsLua(fseFolder, quest, out string? questsError))
             {
@@ -200,6 +208,16 @@ public sealed class DeploymentService
         {
             sb.AppendLine($"            {{ name = \"{entity.ScriptName}\", file = \"{quest.Name}/Entities/{entity.ScriptName}\", id = {entityId} }},");
             entityId++;
+        }
+
+        // Add container entity script if needed (for manual-opening containers)
+        bool needsContainerEntity = quest.Rewards.Container != null &&
+                                    quest.Rewards.Container.Items.Count > 0 &&
+                                    !quest.Rewards.Container.AutoGiveOnComplete;
+        if (needsContainerEntity)
+        {
+            var container = quest.Rewards.Container!;
+            sb.AppendLine($"            {{ name = \"{container.ContainerScriptName}\", file = \"{quest.Name}/Entities/{container.ContainerScriptName}\", id = {entityId} }},");
         }
 
         sb.AppendLine("        }");

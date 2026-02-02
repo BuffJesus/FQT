@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -65,6 +66,14 @@ public sealed partial class QuestEntity : ObservableObject
     [ObservableProperty]
     [property: JsonPropertyName("ShowOnMinimap")]
     private bool showOnMinimap;
+
+    /// <summary>
+    /// Rewards to give when this object entity is interacted with.
+    /// This allows any OBJECT_ type to function as a reward-giving container.
+    /// Only applicable when EntityType is Object.
+    /// </summary>
+    [JsonPropertyName("ObjectReward")]
+    public ObjectReward? ObjectReward { get; set; }
 
     [ObservableProperty]
     [property: JsonPropertyName("SpawnMethod")]

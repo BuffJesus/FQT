@@ -22,6 +22,13 @@ public sealed partial class EntityTabViewModel : ObservableObject
     public ObservableCollection<string> AvailableEvents { get; } = new();
     public ObservableCollection<VariableDefinition> Variables { get; } = new();
 
+    // Object Reward properties
+    public ObservableCollection<string> ObjectRewardItems { get; } = new();
+    public ObservableCollection<string> AvailableRewardItems { get; } = new();
+
+    [ObservableProperty]
+    private string newRewardItem = string.Empty;
+
     [ObservableProperty]
     private string tabTitle;
 
@@ -81,6 +88,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
         LoadNodePalette();
         LoadExistingNodes();
         LoadDropdownData(config);
+        LoadAvailableRewardItems();
+        SyncObjectRewardItemsFromEntity();
 
         // Listen for node collection changes to update available events
         Nodes.CollectionChanged += (s, e) => UpdateAvailableEvents();
@@ -1233,6 +1242,162 @@ public sealed partial class EntityTabViewModel : ObservableObject
         TabTitle = string.IsNullOrWhiteSpace(entity.ScriptName) ? "New Entity" : entity.ScriptName;
         EntityIcon = GetEntityIcon(entity.EntityType);
     }
+
+    #region Object Reward Properties
+
+    /// <summary>
+    /// Whether this entity has object rewards enabled
+    /// </summary>
+    public bool HasObjectReward
+    {
+        get => entity.ObjectReward != null;
+        set
+        {
+            if (value && entity.ObjectReward == null)
+            {
+                entity.ObjectReward = new ObjectReward();
+                SyncObjectRewardItemsFromEntity();
+            }
+            else if (!value)
+            {
+                entity.ObjectReward = null;
+                ObjectRewardItems.Clear();
+            }
+            OnPropertyChanged();
+        }
+    }
+
+    public int ObjectRewardGold
+    {
+        get => entity.ObjectReward?.Gold ?? 0;
+        set
+        {
+            EnsureObjectReward();
+            entity.ObjectReward!.Gold = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public int ObjectRewardExperience
+    {
+        get => entity.ObjectReward?.Experience ?? 0;
+        set
+        {
+            EnsureObjectReward();
+            entity.ObjectReward!.Experience = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool ObjectRewardOneTimeOnly
+    {
+        get => entity.ObjectReward?.OneTimeOnly ?? true;
+        set
+        {
+            EnsureObjectReward();
+            entity.ObjectReward!.OneTimeOnly = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool ObjectRewardDestroyAfter
+    {
+        get => entity.ObjectReward?.DestroyAfterReward ?? true;
+        set
+        {
+            EnsureObjectReward();
+            entity.ObjectReward!.DestroyAfterReward = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool ObjectRewardShowMessage
+    {
+        get => entity.ObjectReward?.ShowMessage ?? true;
+        set
+        {
+            EnsureObjectReward();
+            entity.ObjectReward!.ShowMessage = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string ObjectRewardCustomMessage
+    {
+        get => entity.ObjectReward?.CustomMessage ?? string.Empty;
+        set
+        {
+            EnsureObjectReward();
+            entity.ObjectReward!.CustomMessage = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private void EnsureObjectReward()
+    {
+        if (entity.ObjectReward == null)
+        {
+            entity.ObjectReward = new ObjectReward();
+            OnPropertyChanged(nameof(HasObjectReward));
+        }
+    }
+
+    private void SyncObjectRewardItemsFromEntity()
+    {
+        ObjectRewardItems.Clear();
+        if (entity.ObjectReward?.Items != null)
+        {
+            foreach (var item in entity.ObjectReward.Items)
+            {
+                ObjectRewardItems.Add(item);
+            }
+        }
+    }
+
+    private void SyncObjectRewardItemsToEntity()
+    {
+        if (entity.ObjectReward != null)
+        {
+            entity.ObjectReward.Items.Clear();
+            foreach (var item in ObjectRewardItems)
+            {
+                entity.ObjectReward.Items.Add(item);
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void AddRewardItem()
+    {
+        if (string.IsNullOrWhiteSpace(NewRewardItem))
+            return;
+
+        EnsureObjectReward();
+        ObjectRewardItems.Add(NewRewardItem);
+        entity.ObjectReward!.Items.Add(NewRewardItem);
+        NewRewardItem = string.Empty;
+    }
+
+    [RelayCommand]
+    private void RemoveRewardItem(string? item)
+    {
+        if (string.IsNullOrWhiteSpace(item))
+            return;
+
+        ObjectRewardItems.Remove(item);
+        entity.ObjectReward?.Items.Remove(item);
+    }
+
+    private void LoadAvailableRewardItems()
+    {
+        AvailableRewardItems.Clear();
+        foreach (var obj in GameData.Objects)
+        {
+            AvailableRewardItems.Add(obj);
+        }
+    }
+
+    #endregion
 
     [RelayCommand]
     private void BrowseEntities()

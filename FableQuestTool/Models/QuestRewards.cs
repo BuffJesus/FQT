@@ -83,3 +83,50 @@ public enum ContainerSpawnLocation
     NearEntity,      // Spawn near an entity (SpawnReference = entity script name)
     FixedPosition    // Spawn at fixed X,Y,Z coordinates
 }
+
+/// <summary>
+/// Rewards that can be given when an object entity is interacted with (opened/used).
+/// This allows any OBJECT_ type to function as a reward container.
+/// </summary>
+public sealed class ObjectReward
+{
+    /// <summary>
+    /// Items to give when the object is interacted with
+    /// </summary>
+    public ObservableCollection<string> Items { get; set; } = new();
+
+    /// <summary>
+    /// Gold to give when the object is interacted with
+    /// </summary>
+    public int Gold { get; set; }
+
+    /// <summary>
+    /// Experience points to give when the object is interacted with
+    /// </summary>
+    public int Experience { get; set; }
+
+    /// <summary>
+    /// Whether to destroy the object after giving rewards
+    /// </summary>
+    public bool DestroyAfterReward { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show a message when giving rewards
+    /// </summary>
+    public bool ShowMessage { get; set; } = true;
+
+    /// <summary>
+    /// Custom message to display (if empty, uses default "You received...")
+    /// </summary>
+    public string? CustomMessage { get; set; }
+
+    /// <summary>
+    /// Whether the object can only be used once (prevents repeated rewards)
+    /// </summary>
+    public bool OneTimeOnly { get; set; } = true;
+
+    /// <summary>
+    /// Check if this reward has any actual rewards configured
+    /// </summary>
+    public bool HasRewards => Items.Count > 0 || Gold > 0 || Experience > 0;
+}

@@ -119,6 +119,11 @@ public sealed class CodeGenerator
 
         sb.AppendLine();
 
+        // Check if this object entity has rewards configured
+        bool hasObjectRewards = entity.EntityType == EntityType.Object &&
+                               entity.ObjectReward != null &&
+                               entity.ObjectReward.HasRewards;
+
         if (entity.Nodes.Count > 0)
         {
             sb.AppendLine("    -- Main behavior loop");
@@ -133,6 +138,11 @@ public sealed class CodeGenerator
             // Frame check at END of loop only (like working MAssassinNPC example)
             sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
             sb.AppendLine("    end");
+        }
+        else if (hasObjectRewards)
+        {
+            // Object has rewards but no custom behavior nodes - auto-generate reward behavior
+            GenerateObjectRewardBehavior(sb, entity);
         }
         else if (entity.AcquireControl || entity.ExclusiveControl)
         {
@@ -359,6 +369,19 @@ public sealed class CodeGenerator
 
     private string GenerateEntitySpawnCode(QuestEntity entity)
     {
+        // Use CreateObject for Object entities, CreateCreature for others
+        if (entity.EntityType == EntityType.Object)
+        {
+            return entity.SpawnMethod switch
+            {
+                SpawnMethod.AtMarker => GenerateCreateObjectAtMarker(entity),
+                SpawnMethod.AtPosition => GenerateCreateObjectAtPosition(entity),
+                SpawnMethod.CreateCreature => GenerateCreateObjectAtMarker(entity),
+                SpawnMethod.OnEntity => GenerateCreateObjectOnEntity(entity),
+                _ => string.Empty
+            };
+        }
+
         return entity.SpawnMethod switch
         {
             SpawnMethod.AtMarker => GenerateCreateCreatureAtMarker(entity),
@@ -408,6 +431,50 @@ public sealed class CodeGenerator
     end
 
     -- Brief pause to allow entity to fully spawn
+    Quest:Pause(0.1)
+    if not Quest:NewScriptFrame() then return end";
+    }
+
+    private string GenerateCreateObjectAtMarker(QuestEntity entity)
+    {
+        return $@"    local marker_{entity.ScriptName} = Quest:GetThingWithScriptName(""{entity.SpawnMarker}"")
+    if marker_{entity.ScriptName} ~= nil then
+        local pos_{entity.ScriptName} = marker_{entity.ScriptName}:GetPos()
+        local {entity.ScriptName} = Quest:CreateObject(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
+    else
+        local hero = Quest:GetHero()
+        local heroPos = hero:GetPos()
+        local {entity.ScriptName} = Quest:CreateObject(""{entity.DefName}"", heroPos, ""{entity.ScriptName}"")
+    end
+
+    -- Brief pause to allow object to fully spawn
+    Quest:Pause(0.1)
+    if not Quest:NewScriptFrame() then return end";
+    }
+
+    private string GenerateCreateObjectAtPosition(QuestEntity entity)
+    {
+        string x = entity.SpawnX.ToString(CultureInfo.InvariantCulture);
+        string y = entity.SpawnY.ToString(CultureInfo.InvariantCulture);
+        string z = entity.SpawnZ.ToString(CultureInfo.InvariantCulture);
+
+        return $@"    local pos_{entity.ScriptName} = {{x={x}, y={y}, z={z}}}
+    local {entity.ScriptName} = Quest:CreateObject(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
+
+    -- Brief pause to allow object to fully spawn
+    Quest:Pause(0.1)
+    if not Quest:NewScriptFrame() then return end";
+    }
+
+    private string GenerateCreateObjectOnEntity(QuestEntity entity)
+    {
+        return $@"    local targetEntity_{entity.ScriptName} = Quest:GetThingWithScriptName(""{entity.SpawnMarker}"")
+    if targetEntity_{entity.ScriptName} ~= nil then
+        local pos_{entity.ScriptName} = targetEntity_{entity.ScriptName}:GetPos()
+        local {entity.ScriptName} = Quest:CreateObject(""{entity.DefName}"", pos_{entity.ScriptName}, ""{entity.ScriptName}"")
+    end
+
+    -- Brief pause to allow object to fully spawn
     Quest:Pause(0.1)
     if not Quest:NewScriptFrame() then return end";
     }
@@ -641,6 +708,107 @@ public sealed class CodeGenerator
         sb.AppendLine("            else");
         sb.AppendLine("                Quest:Log(\"WARNING: Failed to spawn container!\")");
         sb.AppendLine("            end");
+    }
+
+    /// <summary>
+    /// Generates automatic behavior for object entities with rewards.
+    /// This creates a loop that waits for the hero to interact with the object,
+    /// then gives the configured rewards.
+    /// </summary>
+    private void GenerateObjectRewardBehavior(StringBuilder sb, QuestEntity entity)
+    {
+        var reward = entity.ObjectReward!;
+        string stateVar = $"{entity.ScriptName}_opened";
+
+        sb.AppendLine("    -- Auto-generated reward behavior for object");
+        sb.AppendLine("    -- This object gives rewards when interacted with by the hero");
+        sb.AppendLine();
+
+        if (reward.OneTimeOnly)
+        {
+            sb.AppendLine($"    local alreadyOpened = Quest:GetStateBool(\"{stateVar}\")");
+            sb.AppendLine("    if alreadyOpened then");
+            sb.AppendLine($"        Quest:Log(\"{entity.ScriptName}: Already opened, skipping reward behavior\")");
+            sb.AppendLine("        return");
+            sb.AppendLine("    end");
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("    -- Make object interactive");
+        sb.AppendLine("    Quest:EntitySetTargetable(Me, true)");
+        sb.AppendLine("    Quest:SetThingHasInformation(Me, true)");
+        sb.AppendLine();
+        sb.AppendLine("    -- Wait for hero interaction");
+        sb.AppendLine("    while true do");
+        sb.AppendLine("        if Me:MsgIsUsedByHero() then");
+        sb.AppendLine($"            Quest:Log(\"{entity.ScriptName}: Hero interacted with object, giving rewards\")");
+        sb.AppendLine();
+
+        // Give gold
+        if (reward.Gold > 0)
+        {
+            sb.AppendLine($"            Quest:GiveHeroGold(\"{reward.Gold}\", 1)");
+        }
+
+        // Give experience
+        if (reward.Experience > 0)
+        {
+            sb.AppendLine($"            Quest:GiveHeroExperience({reward.Experience})");
+        }
+
+        // Give items
+        foreach (string item in reward.Items)
+        {
+            sb.AppendLine($"            Quest:GiveHeroObject(\"{item}\", 1)");
+        }
+
+        // Show message
+        if (reward.ShowMessage)
+        {
+            if (!string.IsNullOrWhiteSpace(reward.CustomMessage))
+            {
+                sb.AppendLine($"            Quest:ShowMessage(\"{Escape(reward.CustomMessage)}\", 3.0)");
+            }
+            else
+            {
+                // Build default message
+                var messageParts = new List<string>();
+                if (reward.Gold > 0) messageParts.Add($"{reward.Gold} gold");
+                if (reward.Experience > 0) messageParts.Add($"{reward.Experience} XP");
+                if (reward.Items.Count > 0) messageParts.Add($"{reward.Items.Count} item(s)");
+                string defaultMessage = "Received: " + string.Join(", ", messageParts);
+                sb.AppendLine($"            Quest:ShowMessage(\"{defaultMessage}\", 3.0)");
+            }
+        }
+
+        // Mark as opened for one-time only objects
+        if (reward.OneTimeOnly)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"            Quest:SetStateBool(\"{stateVar}\", true)");
+        }
+
+        // Destroy object if configured
+        if (reward.DestroyAfterReward)
+        {
+            sb.AppendLine();
+            sb.AppendLine("            -- Destroy the object after giving rewards");
+            sb.AppendLine("            Quest:SetThingAsKilled(Me)");
+            sb.AppendLine("            break");
+        }
+        else if (reward.OneTimeOnly)
+        {
+            sb.AppendLine();
+            sb.AppendLine("            -- Remove highlight since object was already used");
+            sb.AppendLine("            Quest:ClearThingHasInformation(Me)");
+            sb.AppendLine("            break");
+        }
+
+        sb.AppendLine("        end");
+        sb.AppendLine();
+        sb.AppendLine("        if Me:IsNull() then break end");
+        sb.AppendLine("        if not Quest:NewScriptFrame(Me) then break end");
+        sb.AppendLine("    end");
     }
 
     private (int X, int Y) GetWorldMapOffset(QuestProject quest)

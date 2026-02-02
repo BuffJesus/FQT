@@ -269,7 +269,7 @@
                                                       Margin="0,0,0,4"
                                                       ToolTip="Entity glows green when looked at by the player, like quest NPCs in the base game. Uses SetThingHasInformation() API." />
 
-                                            <CheckBox Content="Show on Minimap" 
+                                            <CheckBox Content="Show on Minimap"
                                                       IsChecked="{Binding Entity.ShowOnMinimap}"
                                                       Margin="0,0,0,8"
                                                       ToolTip="Adds a marker for this entity on the minimap. Uses MiniMapAddMarker() API." />
@@ -279,6 +279,103 @@
                                                     Margin="0,8,0,0"
                                                     Padding="6,4"
                                                     ToolTip="Open Entity Browser to find entities from game files" />
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <!-- Object Rewards Section (only visible for Object entities) -->
+                                    <Expander Header="Object Rewards" IsExpanded="True" Margin="0,12,0,0">
+                                        <Expander.Style>
+                                            <Style TargetType="Expander">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Entity.EntityType}" Value="Object">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Expander.Style>
+                                        <StackPanel Margin="8,8,0,0">
+                                            <TextBlock Text="Configure rewards given when hero interacts with this object"
+                                                     FontSize="10" Opacity="0.7" TextWrapping="Wrap" Margin="0,0,0,8" />
+
+                                            <CheckBox Content="Enable Object Rewards"
+                                                      IsChecked="{Binding HasObjectReward}"
+                                                      Margin="0,0,0,8"
+                                                      ToolTip="When enabled, this object will give rewards when the hero interacts with it" />
+
+                                            <StackPanel Visibility="{Binding HasObjectReward, Converter={StaticResource BoolToVisibility}}">
+                                                <TextBlock Text="Gold Reward" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                                <TextBox Text="{Binding ObjectRewardGold, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="0,0,0,8" Padding="4,2" />
+
+                                                <TextBlock Text="Experience Reward" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                                <TextBox Text="{Binding ObjectRewardExperience, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="0,0,0,8" Padding="4,2" />
+
+                                                <TextBlock Text="Reward Items" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                                <Grid Margin="0,0,0,4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <ComboBox Grid.Column="0"
+                                                              Text="{Binding NewRewardItem, UpdateSourceTrigger=PropertyChanged}"
+                                                              ItemsSource="{Binding AvailableRewardItems}"
+                                                              IsEditable="True"
+                                                              IsTextSearchEnabled="True"
+                                                              Margin="0,0,4,0" />
+                                                    <Button Grid.Column="1" Content="Add"
+                                                            Command="{Binding AddRewardItemCommand}"
+                                                            Padding="8,2" />
+                                                </Grid>
+
+                                                <ItemsControl ItemsSource="{Binding ObjectRewardItems}" Margin="0,0,0,8">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Background="{DynamicResource SurfaceBackground}"
+                                                                    CornerRadius="3" Margin="0,0,0,2" Padding="6,3">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock Grid.Column="0" Text="{Binding}"
+                                                                               VerticalAlignment="Center" FontSize="11" />
+                                                                    <Button Grid.Column="1" Content="x"
+                                                                            Command="{Binding DataContext.RemoveRewardItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Width="18" Height="18" FontSize="10"
+                                                                            Background="Transparent" BorderThickness="0"
+                                                                            Foreground="{DynamicResource TextPrimary}"
+                                                                            Opacity="0.5" Cursor="Hand" Padding="0" />
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+
+                                                <Separator Margin="0,4,0,8" Background="{DynamicResource BorderBrush}" />
+
+                                                <CheckBox Content="One-time only (can't be opened again)"
+                                                          IsChecked="{Binding ObjectRewardOneTimeOnly}"
+                                                          Margin="0,0,0,4"
+                                                          ToolTip="If checked, the object can only give rewards once per playthrough" />
+
+                                                <CheckBox Content="Destroy after giving rewards"
+                                                          IsChecked="{Binding ObjectRewardDestroyAfter}"
+                                                          Margin="0,0,0,4"
+                                                          ToolTip="If checked, the object will be destroyed after giving rewards" />
+
+                                                <CheckBox Content="Show reward message"
+                                                          IsChecked="{Binding ObjectRewardShowMessage}"
+                                                          Margin="0,0,0,4"
+                                                          ToolTip="If checked, shows a message when rewards are given" />
+
+                                                <TextBlock Text="Custom Message (optional)" FontSize="10" Opacity="0.7" Margin="0,4,0,2" />
+                                                <TextBox Text="{Binding ObjectRewardCustomMessage, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="0,0,0,4" Padding="4,2"
+                                                         ToolTip="Leave empty for automatic message" />
+                                            </StackPanel>
                                         </StackPanel>
                                     </Expander>
 

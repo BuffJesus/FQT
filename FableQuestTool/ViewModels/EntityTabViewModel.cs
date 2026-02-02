@@ -52,7 +52,17 @@ public sealed partial class EntityTabViewModel : ObservableObject
     [ObservableProperty]
     private string nodeSearchText = string.Empty;
 
+    [ObservableProperty]
+    private bool isContextSensitive = true;
+
+    [ObservableProperty]
+    private ConnectorType? pendingConnectorType;
+
+    [ObservableProperty]
+    private bool hasPendingWire;
+
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
+    public ObservableCollection<NodeCategoryGroup> GroupedFilteredNodes { get; } = new();
 
     private int nodeSeed = 0;
 
@@ -723,6 +733,18 @@ public sealed partial class EntityTabViewModel : ObservableObject
             NodeMenuGraphPosition = position;
         }
 
+        // Store pending connection info for context-sensitive filtering
+        if (PendingConnection?.Source != null)
+        {
+            HasPendingWire = true;
+            PendingConnectorType = PendingConnection.Source.ConnectorType;
+        }
+        else
+        {
+            HasPendingWire = false;
+            PendingConnectorType = null;
+        }
+
         NodeSearchText = string.Empty;
         UpdateFilteredNodes();
         IsNodeMenuOpen = true;
@@ -733,6 +755,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
     {
         IsNodeMenuOpen = false;
         NodeSearchText = string.Empty;
+        HasPendingWire = false;
+        PendingConnectorType = null;
+        PendingConnection = null;
     }
 
     [RelayCommand]
@@ -770,28 +795,112 @@ public sealed partial class EntityTabViewModel : ObservableObject
         UpdateFilteredNodes();
     }
 
+    partial void OnIsContextSensitiveChanged(bool value)
+    {
+        UpdateFilteredNodes();
+    }
+
     private void UpdateFilteredNodes()
     {
         FilteredNodes.Clear();
+        GroupedFilteredNodes.Clear();
 
-        var allNodes = SimpleNodes.Concat(AdvancedNodes);
+        var allNodes = SimpleNodes.Concat(AdvancedNodes).ToList();
 
-        if (string.IsNullOrWhiteSpace(NodeSearchText))
-        {
-            foreach (var node in allNodes)
-            {
-                FilteredNodes.Add(node);
-            }
-        }
-        else
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(NodeSearchText))
         {
             var searchLower = NodeSearchText.ToLower();
-            foreach (var node in allNodes.Where(n =>
+            allNodes = allNodes.Where(n =>
                 n.Label.ToLower().Contains(searchLower) ||
-                n.Category.ToLower().Contains(searchLower)))
+                n.Category.ToLower().Contains(searchLower) ||
+                (n.Type?.ToLower().Contains(searchLower) ?? false)).ToList();
+        }
+
+        // Apply context-sensitive filtering when dragging a wire
+        if (IsContextSensitive && HasPendingWire && PendingConnectorType.HasValue)
+        {
+            // Filter based on what the source connector can connect to
+            // For exec pins, show nodes that have exec inputs (most nodes)
+            // For data pins, we'd filter by data type compatibility
+            if (PendingConnectorType.Value == ConnectorType.Exec)
             {
-                FilteredNodes.Add(node);
+                // Most nodes accept exec input, so show all except triggers
+                // Triggers don't have input exec pins
+                allNodes = allNodes.Where(n => n.Category != "trigger").ToList();
             }
+            // For other connector types, we could add more specific filtering here
+        }
+
+        // Populate flat list for backwards compatibility
+        foreach (var node in allNodes)
+        {
+            FilteredNodes.Add(node);
+        }
+
+        // Group by category for UE5-style display
+        var groups = allNodes
+            .GroupBy(n => n.Category)
+            .OrderBy(g => GetCategoryOrder(g.Key))
+            .Select(g => new NodeCategoryGroup(
+                GetCategoryDisplayName(g.Key),
+                g.Key,
+                g.OrderBy(n => n.Label).ToList()))
+            .ToList();
+
+        foreach (var group in groups)
+        {
+            GroupedFilteredNodes.Add(group);
+        }
+    }
+
+    private static int GetCategoryOrder(string category)
+    {
+        return category switch
+        {
+            "trigger" => 0,
+            "action" => 1,
+            "condition" => 2,
+            "flow" => 3,
+            "custom" => 4,
+            _ => 5
+        };
+    }
+
+    private static string GetCategoryDisplayName(string category)
+    {
+        return category switch
+        {
+            "trigger" => "Events",
+            "action" => "Actions",
+            "condition" => "Conditions",
+            "flow" => "Flow Control",
+            "custom" => "Custom Events",
+            _ => category
+        };
+    }
+
+    [RelayCommand]
+    private void AddRerouteFromMenu()
+    {
+        if (!HasPendingWire || PendingConnection?.Source == null)
+        {
+            return;
+        }
+
+        CreateRerouteNode(NodeMenuGraphPosition);
+        IsNodeMenuOpen = false;
+        HasPendingWire = false;
+        PendingConnectorType = null;
+    }
+
+    [RelayCommand]
+    private void SelectFirstFilteredNode()
+    {
+        var firstNode = FilteredNodes.FirstOrDefault();
+        if (firstNode != null)
+        {
+            SelectNodeFromMenu(firstNode);
         }
     }
 

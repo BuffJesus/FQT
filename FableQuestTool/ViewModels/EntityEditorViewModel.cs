@@ -187,6 +187,19 @@ public sealed partial class EntityEditorViewModel : ObservableObject
         LoadExistingEntities();
     }
 
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        // Synchronize SelectedTab with SelectedTabIndex when tabs are switched
+        if (value >= 0 && value < EntityTabs.Count)
+        {
+            SelectedTab = EntityTabs[value];
+        }
+        else
+        {
+            SelectedTab = null;
+        }
+    }
+
     partial void OnSelectedTabChanged(EntityTabViewModel? value)
     {
         // Could add logic here to save previous tab or perform cleanup

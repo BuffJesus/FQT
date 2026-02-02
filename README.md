@@ -29,7 +29,7 @@ FQT is a WPF-based visual editor that allows you to create quests for Fable: The
 
 ### For Users (Prebuilt Release)
 
-1. Download the latest release from the [Releases](https://github.com/YOUR_USERNAME/FQT/releases) page
+1. Download the latest release from the [Releases](https://github.com/BuffJesus/FQT/releases/tag/fable) page
 2. Extract the ZIP file to your preferred location
 3. Run `FableQuestTool.exe`
 

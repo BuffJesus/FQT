@@ -325,16 +325,18 @@ public sealed class CodeGenerator
                 sb.AppendLine($"    Quest:SetQuestCardObjective(\"{quest.Name}\", \"{Escape(quest.ObjectiveText)}\", \"{region1}\", \"{region2}\")");
             }
 
-            if (quest.Rewards.Gold > 0)
-            {
-                sb.AppendLine($"    Quest:SetQuestGoldReward(\"{quest.Name}\", {quest.Rewards.Gold})");
-            }
-
-            if (quest.Rewards.Renown > 0)
-            {
-                sb.AppendLine($"    Quest:SetQuestRenownReward(\"{quest.Name}\", {quest.Rewards.Renown})");
-            }
             sb.AppendLine();
+        }
+
+        // Set quest rewards (for quest card and start screen display)
+        // These must be set before KickOffQuestStartScreen for rewards to appear
+        if (quest.Rewards.Gold > 0)
+        {
+            sb.AppendLine($"    Quest:SetQuestGoldReward(\"{quest.Name}\", {quest.Rewards.Gold})");
+        }
+        if (quest.Rewards.Renown > 0)
+        {
+            sb.AppendLine($"    Quest:SetQuestRenownReward(\"{quest.Name}\", {quest.Rewards.Renown})");
         }
 
         // Show quest start screen
@@ -342,12 +344,17 @@ public sealed class CodeGenerator
         {
             string isStory = quest.IsStoryQuest ? "true" : "false";
             string isGold = quest.IsGoldQuest ? "true" : "false";
+            sb.AppendLine();
             sb.AppendLine("    -- Set quest info for start screen");
             sb.AppendLine($"    Quest:SetQuestInfoName(\"{Escape(quest.DisplayName)}\")");
-            if (!string.IsNullOrWhiteSpace(quest.Description))
+
+            // Build description with rewards info for start screen
+            string description = BuildStartScreenDescription(quest);
+            if (!string.IsNullOrWhiteSpace(description))
             {
-                sb.AppendLine($"    Quest:SetQuestInfoText(\"{Escape(quest.Description)}\")");
+                sb.AppendLine($"    Quest:SetQuestInfoText(\"{Escape(description)}\")");
             }
+
             sb.AppendLine("    -- Show quest start screen");
             sb.AppendLine($"    Quest:KickOffQuestStartScreen(\"{quest.Name}\", {isStory}, {isGold})");
             sb.AppendLine();
@@ -924,6 +931,57 @@ public sealed class CodeGenerator
     {
         string primaryRegion = quest.Regions.FirstOrDefault() ?? "";
         return WorldMapCoordinateService.GetMapOffsetForQuest(primaryRegion, quest.Entities);
+    }
+
+    /// <summary>
+    /// Builds the description text for the quest start screen.
+    /// Combines the quest description with reward information since the game API
+    /// doesn't have separate methods for setting experience rewards on the start screen.
+    /// </summary>
+    private string BuildStartScreenDescription(QuestProject quest)
+    {
+        var parts = new List<string>();
+
+        // Add the quest description if present
+        if (!string.IsNullOrWhiteSpace(quest.Description))
+        {
+            parts.Add(quest.Description.Trim());
+        }
+
+        // Build rewards summary if any rewards are configured
+        var rewardParts = new List<string>();
+        if (quest.Rewards.Gold > 0)
+        {
+            rewardParts.Add($"{quest.Rewards.Gold} Gold");
+        }
+        if (quest.Rewards.Experience > 0)
+        {
+            rewardParts.Add($"{quest.Rewards.Experience} XP");
+        }
+        if (quest.Rewards.Renown > 0)
+        {
+            rewardParts.Add($"{quest.Rewards.Renown} Renown");
+        }
+        if (!string.IsNullOrWhiteSpace(quest.Rewards.DirectRewardItem))
+        {
+            // Format item name nicely (remove OBJECT_ prefix)
+            string itemName = quest.Rewards.DirectRewardItem;
+            if (itemName.StartsWith("OBJECT_"))
+            {
+                itemName = itemName.Substring(7).Replace("_", " ");
+                itemName = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(itemName.ToLower());
+            }
+            rewardParts.Add(itemName);
+        }
+
+        // Add rewards line if there are any
+        if (rewardParts.Count > 0)
+        {
+            string rewardsLine = "Rewards: " + string.Join(", ", rewardParts);
+            parts.Add(rewardsLine);
+        }
+
+        return string.Join("\\n\\n", parts);
     }
 
     private string RenderStateInit(QuestState state)

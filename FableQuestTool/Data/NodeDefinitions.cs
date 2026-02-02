@@ -134,7 +134,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "item", Type = "string", Label = "Item (optional)", DefaultValue = "", Options = new List<string>(GameData.Objects) },
                     new NodeProperty { Name = "amount", Type = "int", Label = "Item Amount", DefaultValue = "1" }
                 },
-                CodeTemplate = "if {gold} > 0 then Quest:GiveHeroGold({gold}) end\nlocal itemToGive = \"{item}\"\nif itemToGive ~= \"\" and itemToGive ~= nil then Quest:GiveHeroObject(\"{item}\", {amount}) end\n{CHILDREN}" },
+                CodeTemplate = "if {gold} > 0 then Quest:GiveHeroGold(\"{gold}\", 1) end\nlocal itemToGive = \"{item}\"\nif itemToGive ~= \"\" and itemToGive ~= nil then Quest:GiveHeroObject(\"{item}\", {amount}) end\n{CHILDREN}" },
 
             new() { Type = "giveItem", Label = "Give Item", Category = "action", Icon = "🎁", IsAdvanced = false,
                 Description = "Give specific item(s) to hero",
@@ -225,30 +225,10 @@ public static class NodeDefinitions
                 Properties = new(),
                 CodeTemplate = "Quest:EndLetterBox()\nQuest:EndMovieSequence()\n{CHILDREN}" },
 
-            // ===== CONVERSATIONS (Just pause, no frame checks during cinematics) =====
-            new() { Type = "startConversation", Label = "Start Conversation", Category = "action", Icon = "🎭", IsAdvanced = false,
-                Description = "Begin a multi-line conversation (stores conversation ID for adding lines)",
-                Properties = new() {
-                    new NodeProperty { Name = "use2DSound", Type = "bool", Label = "Use 2D Sound (no spatial)", DefaultValue = "true" },
-                    new NodeProperty { Name = "playInCutscene", Type = "bool", Label = "Play During Cutscene", DefaultValue = "true" }
-                },
-                CodeTemplate = "local convoId = Quest:StartAmbientConversation(Me, hero, {use2DSound}, {playInCutscene})\nQuest:Pause(0.5)\n{CHILDREN}" },
-
-            new() { Type = "addConversationLine", Label = "Add Conversation Line", Category = "action", Icon = "💭", IsAdvanced = false,
-                Description = "Add a dialogue line to current conversation (use after Start Conversation)",
-                Properties = new() {
-                    new NodeProperty { Name = "textKey", Type = "string", Label = "Text/Voice Key", DefaultValue = "DIALOGUE_LINE_001" },
-                    new NodeProperty { Name = "showSubtitle", Type = "bool", Label = "Show Subtitle", DefaultValue = "true" },
-                    new NodeProperty { Name = "waitTime", Type = "float", Label = "Wait After (seconds)", DefaultValue = "3.0" }
-                },
-                CodeTemplate = "Quest:AddLineToConversation(convoId, \"{textKey}\", Me, hero, {showSubtitle})\nQuest:Pause({waitTime})\n{CHILDREN}" },
-
-            new() { Type = "endConversation", Label = "End Conversation", Category = "action", Icon = "🔚", IsAdvanced = false,
-                Description = "End the current conversation",
-                Properties = new() {
-                    new NodeProperty { Name = "immediate", Type = "bool", Label = "End Immediately", DefaultValue = "false" }
-                },
-                CodeTemplate = "Quest:RemoveConversation(convoId, {immediate})\nQuest:Pause(0.5)\n{CHILDREN}" },
+            // ===== CONVERSATIONS (DEPRECATED - Use SpeakAndWait instead) =====
+            // NOTE: Conversation system APIs don't work reliably from entity scripts and can cause hangs.
+            // For multi-line dialogue, use multiple "Show Dialogue" nodes (which use SpeakAndWait).
+            // SpeakAndWait automatically manages movie sequences and letterbox bars.
 
             new() { Type = "speakWithOptions", Label = "Speak (Advanced)", Category = "action", Icon = "🎤", IsAdvanced = true,
                 Description = "Entity speaks with full audio and display options",
@@ -260,25 +240,10 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "Me:Speak(hero, \"{text}\", {use2DSound}, {useVoice}, {displayOnScreen})\n{CHILDREN}" },
 
-            // ===== CAMERA (Just pause for timing, no frame checks during cinematics) =====
-            new() { Type = "cameraOrbitEntity", Label = "Camera Orbit Entity", Category = "action", Icon = "🎥", IsAdvanced = false,
-                Description = "Orbit camera around this entity for specified duration",
-                Properties = new() {
-                    new NodeProperty { Name = "distance", Type = "float", Label = "Distance from Entity", DefaultValue = "4.0" },
-                    new NodeProperty { Name = "height", Type = "float", Label = "Camera Height", DefaultValue = "1.5" },
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Orbit Duration (seconds)", DefaultValue = "3.0" }
-                },
-                CodeTemplate = "Quest:CameraCircleAroundThing(Me, {x=0, y={height}, z={distance}}, {duration})\nQuest:Pause({duration})\n{CHILDREN}" },
-
-            new() { Type = "cameraLookAtEntity", Label = "Camera Look At Entity", Category = "action", Icon = "👁️🎥", IsAdvanced = false,
-                Description = "Position camera relative to entity and look at it",
-                Properties = new() {
-                    new NodeProperty { Name = "camX", Type = "float", Label = "Camera X Offset", DefaultValue = "0" },
-                    new NodeProperty { Name = "camY", Type = "float", Label = "Camera Y Offset (height)", DefaultValue = "2.0" },
-                    new NodeProperty { Name = "camZ", Type = "float", Label = "Camera Z Offset (distance)", DefaultValue = "5.0" },
-                    new NodeProperty { Name = "duration", Type = "float", Label = "Transition Duration", DefaultValue = "1.0" }
-                },
-                CodeTemplate = "local entityPos = Me:GetPos()\nlocal camPos = {x=entityPos.x+{camX}, y=entityPos.y+{camY}, z=entityPos.z+{camZ}}\nQuest:CameraMoveToPosAndLookAtThing(camPos, Me, {duration})\nQuest:Pause({duration})\n{CHILDREN}" },
+            // ===== CAMERA (Quest-level APIs only) =====
+            // NOTE: Advanced camera APIs (CameraCircleAroundThing, CameraMoveToPosAndLookAtThing) crash from entity scripts.
+            // For dialogue scenes, use "Conversation Camera" node instead (CameraDoConversation).
+            // Only basic camera reset works from entity scripts.
 
             new() { Type = "cameraResetToHero", Label = "Reset Camera To Hero", Category = "action", Icon = "🔄🎥", IsAdvanced = false,
                 Description = "Return camera to default third-person view behind hero",
@@ -298,11 +263,11 @@ public static class NodeDefinitions
                 CodeTemplate = "local camPoint = Quest:GetThingWithScriptName(\"{cameraPoint}\")\nif camPoint ~= nil then\n    Quest:CameraUseCameraPoint(camPoint, Me, {duration}, {easeIn}, {easeOut})\n    Quest:Pause({duration})\nelse\n    Quest:Log(\"Warning: Camera point '{cameraPoint}' not found\")\nend\n{CHILDREN}" },
 
             new() { Type = "cameraConversation", Label = "Conversation Camera", Category = "action", Icon = "🎬💬", IsAdvanced = true,
-                Description = "Set up camera for dialogue scene (0=Default, 1=Close, 2=OTS_Speaker, 3=OTS_Listener)",
+                Description = "Set up camera for dialogue scene (0=Default, 1=Close, 2=OTS_Speaker, 3=OTS_Listener) - QUEST THREAD ONLY",
                 Properties = new() {
-                    new NodeProperty { Name = "cameraOp", Type = "int", Label = "Camera Type", DefaultValue = "0" }
+                    new NodeProperty { Name = "cameraOp", Type = "int", Label = "Camera Type", DefaultValue = "3" }
                 },
-                CodeTemplate = "Quest:CameraDoConversation(Me, hero, {cameraOp})\nQuest:Pause(0.5)\n{CHILDREN}" },
+                CodeTemplate = "-- This API only works from Quest threads, NOT entity scripts\n-- Use with a quest thread that monitors DialogueTriggered flag\nlocal stranger = Quest:GetThingWithScriptName(\"ENTITY_SCRIPT_NAME\")\nlocal hero = Quest:GetHero()\nif stranger and hero then\n    Quest:CameraDoConversation(stranger, hero, {cameraOp})\n    Quest:Pause(0.5)\nend\n{CHILDREN}" },
 
             // ===== SCREEN EFFECTS (Just pause for timing, no frame checks) =====
             new() { Type = "screenFadeOut", Label = "Screen Fade Out", Category = "action", Icon = "⬛", IsAdvanced = false,
@@ -317,7 +282,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "0.5" }
                 },
-                CodeTemplate = "Quest:EndCutFade()\nQuest:Pause({duration})\n{CHILDREN}" },
+                CodeTemplate = "Quest:FadeScreenIn({duration})\nQuest:Pause({duration})\n{CHILDREN}" },
 
             new() { Type = "radialBlur", Label = "Radial Blur", Category = "action", Icon = "🌀", IsAdvanced = true,
                 Description = "Apply radial blur effect (intensity 0-1, inner/outer radius, fade params)",
@@ -491,7 +456,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "showScreen", Type = "bool", Label = "Show Completion Screen", DefaultValue = "true" }
                 },
-                CodeTemplate = "Quest:SetStateBool(\"QuestCompleted\", true)\n{CHILDREN}" },
+                CodeTemplate = "Quest:SetStateBool(\"QuestCompleted\", true)\nbreak\n{CHILDREN}" },
             
             new() { Type = "failQuest", Label = "Fail Quest", Category = "action", Icon = "❌", IsAdvanced = false,
                 Description = "Mark quest as failed",

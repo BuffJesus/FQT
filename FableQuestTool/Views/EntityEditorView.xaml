@@ -358,7 +358,7 @@
                                                              Stroke="{Binding WireColor, Converter={StaticResource StringToColorBrush}}"
                                                              StrokeThickness="3"
                                                              SourceOffset="12,0"
-                                                             TargetOffset="-12,0">
+                                                             TargetOffset="12,0">
                                                 <nodify:Connection.Effect>
                                                     <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.3" Color="White" />
                                                 </nodify:Connection.Effect>

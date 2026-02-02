@@ -55,8 +55,7 @@ public sealed class CodeGenerator
             GenerateUserThread(sb, thread);
         }
 
-        // Generate CompleteQuest function
-        GenerateCompleteQuestFunction(sb, quest);
+        // CompleteQuest logic is now inlined in MonitorQuestCompletion thread to preserve thread context
 
         return sb.ToString();
     }
@@ -81,13 +80,15 @@ public sealed class CodeGenerator
         {
             sb.AppendLine("    Me:MakeBehavioral()");
         }
-        if (entity.ExclusiveControl)
-        {
-            sb.AppendLine("    Me:TakeExclusiveControl()");
-        }
-        else if (entity.AcquireControl)
+        // Always use AcquireControl if enabled, as it works with SpeakAndWait
+        // TakeExclusiveControl does NOT work with SpeakAndWait
+        if (entity.AcquireControl)
         {
             sb.AppendLine("    Me:AcquireControl()");
+        }
+        else if (entity.ExclusiveControl)
+        {
+            sb.AppendLine("    Me:TakeExclusiveControl()");
         }
 
         sb.AppendLine("end");
@@ -348,6 +349,9 @@ public sealed class CodeGenerator
             sb.AppendLine();
         }
 
+        // Note: Container rewards are now spawned during quest completion, not here
+        // This prevents issues with containers despawning before quest completes
+
         sb.AppendLine($"    Quest:Log(\"{quest.Name}: EntitySpawner completed.\")");
         sb.AppendLine("end");
         sb.AppendLine();
@@ -414,7 +418,69 @@ public sealed class CodeGenerator
         sb.AppendLine("    Quest = questObject");
         sb.AppendLine("    while true do");
         sb.AppendLine("        if Quest:GetStateBool(\"QuestCompleted\") then");
-        sb.AppendLine("            CompleteQuest()");
+        sb.AppendLine($"            Quest:Log(\"{quest.Name}: Quest completed, giving rewards...\")");
+        sb.AppendLine();
+
+        // Clear quest target highlighting
+        var questTargets = quest.Entities.Where(e => e.IsQuestTarget || e.ShowOnMinimap).ToList();
+        if (questTargets.Count > 0)
+        {
+            sb.AppendLine("            -- Clear quest target highlighting and minimap markers");
+            foreach (QuestEntity entity in questTargets)
+            {
+                sb.AppendLine($"            local {entity.ScriptName} = Quest:GetThingWithScriptName(\"{entity.ScriptName}\")");
+                sb.AppendLine($"            if {entity.ScriptName} ~= nil then");
+
+                if (entity.IsQuestTarget)
+                {
+                    sb.AppendLine($"                Quest:ClearThingHasInformation({entity.ScriptName})");
+                }
+
+                if (entity.ShowOnMinimap)
+                {
+                    sb.AppendLine($"                Quest:MiniMapRemoveMarker({entity.ScriptName})");
+                }
+
+                sb.AppendLine("            end");
+            }
+            sb.AppendLine();
+        }
+
+        // Give rewards
+        sb.AppendLine("            -- Give rewards");
+        if (quest.Rewards.Gold > 0)
+        {
+            sb.AppendLine($"            Quest:GiveHeroGold(\"{quest.Rewards.Gold}\", 1)");
+        }
+        if (quest.Rewards.Experience > 0)
+        {
+            sb.AppendLine($"            Quest:GiveHeroExperience({quest.Rewards.Experience})");
+        }
+        if (quest.Rewards.Renown > 0)
+        {
+            sb.AppendLine($"            Quest:GiveHeroRenownPoints({quest.Rewards.Renown})");
+        }
+        if (quest.Rewards.Morality != 0)
+        {
+            sb.AppendLine($"            Quest:GiveHeroMorality({quest.Rewards.Morality})");
+        }
+
+        // Single direct reward item (limited by game engine)
+        if (!string.IsNullOrWhiteSpace(quest.Rewards.DirectRewardItem))
+        {
+            sb.AppendLine($"            Quest:GiveHeroObject(\"{quest.Rewards.DirectRewardItem}\", 1)");
+        }
+
+        // Container-based rewards (for multiple items)
+        if (quest.Rewards.Container != null && quest.Rewards.Container.Items.Count > 0)
+        {
+            GenerateContainerReward(sb, quest);
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("            -- Complete and deactivate quest");
+        sb.AppendLine($"            Quest:SetQuestAsCompleted(\"{quest.Name}\", true, false, false)");
+        sb.AppendLine($"            Quest:DeactivateQuestLater(\"{quest.Name}\", 0)");
         sb.AppendLine("            break");
         sb.AppendLine("        end");
         sb.AppendLine("        Quest:Pause(0.5)");
@@ -437,65 +503,144 @@ public sealed class CodeGenerator
         sb.AppendLine();
     }
 
-    private void GenerateCompleteQuestFunction(StringBuilder sb, QuestProject quest)
-    {
-        sb.AppendLine("function CompleteQuest()");
-        sb.AppendLine($"    Quest:Log(\"{quest.Name}: CompleteQuest called.\")");
+    // GenerateCompleteQuestFunction has been removed - completion logic is now inlined
+    // in MonitorQuestCompletion thread to preserve PActiveThread context
 
-        // Clear quest target highlighting
-        var questTargets = quest.Entities.Where(e => e.IsQuestTarget || e.ShowOnMinimap).ToList();
-        if (questTargets.Count > 0)
+    private void GenerateContainerSpawn(StringBuilder sb, QuestProject quest)
+    {
+        var container = quest.Rewards.Container!;
+
+        sb.AppendLine();
+        sb.AppendLine("    -- Spawn reward container");
+
+        // Generate spawn code based on location type
+        switch (container.SpawnLocation)
         {
-            sb.AppendLine();
-            sb.AppendLine("    -- Clear quest target highlighting and minimap markers");
-            foreach (QuestEntity entity in questTargets)
-            {
-                sb.AppendLine($"    local {entity.ScriptName} = Quest:GetThingWithScriptName(\"{entity.ScriptName}\")");
-                sb.AppendLine($"    if {entity.ScriptName} ~= nil then");
-                
-                if (entity.IsQuestTarget)
-                {
-                    sb.AppendLine($"        Quest:ClearThingHasInformation({entity.ScriptName})");
-                }
-                
-                if (entity.ShowOnMinimap)
-                {
-                    sb.AppendLine($"        Quest:MiniMapRemoveMarker({entity.ScriptName})");
-                }
-                
+            case ContainerSpawnLocation.NearMarker:
+                sb.AppendLine($"    local marker = Quest:GetThingWithScriptName(\"{container.SpawnReference}\")");
+                sb.AppendLine("    local containerPos");
+                sb.AppendLine("    if marker ~= nil then");
+                sb.AppendLine("        containerPos = marker:GetPos()");
+                sb.AppendLine("    else");
+                sb.AppendLine("        local hero = Quest:GetHero()");
+                sb.AppendLine("        containerPos = hero:GetPos()");
                 sb.AppendLine("    end");
+                break;
+
+            case ContainerSpawnLocation.NearEntity:
+                sb.AppendLine($"    local entity = Quest:GetThingWithScriptName(\"{container.SpawnReference}\")");
+                sb.AppendLine("    local containerPos");
+                sb.AppendLine("    if entity ~= nil then");
+                sb.AppendLine("        containerPos = entity:GetPos()");
+                sb.AppendLine("    else");
+                sb.AppendLine("        local hero = Quest:GetHero()");
+                sb.AppendLine("        containerPos = hero:GetPos()");
+                sb.AppendLine("    end");
+                break;
+
+            case ContainerSpawnLocation.FixedPosition:
+                string x = container.X.ToString(CultureInfo.InvariantCulture);
+                string y = container.Y.ToString(CultureInfo.InvariantCulture);
+                string z = container.Z.ToString(CultureInfo.InvariantCulture);
+                sb.AppendLine($"    local containerPos = {{x={x}, y={y}, z={z}}}");
+                break;
+        }
+
+        sb.AppendLine($"    local container = Quest:CreateObject(\"{container.ContainerDefName}\", containerPos, \"{container.ContainerScriptName}\")");
+        sb.AppendLine("    if container ~= nil then");
+
+        // Add items to container
+        foreach (string item in container.Items)
+        {
+            sb.AppendLine($"        Quest:AddItemToContainer(container, \"{item}\")");
+        }
+
+        // Highlight container if configured
+        if (container.HighlightContainer)
+        {
+            sb.AppendLine("        Quest:SetThingHasInformation(container, true)");
+        }
+
+        sb.AppendLine("    end");
+        sb.AppendLine("    Quest:Pause(0.1)");
+        sb.AppendLine("    if not Quest:NewScriptFrame() then return end");
+    }
+
+    private void GenerateContainerReward(StringBuilder sb, QuestProject quest)
+    {
+        var container = quest.Rewards.Container!;
+
+        sb.AppendLine();
+        sb.AppendLine("            -- Container reward: Spawn and populate container");
+        sb.AppendLine("            Quest:Log(\"Attempting to spawn container...\")");
+
+        // Generate spawn position code
+        switch (container.SpawnLocation)
+        {
+            case ContainerSpawnLocation.NearMarker:
+                sb.AppendLine($"            local marker = Quest:GetThingWithScriptName(\"{container.SpawnReference}\")");
+                sb.AppendLine("            local containerPos");
+                sb.AppendLine("            if marker ~= nil then");
+                sb.AppendLine("                containerPos = marker:GetPos()");
+                sb.AppendLine("            else");
+                sb.AppendLine("                local hero = Quest:GetHero()");
+                sb.AppendLine("                containerPos = hero:GetPos()");
+                sb.AppendLine("            end");
+                break;
+
+            case ContainerSpawnLocation.NearEntity:
+                sb.AppendLine($"            local entity = Quest:GetThingWithScriptName(\"{container.SpawnReference}\")");
+                sb.AppendLine("            local containerPos");
+                sb.AppendLine("            if entity ~= nil then");
+                sb.AppendLine("                containerPos = entity:GetPos()");
+                sb.AppendLine("            else");
+                sb.AppendLine("                local hero = Quest:GetHero()");
+                sb.AppendLine("                containerPos = hero:GetPos()");
+                sb.AppendLine("            end");
+                break;
+
+            case ContainerSpawnLocation.FixedPosition:
+                string x = container.X.ToString(CultureInfo.InvariantCulture);
+                string y = container.Y.ToString(CultureInfo.InvariantCulture);
+                string z = container.Z.ToString(CultureInfo.InvariantCulture);
+                sb.AppendLine($"            local containerPos = {{x={x}, y={y}, z={z}}}");
+                break;
+        }
+
+        // Spawn the container
+        sb.AppendLine($"            Quest:Log(\"Creating container: {container.ContainerDefName} at position...\")");
+        sb.AppendLine($"            local container = Quest:CreateObject(\"{container.ContainerDefName}\", containerPos, \"{container.ContainerScriptName}\")");
+        sb.AppendLine("            Quest:Log(\"CreateObject returned: \" .. tostring(container))");
+        sb.AppendLine("            if container ~= nil then");
+        sb.AppendLine("                Quest:Log(\"Container spawned successfully!\")");
+
+        // CRITICAL: Make the container targetable/interactive
+        sb.AppendLine("                Quest:EntitySetTargetable(container, true)");
+        sb.AppendLine("                Quest:Log(\"Container set as targetable\")");
+
+        // Add items to container
+        foreach (string item in container.Items)
+        {
+            sb.AppendLine($"                Quest:AddItemToContainer(container, \"{item}\")");
+        }
+
+        if (container.AutoGiveOnComplete)
+        {
+            // Automatically give all items from container
+            sb.AppendLine("                Quest:GiveHeroItemsFromContainer(container, true) -- true = show UI");
+        }
+        else
+        {
+            // Just highlight the container for player to open manually
+            if (container.HighlightContainer)
+            {
+                sb.AppendLine("                Quest:SetThingHasInformation(container, true)");
             }
         }
 
-        sb.AppendLine();
-        sb.AppendLine("    -- Give rewards");
-
-        if (quest.Rewards.Gold > 0)
-        {
-            sb.AppendLine($"    Quest:GiveHeroGold({quest.Rewards.Gold})");
-        }
-        if (quest.Rewards.Experience > 0)
-        {
-            sb.AppendLine($"    Quest:GiveHeroExperience({quest.Rewards.Experience})");
-        }
-        if (quest.Rewards.Renown > 0)
-        {
-            sb.AppendLine($"    Quest:GiveHeroRenownPoints({quest.Rewards.Renown})");
-        }
-        if (quest.Rewards.Morality != 0)
-        {
-            sb.AppendLine($"    Quest:GiveHeroMorality({quest.Rewards.Morality})");
-        }
-        foreach (string item in quest.Rewards.Items)
-        {
-            sb.AppendLine($"    Quest:GiveHeroObject(\"{item}\", 1)");
-        }
-
-        sb.AppendLine();
-        sb.AppendLine("    -- Complete and deactivate quest");
-        sb.AppendLine($"    Quest:SetQuestAsCompleted(\"{quest.Name}\", false, false, false)");
-        sb.AppendLine($"    Quest:DeactivateQuestLater(\"{quest.Name}\", 1.0)");
-        sb.AppendLine("end");
+        sb.AppendLine("            else");
+        sb.AppendLine("                Quest:Log(\"WARNING: Failed to spawn container!\")");
+        sb.AppendLine("            end");
     }
 
     private (int X, int Y) GetWorldMapOffset(QuestProject quest)

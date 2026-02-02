@@ -376,69 +376,51 @@ public class TemplateService
             IsQuestTarget = true
         };
 
-        // Create cinematic dialogue flow with letterbox, camera orbit, conversation, and effects
+        // Create cinematic dialogue flow using WORKING hybrid architecture
+        // Entity script sets flag when hero talks, waits for camera, then uses SpeakAndWait
+        // SpeakAndWait handles letterbox bars automatically - DON'T call StartMovieSequence manually!
         string triggerId = Guid.NewGuid().ToString();
-        string letterboxOnId = Guid.NewGuid().ToString();
-        string fadeOutId = Guid.NewGuid().ToString();
-        string musicId = Guid.NewGuid().ToString();
-        string fadeInId = Guid.NewGuid().ToString();
-        string cameraOrbitId = Guid.NewGuid().ToString();
-        string startConvoId = Guid.NewGuid().ToString();
+        string setFlagId = Guid.NewGuid().ToString();
+        string waitCameraId = Guid.NewGuid().ToString();
         string line1Id = Guid.NewGuid().ToString();
+        string wait1Id = Guid.NewGuid().ToString();
         string line2Id = Guid.NewGuid().ToString();
+        string wait2Id = Guid.NewGuid().ToString();
         string line3Id = Guid.NewGuid().ToString();
-        string endConvoId = Guid.NewGuid().ToString();
-        string stopMusicId = Guid.NewGuid().ToString();
-        string letterboxOffId = Guid.NewGuid().ToString();
-        string cameraResetId = Guid.NewGuid().ToString();
         string completeId = Guid.NewGuid().ToString();
 
         var nodes = new List<BehaviorNode>
         {
             new BehaviorNode { Id = triggerId, Type = "onHeroTalks", Category = "trigger", Label = "When Hero Talks", Icon = "💬", X = 50, Y = 200 },
-            new BehaviorNode { Id = letterboxOnId, Type = "letterbox", Category = "action", Label = "Start Cinematic", Icon = "🎬", X = 200, Y = 200 },
-            new BehaviorNode { Id = fadeOutId, Type = "screenFadeOut", Category = "action", Label = "Fade Out", Icon = "⬛", X = 350, Y = 200,
-                Config = new Dictionary<string, object> { { "duration", "0.5" } } },
-            new BehaviorNode { Id = musicId, Type = "overrideMusic", Category = "action", Label = "Mystery Music", Icon = "🎵", X = 500, Y = 200,
-                Config = new Dictionary<string, object> { { "musicSetType", "2" }, { "isCutscene", "true" }, { "forcePlay", "true" } } },
-            new BehaviorNode { Id = fadeInId, Type = "screenFadeIn", Category = "action", Label = "Fade In", Icon = "⬜", X = 650, Y = 200 },
-            new BehaviorNode { Id = cameraOrbitId, Type = "cameraOrbitEntity", Category = "action", Label = "Camera Orbit", Icon = "🎥", X = 800, Y = 200,
-                Config = new Dictionary<string, object> { { "offsetX", "0" }, { "offsetY", "1.5" }, { "offsetZ", "4.0" }, { "duration", "3.0" } } },
-            new BehaviorNode { Id = startConvoId, Type = "startConversation", Category = "action", Label = "Start Conversation", Icon = "🎭", X = 950, Y = 200,
-                Config = new Dictionary<string, object> { { "use2DSound", "true" }, { "playInCutscene", "true" } } },
-            new BehaviorNode { Id = line1Id, Type = "addConversationLine", Category = "action", Label = "Line 1", Icon = "💭", X = 1100, Y = 100,
-                Config = new Dictionary<string, object> { { "textKey", "Ah... you've finally arrived. I've been expecting you." }, { "showSubtitle", "true" } } },
-            new BehaviorNode { Id = line2Id, Type = "addConversationLine", Category = "action", Label = "Line 2", Icon = "💭", X = 1100, Y = 200,
-                Config = new Dictionary<string, object> { { "textKey", "There are forces at work here... forces you cannot yet comprehend." }, { "showSubtitle", "true" } } },
-            new BehaviorNode { Id = line3Id, Type = "addConversationLine", Category = "action", Label = "Line 3", Icon = "💭", X = 1100, Y = 300,
-                Config = new Dictionary<string, object> { { "textKey", "But in time, hero, you will understand. In time..." }, { "showSubtitle", "true" } } },
-            new BehaviorNode { Id = endConvoId, Type = "endConversation", Category = "action", Label = "End Conversation", Icon = "🔚", X = 1250, Y = 200,
-                Config = new Dictionary<string, object> { { "immediate", "false" } } },
-            new BehaviorNode { Id = stopMusicId, Type = "stopMusicOverride", Category = "action", Label = "Stop Music", Icon = "⏹️🎵", X = 1400, Y = 200 },
-            new BehaviorNode { Id = letterboxOffId, Type = "letterboxOff", Category = "action", Label = "Letterbox Off", Icon = "📺", X = 1550, Y = 200 },
-            new BehaviorNode { Id = cameraResetId, Type = "cameraResetToHero", Category = "action", Label = "Reset Camera", Icon = "🔄🎥", X = 1700, Y = 200,
-                Config = new Dictionary<string, object> { { "duration", "1.0" } } },
-            new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete", Icon = "✅", X = 1850, Y = 200,
+            new BehaviorNode { Id = setFlagId, Type = "setState", Category = "action", Label = "Set Dialogue Flag", Icon = "💾", X = 200, Y = 200,
+                Config = new Dictionary<string, object> { { "name", "DialogueTriggered" }, { "value", "true" } } },
+            new BehaviorNode { Id = waitCameraId, Type = "wait", Category = "action", Label = "Wait for Camera", Icon = "⏱️", X = 350, Y = 200,
+                Config = new Dictionary<string, object> { { "seconds", "1.0" } } },
+            new BehaviorNode { Id = line1Id, Type = "showDialogue", Category = "action", Label = "Line 1", Icon = "💬", X = 500, Y = 200,
+                Config = new Dictionary<string, object> { { "text", "Ah... you've finally arrived. I've been expecting you." } } },
+            new BehaviorNode { Id = wait1Id, Type = "wait", Category = "action", Label = "Pause", Icon = "⏱️", X = 650, Y = 200,
+                Config = new Dictionary<string, object> { { "seconds", "0.5" } } },
+            new BehaviorNode { Id = line2Id, Type = "showDialogue", Category = "action", Label = "Line 2", Icon = "💬", X = 800, Y = 200,
+                Config = new Dictionary<string, object> { { "text", "There are forces at work here... forces you cannot yet comprehend." } } },
+            new BehaviorNode { Id = wait2Id, Type = "wait", Category = "action", Label = "Pause", Icon = "⏱️", X = 950, Y = 200,
+                Config = new Dictionary<string, object> { { "seconds", "0.5" } } },
+            new BehaviorNode { Id = line3Id, Type = "showDialogue", Category = "action", Label = "Line 3", Icon = "💬", X = 1100, Y = 200,
+                Config = new Dictionary<string, object> { { "text", "But in time, hero, you will understand. In time..." } } },
+            new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete", Icon = "✅", X = 1250, Y = 200,
                 Config = new Dictionary<string, object> { { "showScreen", "true" } } }
         };
 
         stranger.Nodes = nodes;
         stranger.Connections = new List<NodeConnection>
         {
-            new NodeConnection { FromNodeId = triggerId, FromPort = "Output", ToNodeId = letterboxOnId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = letterboxOnId, FromPort = "Output", ToNodeId = fadeOutId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = fadeOutId, FromPort = "Output", ToNodeId = musicId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = musicId, FromPort = "Output", ToNodeId = fadeInId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = fadeInId, FromPort = "Output", ToNodeId = cameraOrbitId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = cameraOrbitId, FromPort = "Output", ToNodeId = startConvoId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = startConvoId, FromPort = "Output", ToNodeId = line1Id, ToPort = "Input" },
-            new NodeConnection { FromNodeId = line1Id, FromPort = "Output", ToNodeId = line2Id, ToPort = "Input" },
-            new NodeConnection { FromNodeId = line2Id, FromPort = "Output", ToNodeId = line3Id, ToPort = "Input" },
-            new NodeConnection { FromNodeId = line3Id, FromPort = "Output", ToNodeId = endConvoId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = endConvoId, FromPort = "Output", ToNodeId = stopMusicId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = stopMusicId, FromPort = "Output", ToNodeId = letterboxOffId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = letterboxOffId, FromPort = "Output", ToNodeId = cameraResetId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = cameraResetId, FromPort = "Output", ToNodeId = completeId, ToPort = "Input" }
+            new NodeConnection { FromNodeId = triggerId, FromPort = "Output", ToNodeId = setFlagId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setFlagId, FromPort = "Output", ToNodeId = waitCameraId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = waitCameraId, FromPort = "Output", ToNodeId = line1Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = line1Id, FromPort = "Output", ToNodeId = wait1Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = wait1Id, FromPort = "Output", ToNodeId = line2Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = line2Id, FromPort = "Output", ToNodeId = wait2Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = wait2Id, FromPort = "Output", ToNodeId = line3Id, ToPort = "Input" },
+            new NodeConnection { FromNodeId = line3Id, FromPort = "Output", ToNodeId = completeId, ToPort = "Input" }
         };
 
         project.Entities.Add(stranger);

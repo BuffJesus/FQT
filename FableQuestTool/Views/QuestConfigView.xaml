@@ -9,6 +9,7 @@
              DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <local:NullToBoolConverter x:Key="NullToBoolConverter" />
     </UserControl.Resources>
     <Grid Background="{DynamicResource BackgroundPrimary}">
         <Grid.ColumnDefinitions>
@@ -162,15 +163,78 @@
                                 </StackPanel>
                             </UniformGrid>
 
-                            <TextBlock Text="Reward Items" Margin="0,12,0,0" />
-                            <StackPanel Orientation="Horizontal">
-                                <ComboBox x:Name="RewardItemInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
-                                          ItemsSource="{x:Static data:GameData.Objects}" />
-                                <Button Content="Add" Width="80" Click="OnAddRewardItem" />
-                                <Button Content="Update" Width="80" Margin="8,0,0,0" Click="OnUpdateRewardItem" />
-                                <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRewardItem" />
-                            </StackPanel>
-                            <ListBox x:Name="RewardItemsList" ItemsSource="{Binding Project.Rewards.Items}" Height="80" Margin="0,8,0,0" SelectionChanged="OnRewardItemSelected" />
+                            <TextBlock Text="Direct Reward Item (One Only)" Margin="0,12,0,0" />
+                            <ComboBox x:Name="DirectRewardItemInput" IsEditable="True" IsTextSearchEnabled="True"
+                                      ItemsSource="{x:Static data:GameData.Objects}"
+                                      Text="{Binding Project.Rewards.DirectRewardItem, UpdateSourceTrigger=PropertyChanged}"
+                                      ToolTip="Single item reward given directly to player. Game engine limitation: only ONE item can be given directly." />
+
+                            <Expander Header="Container Rewards (Multiple Items)" Margin="0,16,0,0" IsExpanded="False">
+                                <StackPanel Margin="8">
+                                    <CheckBox x:Name="UseContainerCheckBox" Content="Use Container for Multiple Items"
+                                              Checked="OnUseContainerChanged" Unchecked="OnUseContainerChanged"
+                                              Margin="0,0,0,12" />
+
+                                    <StackPanel x:Name="ContainerPanel" IsEnabled="{Binding IsChecked, ElementName=UseContainerCheckBox}">
+                                        <TextBlock Text="Container Object" />
+                                        <ComboBox x:Name="ContainerDefNameInput" IsEditable="True" IsTextSearchEnabled="True"
+                                                  Text="{Binding Project.Rewards.Container.ContainerDefName, UpdateSourceTrigger=PropertyChanged}"
+                                                  ToolTip="The container object (chest, barrel, etc.) to spawn for rewards. Populated from game files." />
+
+                                        <TextBlock Text="Container Script Name" Margin="0,8,0,0" />
+                                        <TextBox Text="{Binding Project.Rewards.Container.ContainerScriptName, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="Unique script name for this container instance." />
+
+                                        <TextBlock Text="Spawn Location" Margin="0,8,0,0" />
+                                        <ComboBox x:Name="SpawnLocationInput"
+                                                  SelectedIndex="0"
+                                                  SelectionChanged="OnSpawnLocationChanged"
+                                                  ToolTip="Where to spawn the container in the world.">
+                                            <ComboBoxItem Content="Near Marker" />
+                                            <ComboBoxItem Content="Near Entity" />
+                                            <ComboBoxItem Content="Fixed Position" />
+                                        </ComboBox>
+
+                                        <StackPanel x:Name="SpawnReferencePanel" Margin="0,8,0,0">
+                                            <TextBlock x:Name="SpawnReferenceLabel" Text="Marker/Entity Name" />
+                                            <ComboBox x:Name="SpawnReferenceInput" IsEditable="True" IsTextSearchEnabled="True"
+                                                      Text="{Binding Project.Rewards.Container.SpawnReference, UpdateSourceTrigger=PropertyChanged}"
+                                                      ToolTip="Name of the marker or entity to spawn near. Select from quest entities or type manually." />
+                                        </StackPanel>
+
+                                        <StackPanel x:Name="SpawnPositionPanel" Margin="0,8,0,0" Visibility="Collapsed">
+                                            <TextBlock Text="Position (X, Y, Z)" />
+                                            <UniformGrid Columns="3">
+                                                <TextBox Text="{Binding Project.Rewards.Container.X, UpdateSourceTrigger=PropertyChanged}"
+                                                         ToolTip="X coordinate" />
+                                                <TextBox Text="{Binding Project.Rewards.Container.Y, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="4,0,0,0" ToolTip="Y coordinate" />
+                                                <TextBox Text="{Binding Project.Rewards.Container.Z, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="4,0,0,0" ToolTip="Z coordinate" />
+                                            </UniformGrid>
+                                        </StackPanel>
+
+                                        <TextBlock Text="Container Items" Margin="0,12,0,0" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <ComboBox x:Name="ContainerItemInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
+                                                      ItemsSource="{x:Static data:GameData.Objects}" />
+                                            <Button Content="Add" Width="80" Click="OnAddContainerItem" />
+                                            <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveContainerItem" />
+                                        </StackPanel>
+                                        <ListBox x:Name="ContainerItemsList" ItemsSource="{Binding Project.Rewards.Container.Items}" Height="80" Margin="0,8,0,0" />
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <CheckBox Content="Highlight Container"
+                                                      IsChecked="{Binding Project.Rewards.Container.HighlightContainer}"
+                                                      Margin="0,0,12,0"
+                                                      ToolTip="Make container glow/highlighted for easy finding." />
+                                            <CheckBox Content="Auto-Give Items on Complete"
+                                                      IsChecked="{Binding Project.Rewards.Container.AutoGiveOnComplete}"
+                                                      ToolTip="If checked, items are automatically given when quest completes. If unchecked, player must manually open container." />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
 
                             <TextBlock Text="Reward Abilities" Margin="0,12,0,0" />
                             <StackPanel Orientation="Horizontal">

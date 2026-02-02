@@ -1,12 +1,29 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using FableQuestTool.Models;
 using FableQuestTool.Services;
 using FableQuestTool.ViewModels;
 
 namespace FableQuestTool.Views;
+
+public sealed class NullToBoolConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value != null;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        // ConvertBack is handled by the OnUseContainerChanged event handler
+        // Return the value as-is to avoid binding errors
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
 
 public partial class QuestConfigView : System.Windows.Controls.UserControl
 {
@@ -21,6 +38,99 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         UpdatePreview();
+        PopulateEntityScriptNames();
+
+        // Initialize checkbox state based on whether Container exists
+        if (ViewModel?.Project?.Rewards?.Container != null)
+        {
+            UseContainerCheckBox.IsChecked = true;
+        }
+    }
+
+    private void PopulateEntityScriptNames()
+    {
+        if (SpawnReferenceInput == null)
+        {
+            return;
+        }
+
+        if (ViewModel?.Project?.Entities == null)
+        {
+            return;
+        }
+
+        // Store current value
+        string? currentValue = SpawnReferenceInput.Text;
+
+        SpawnReferenceInput.Items.Clear();
+
+        // Get all entity script names from the quest project
+        foreach (var entity in ViewModel.Project.Entities)
+        {
+            if (!string.IsNullOrWhiteSpace(entity.ScriptName))
+            {
+                SpawnReferenceInput.Items.Add(entity.ScriptName);
+            }
+        }
+
+        // Restore current value if it existed
+        if (!string.IsNullOrWhiteSpace(currentValue))
+        {
+            SpawnReferenceInput.Text = currentValue;
+        }
+    }
+
+    private void PopulateContainerDefinitions()
+    {
+        if (ContainerDefNameInput == null || ViewModel == null)
+        {
+            return;
+        }
+
+        try
+        {
+            // Get Fable install path from settings
+            var config = Config.FableConfig.Load();
+            var entityBrowser = new Services.EntityBrowserService(config);
+
+            // Store current value
+            string? currentValue = ContainerDefNameInput.Text;
+
+            ContainerDefNameInput.Items.Clear();
+
+            // Get all chest definitions from game files
+            var chestDefinitions = entityBrowser.GetAllChestDefinitions();
+
+            foreach (var def in chestDefinitions)
+            {
+                ContainerDefNameInput.Items.Add(def);
+            }
+
+            // If no chests found, add some common object definitions as fallback
+            if (chestDefinitions.Count == 0)
+            {
+                var objectDefinitions = entityBrowser.GetAllObjectDefinitions();
+                foreach (var def in objectDefinitions)
+                {
+                    if (def.Contains("CHEST", StringComparison.OrdinalIgnoreCase) ||
+                        def.Contains("BARREL", StringComparison.OrdinalIgnoreCase) ||
+                        def.Contains("CONTAINER", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ContainerDefNameInput.Items.Add(def);
+                    }
+                }
+            }
+
+            // Restore current value if it existed
+            if (!string.IsNullOrWhiteSpace(currentValue))
+            {
+                ContainerDefNameInput.Text = currentValue;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error populating container definitions: {ex.Message}");
+        }
     }
 
     private void OnSectionChanged(object sender, SelectionChangedEventArgs e)
@@ -64,6 +174,13 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         // Advanced-only sections
         BoastsGroup.Visibility = advanced ? BoastsGroup.Visibility : Visibility.Collapsed;
         ThreadsGroup.Visibility = advanced ? ThreadsGroup.Visibility : Visibility.Collapsed;
+
+        // Refresh entity script names and container definitions when Rewards section is shown
+        if (section == "Rewards")
+        {
+            PopulateEntityScriptNames();
+            PopulateContainerDefinitions();
+        }
     }
 
     private void OnAutoCalculateMapOffset(object sender, RoutedEventArgs e)
@@ -142,70 +259,102 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
-    private void OnRewardItemSelected(object sender, SelectionChangedEventArgs e)
-    {
-        if (RewardItemsList.SelectedItem is string item)
-        {
-            RewardItemInput.Text = item;
-        }
-    }
-
-    private void OnAddRewardItem(object sender, RoutedEventArgs e)
+    private void OnUseContainerChanged(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)
         {
             return;
         }
 
-        string item = RewardItemInput.Text.Trim();
+        bool useContainer = UseContainerCheckBox.IsChecked == true;
+
+        if (useContainer && ViewModel.Project.Rewards.Container == null)
+        {
+            // Create new container configuration with defaults
+            ViewModel.Project.Rewards.Container = new ContainerReward();
+            ViewModel.IsModified = true;
+            ViewModel.StatusText = "Container rewards enabled.";
+        }
+        else if (!useContainer && ViewModel.Project.Rewards.Container != null)
+        {
+            // Remove container configuration
+            ViewModel.Project.Rewards.Container = null;
+            ViewModel.IsModified = true;
+            ViewModel.StatusText = "Container rewards disabled.";
+        }
+
+        UpdatePreview();
+    }
+
+    private void OnSpawnLocationChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ViewModel?.Project.Rewards.Container == null)
+        {
+            return;
+        }
+
+        int selected = SpawnLocationInput.SelectedIndex;
+
+        // Update the model
+        ViewModel.Project.Rewards.Container.SpawnLocation = selected switch
+        {
+            0 => ContainerSpawnLocation.NearMarker,
+            1 => ContainerSpawnLocation.NearEntity,
+            2 => ContainerSpawnLocation.FixedPosition,
+            _ => ContainerSpawnLocation.NearMarker
+        };
+
+        // Update UI visibility
+        if (selected == 2) // FixedPosition
+        {
+            SpawnReferencePanel.Visibility = Visibility.Collapsed;
+            SpawnPositionPanel.Visibility = Visibility.Visible;
+        }
+        else // NearMarker or NearEntity
+        {
+            SpawnReferencePanel.Visibility = Visibility.Visible;
+            SpawnPositionPanel.Visibility = Visibility.Collapsed;
+
+            // Update label
+            SpawnReferenceLabel.Text = selected == 0 ? "Marker Name" : "Entity Script Name";
+        }
+
+        ViewModel.IsModified = true;
+        UpdatePreview();
+    }
+
+    private void OnAddContainerItem(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.Project.Rewards.Container == null)
+        {
+            return;
+        }
+
+        string item = ContainerItemInput.Text.Trim();
         if (string.IsNullOrWhiteSpace(item))
         {
             return;
         }
 
-        ViewModel.Project.Rewards.Items.Add(item);
-        RewardItemInput.Text = string.Empty;
+        ViewModel.Project.Rewards.Container.Items.Add(item);
+        ContainerItemInput.Text = string.Empty;
         ViewModel.IsModified = true;
-        ViewModel.StatusText = "Reward item added.";
+        ViewModel.StatusText = "Container item added.";
         UpdatePreview();
     }
 
-    private void OnUpdateRewardItem(object sender, RoutedEventArgs e)
+    private void OnRemoveContainerItem(object sender, RoutedEventArgs e)
     {
-        if (ViewModel == null || RewardItemsList.SelectedItem is not string current)
+        if (ViewModel?.Project.Rewards.Container == null)
         {
             return;
         }
 
-        string updated = RewardItemInput.Text.Trim();
-        if (string.IsNullOrWhiteSpace(updated))
+        if (ContainerItemsList.SelectedItem is string item)
         {
-            return;
-        }
-
-        int index = ViewModel.Project.Rewards.Items.IndexOf(current);
-        if (index >= 0)
-        {
-            ViewModel.Project.Rewards.Items[index] = updated;
-            RewardItemsList.SelectedIndex = index;
+            ViewModel.Project.Rewards.Container.Items.Remove(item);
             ViewModel.IsModified = true;
-            ViewModel.StatusText = "Reward item updated.";
-            UpdatePreview();
-        }
-    }
-
-    private void OnRemoveRewardItem(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel == null)
-        {
-            return;
-        }
-
-        if (RewardItemsList.SelectedItem is string item)
-        {
-            ViewModel.Project.Rewards.Items.Remove(item);
-            ViewModel.IsModified = true;
-            ViewModel.StatusText = "Reward item removed.";
+            ViewModel.StatusText = "Container item removed.";
             UpdatePreview();
         }
     }

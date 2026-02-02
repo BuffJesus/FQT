@@ -170,4 +170,42 @@ public sealed class EntityBrowserService
 
         return creatureDefinitions;
     }
+
+    /// <summary>
+    /// Gets all unique object definition types from the game files, including chests, doors, and quest items.
+    /// Returns sorted list of object DefinitionType values (e.g. "OBJECT_CHEST_SILVER", "OBJECT_BARREL").
+    /// </summary>
+    public List<string> GetAllObjectDefinitions()
+    {
+        var allEntities = GetAllEntities();
+        var objectDefinitions = allEntities
+            .Where(e => (e.Category == EntityCategory.Object ||
+                        e.Category == EntityCategory.Chest ||
+                        e.Category == EntityCategory.Door ||
+                        e.Category == EntityCategory.QuestItem) &&
+                        !string.IsNullOrWhiteSpace(e.DefinitionType))
+            .Select(e => e.DefinitionType!)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        return objectDefinitions;
+    }
+
+    /// <summary>
+    /// Gets all unique chest definition types from the game files.
+    /// Returns sorted list of chest DefinitionType values (e.g. "OBJECT_CHEST_SILVER", "OBJECT_CHEST_GOLD").
+    /// </summary>
+    public List<string> GetAllChestDefinitions()
+    {
+        var allEntities = GetAllEntities();
+        var chestDefinitions = allEntities
+            .Where(e => e.Category == EntityCategory.Chest && !string.IsNullOrWhiteSpace(e.DefinitionType))
+            .Select(e => e.DefinitionType!)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        return chestDefinitions;
+    }
 }

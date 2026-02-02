@@ -380,13 +380,19 @@
                                     </Expander>
 
                                     <TextBlock Text="Quick Start" FontWeight="SemiBold" Margin="0,0,0,8" />
-                                    <UniformGrid Columns="3" Margin="0,0,0,12">
-                                        <Button Content="Talk" Margin="0,0,4,0"
-                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Talk" />
-                                        <Button Content="Kill" Margin="0,0,4,0"
-                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Kill" />
-                                        <Button Content="Fetch"
-                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Fetch" />
+                                    <UniformGrid Columns="2" Rows="2" Margin="0,0,0,12">
+                                        <Button Content="Talk" Margin="0,0,4,4"
+                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Talk"
+                                                ToolTip="NPC that talks to the hero and completes quest" />
+                                        <Button Content="Kill" Margin="0,0,0,4"
+                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Kill"
+                                                ToolTip="Enemy that gives rewards when killed" />
+                                        <Button Content="Fetch" Margin="0,0,4,0"
+                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Fetch"
+                                                ToolTip="NPC that accepts an item from the hero" />
+                                        <Button Content="Reward" Margin="0,0,0,0"
+                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Reward"
+                                                ToolTip="Object that gives rewards when interacted with (chest, barrel, etc.)" />
                                     </UniformGrid>
 
                                     <TextBlock Text="Quick Nodes" FontWeight="SemiBold" Margin="0,0,0,8" />

@@ -564,6 +564,50 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Nodes.Add(CreateNode(allNodes.First(n => n.Type == "giveReward"), 420, 160));
             Nodes.Add(CreateNode(allNodes.First(n => n.Type == "completeQuest"), 720, 200));
         }
+        else if (template == "Reward")
+        {
+            // Set up as a reward object - configure entity settings
+            entity.EntityType = EntityType.Object;
+            entity.SpawnMethod = SpawnMethod.AtMarker;
+
+            // Set a default object definition if empty
+            if (string.IsNullOrWhiteSpace(entity.DefName))
+            {
+                entity.DefName = "OBJECT_CHEST_SILVER";
+            }
+
+            // Set a default script name if empty
+            if (string.IsNullOrWhiteSpace(entity.ScriptName))
+            {
+                entity.ScriptName = "RewardObject";
+            }
+
+            // Enable object rewards with defaults
+            entity.ObjectReward = new ObjectReward
+            {
+                Gold = 100,
+                Experience = 50,
+                OneTimeOnly = true,
+                DestroyAfterReward = true,
+                ShowMessage = true
+            };
+
+            // Add a default item
+            entity.ObjectReward.Items.Add("OBJECT_HEALTH_POTION");
+
+            // Sync to UI
+            SyncObjectRewardItemsFromEntity();
+            OnPropertyChanged(nameof(HasObjectReward));
+            OnPropertyChanged(nameof(ObjectRewardGold));
+            OnPropertyChanged(nameof(ObjectRewardExperience));
+            OnPropertyChanged(nameof(ObjectRewardOneTimeOnly));
+            OnPropertyChanged(nameof(ObjectRewardDestroyAfter));
+            OnPropertyChanged(nameof(ObjectRewardShowMessage));
+
+            // Update dropdowns for Object type
+            UpdateAvailableDefinitions();
+            UpdateTabTitle();
+        }
     }
 
     [RelayCommand]

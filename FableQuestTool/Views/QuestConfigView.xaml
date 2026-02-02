@@ -116,6 +116,8 @@
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                 <CheckBox Content="Use Start Screen" IsChecked="{Binding Project.UseQuestStartScreen}" Margin="0,0,12,0"
                                           ToolTip="Shows a fancy quest introduction screen when the quest begins, displaying quest name, description, and rewards preview. Typically used for major quests." />
+                                <CheckBox Content="Use End Screen" IsChecked="{Binding Project.UseQuestEndScreen}" Margin="0,0,12,0"
+                                          ToolTip="Shows a quest completion screen when the quest ends, displaying rewards and completion message." />
                                 <CheckBox Content="Story Quest" IsChecked="{Binding Project.IsStoryQuest}" Margin="0,0,12,0"
                                           ToolTip="Marks this as a main storyline quest. Affects display order in quest log (story quests appear at top)." />
                                 <CheckBox Content="Gold Quest" IsChecked="{Binding Project.IsGoldQuest}"

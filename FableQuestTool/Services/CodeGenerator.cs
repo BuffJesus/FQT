@@ -342,6 +342,12 @@ public sealed class CodeGenerator
         {
             string isStory = quest.IsStoryQuest ? "true" : "false";
             string isGold = quest.IsGoldQuest ? "true" : "false";
+            sb.AppendLine("    -- Set quest info for start screen");
+            sb.AppendLine($"    Quest:SetQuestInfoName(\"{Escape(quest.DisplayName)}\")");
+            if (!string.IsNullOrWhiteSpace(quest.Description))
+            {
+                sb.AppendLine($"    Quest:SetQuestInfoText(\"{Escape(quest.Description)}\")");
+            }
             sb.AppendLine("    -- Show quest start screen");
             sb.AppendLine($"    Quest:KickOffQuestStartScreen(\"{quest.Name}\", {isStory}, {isGold})");
             sb.AppendLine();
@@ -629,7 +635,8 @@ public sealed class CodeGenerator
 
         sb.AppendLine();
         sb.AppendLine("            -- Complete and deactivate quest");
-        sb.AppendLine($"            Quest:SetQuestAsCompleted(\"{quest.Name}\", true, false, false)");
+        string showEndScreen = quest.UseQuestEndScreen ? "true" : "false";
+        sb.AppendLine($"            Quest:SetQuestAsCompleted(\"{quest.Name}\", true, false, {showEndScreen})");
         sb.AppendLine($"            Quest:DeactivateQuestLater(\"{quest.Name}\", 0)");
         sb.AppendLine("            break");
         sb.AppendLine("        end");

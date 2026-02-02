@@ -45,6 +45,9 @@
                 <DataTrigger Binding="{Binding Category}" Value="custom">
                     <Setter Property="Background" Value="#8800AA" />
                 </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="variable">
+                    <Setter Property="Background" Value="#00AA66" />
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -97,6 +100,9 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Category}" Value="custom">
                     <Setter Property="BorderBrush" Value="#8800AA" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Category}" Value="variable">
+                    <Setter Property="BorderBrush" Value="#00AA66" />
                 </DataTrigger>
                 <!-- Make reroute/redirection nodes invisible (only show the center dot) -->
                 <DataTrigger Binding="{Binding IsRerouteNode}" Value="True">
@@ -308,6 +314,86 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                    </Expander>
+
+                                    <!-- Variables Section (UE5 Blueprint-style) -->
+                                    <Expander Header="Variables" IsExpanded="True" Margin="0,12,0,0">
+                                        <StackPanel Margin="8,8,0,0">
+                                            <TextBlock Text="Define variables for your graph"
+                                                     FontSize="10" Opacity="0.7" TextWrapping="Wrap" Margin="0,0,0,8" />
+
+                                            <!-- Add Variable Form -->
+                                            <Grid Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <TextBox Grid.Row="0" Grid.Column="0"
+                                                       Text="{Binding NewVariableName, UpdateSourceTrigger=PropertyChanged}"
+                                                       Padding="4,2" Margin="0,0,4,4" />
+                                                <ComboBox Grid.Row="0" Grid.Column="1" Width="70"
+                                                        SelectedItem="{Binding NewVariableType}" Margin="0,0,0,4">
+                                                    <ComboBoxItem Content="String" />
+                                                    <ComboBoxItem Content="Boolean" />
+                                                    <ComboBoxItem Content="Integer" />
+                                                    <ComboBoxItem Content="Float" />
+                                                </ComboBox>
+                                                <Button Grid.Row="1" Grid.ColumnSpan="2"
+                                                      Content="+ Add Variable"
+                                                      Command="{Binding AddVariableCommand}"
+                                                      Padding="4,2" />
+                                            </Grid>
+
+                                            <!-- Variable List -->
+                                            <ItemsControl ItemsSource="{Binding Variables}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="{DynamicResource SurfaceBackground}"
+                                                              CornerRadius="3" Margin="0,0,0,4" Padding="6,4">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <!-- Type indicator -->
+                                                                <Border Grid.Column="0" Width="18" Height="18"
+                                                                      CornerRadius="9" Margin="0,0,6,0"
+                                                                      Background="{Binding TypeColor, Converter={StaticResource StringToColorBrush}}">
+                                                                    <TextBlock Text="{Binding TypeIcon}"
+                                                                             HorizontalAlignment="Center"
+                                                                             VerticalAlignment="Center"
+                                                                             FontSize="10" FontWeight="Bold"
+                                                                             Foreground="White" />
+                                                                </Border>
+
+                                                                <!-- Variable name -->
+                                                                <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                                         VerticalAlignment="Center" FontSize="11" />
+
+                                                                <!-- Delete button -->
+                                                                <Button Grid.Column="2" Content="x"
+                                                                      Command="{Binding DataContext.RemoveVariableCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                      CommandParameter="{Binding}"
+                                                                      Width="18" Height="18" FontSize="10"
+                                                                      Background="Transparent" BorderThickness="0"
+                                                                      Foreground="{DynamicResource TextPrimary}"
+                                                                      Opacity="0.5" Cursor="Hand" Padding="0" />
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <TextBlock Text="Tip: Use Get/Set nodes to access variables in your graph"
+                                                     FontSize="9" Opacity="0.5" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                        </StackPanel>
                                     </Expander>
                                 </StackPanel>
                             </ScrollViewer>
@@ -561,55 +647,125 @@
                                     </nodify:NodifyEditor.ItemTemplate>
                                 </nodify:NodifyEditor>
 
-                                <!-- Node Creation Menu -->
+                                <!-- Node Creation Menu (UE5 Blueprint-style) -->
                                 <Border Background="{DynamicResource PanelBackground}"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="4"
                                         Padding="8"
-                                        Width="280"
-                                        MaxHeight="400"
+                                        Width="320"
+                                        MaxHeight="500"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Top"
                                         Panel.ZIndex="1000"
                                         Margin="{Binding NodeMenuPosition, Converter={StaticResource PointToThickness}}"
                                         Visibility="{Binding IsNodeMenuOpen, Converter={StaticResource BoolToVisibility}}">
                                     <StackPanel>
-                                        <TextBlock Text="Add Node" FontWeight="SemiBold" Margin="0,0,0,8" />
-                                        <TextBox Text="{Binding NodeSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                               Padding="4" Margin="0,0,0,8"
+                                        <!-- Header with context hint -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <TextBlock Text="Add Node" FontWeight="SemiBold" />
+                                            <TextBlock Text=" - drag wire here to connect"
+                                                     FontSize="10" Opacity="0.6" VerticalAlignment="Center"
+                                                     Visibility="{Binding HasPendingConnection, Converter={StaticResource BoolToVisibility}}" />
+                                        </StackPanel>
+
+                                        <!-- Search Box -->
+                                        <TextBox x:Name="NodeSearchTextBox"
+                                               Text="{Binding NodeSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                               Padding="6,4" Margin="0,0,0,8"
                                                Tag="Search nodes..." />
 
-                                        <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto">
-                                            <ItemsControl ItemsSource="{Binding FilteredNodes}">
+                                        <!-- Quick Actions -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <Button Content="Add Reroute"
+                                                  Command="{Binding CreateStandaloneRerouteNodeCommand}"
+                                                  Padding="8,4" Margin="0,0,4,0"
+                                                  FontSize="11"
+                                                  ToolTip="Add a reroute node to organize wires (Ctrl+Click while dragging)" />
+                                        </StackPanel>
+
+                                        <!-- Grouped Node List -->
+                                        <ScrollViewer MaxHeight="340" VerticalScrollBarVisibility="Auto">
+                                            <ItemsControl x:Name="GroupedNodesControl" ItemsSource="{Binding GroupedFilteredNodes}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                            <Button Margin="0,2"
-                                                              Command="{Binding DataContext.SelectNodeFromMenuCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                              CommandParameter="{Binding}"
-                                                              Background="Transparent"
-                                                              BorderThickness="0"
-                                                              HorizontalContentAlignment="Left"
-                                                              Padding="4">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <TextBlock Text="{Binding Icon}" Width="24" />
-                                                                <TextBlock Text="{Binding Label}"
-                                                                         VerticalAlignment="Center" />
-                                                                <TextBlock Text="{Binding Category, StringFormat=' ({0})'}"
-                                                                         VerticalAlignment="Center"
-                                                                         Opacity="0.6"
-                                                                         FontSize="10"
-                                                                         Margin="4,0,0,0" />
-                                                            </StackPanel>
-                                                        </Button>
+                                                        <StackPanel Margin="0,0,0,8">
+                                                            <!-- Category Header -->
+                                                            <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3" Margin="0,0,0,4">
+                                                                <TextBlock Text="{Binding Name}"
+                                                                         FontWeight="SemiBold"
+                                                                         FontSize="11"
+                                                                         Foreground="#AAB8C2" />
+                                                            </Border>
+
+                                                            <!-- Nodes in Category -->
+                                                            <ItemsControl ItemsSource="{Binding Nodes}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Button Margin="0,1"
+                                                                              Command="{Binding DataContext.SelectNodeFromMenuCommand, ElementName=GroupedNodesControl}"
+                                                                              CommandParameter="{Binding}"
+                                                                              Background="Transparent"
+                                                                              BorderThickness="0"
+                                                                              HorizontalContentAlignment="Left"
+                                                                              Padding="8,4"
+                                                                              Cursor="Hand">
+                                                                            <Button.Style>
+                                                                                <Style TargetType="Button">
+                                                                                    <Style.Triggers>
+                                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                                            <Setter Property="Background" Value="#2A3040" />
+                                                                                        </Trigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </Button.Style>
+                                                                            <Grid Width="270">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="24" />
+                                                                                    <ColumnDefinition Width="*" />
+                                                                                    <ColumnDefinition Width="Auto" />
+                                                                                </Grid.ColumnDefinitions>
+
+                                                                                <!-- Icon -->
+                                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}"
+                                                                                         FontSize="12" VerticalAlignment="Center" />
+
+                                                                                <!-- Label -->
+                                                                                <TextBlock Grid.Column="1" Text="{Binding Label}"
+                                                                                         VerticalAlignment="Center"
+                                                                                         FontSize="11" />
+
+                                                                                <!-- Type hint -->
+                                                                                <TextBlock Grid.Column="2"
+                                                                                         Text="{Binding Type}"
+                                                                                         VerticalAlignment="Center"
+                                                                                         Opacity="0.4"
+                                                                                         FontSize="9"
+                                                                                         Margin="8,0,0,0" />
+                                                                            </Grid>
+                                                                        </Button>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
                                         </ScrollViewer>
 
-                                        <Button Content="Cancel (Esc)"
-                                                Margin="0,8,0,0"
-                                                Command="{Binding CloseNodeMenuCommand}" />
+                                        <!-- Footer -->
+                                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                              Margin="0,8,0,0" Padding="0,8,0,0">
+                                            <StackPanel>
+                                                <TextBlock Text="Tips:" FontSize="10" Opacity="0.6" Margin="0,0,0,4" />
+                                                <TextBlock Text="- Double-click wire to add reroute" FontSize="9" Opacity="0.5" />
+                                                <TextBlock Text="- Ctrl+drag to create reroute inline" FontSize="9" Opacity="0.5" />
+                                                <TextBlock Text="- Right-click empty space for this menu" FontSize="9" Opacity="0.5" />
+                                                <Button Content="Close (Esc)"
+                                                      Margin="0,8,0,0"
+                                                      Command="{Binding CloseNodeMenuCommand}" />
+                                            </StackPanel>
+                                        </Border>
                                     </StackPanel>
                                 </Border>
                             </Grid>

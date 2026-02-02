@@ -11,6 +11,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 {
     private Nodify.NodifyEditor? _editor;
     private bool _redirectNodeCreated = false;
+    private System.Windows.Point? _rightClickDownPosition;
 
     public EntityEditorView()
     {
@@ -28,6 +29,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         {
             _editor.PreviewKeyDown -= OnEditorKeyDown;
             _editor.PreviewMouseLeftButtonUp -= OnEditorMouseUp;
+            _editor.PreviewMouseLeftButtonDown -= OnEditorMouseLeftButtonDown;
             _editor.PreviewMouseRightButtonDown -= OnEditorRightClickDown;
             _editor.PreviewMouseRightButtonUp -= OnEditorRightClick;
             _editor = null;
@@ -44,11 +46,15 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             {
                 _editor.PreviewKeyDown -= OnEditorKeyDown;
                 _editor.PreviewKeyDown += OnEditorKeyDown;
-                
+
+                // Add mouse down handler for double-click on connections
+                _editor.PreviewMouseLeftButtonDown -= OnEditorMouseLeftButtonDown;
+                _editor.PreviewMouseLeftButtonDown += OnEditorMouseLeftButtonDown;
+
                 // Add mouse up handler to properly clean up after Ctrl+drag
                 _editor.PreviewMouseLeftButtonUp -= OnEditorMouseUp;
                 _editor.PreviewMouseLeftButtonUp += OnEditorMouseUp;
-                
+
                 // Add right-click handler for node menu
                 _editor.PreviewMouseRightButtonDown -= OnEditorRightClickDown;
                 _editor.PreviewMouseRightButtonDown += OnEditorRightClickDown;
@@ -141,6 +147,64 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         catch
         {
             // Silently handle key event errors
+        }
+    }
+
+    private void OnEditorMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            // Handle double-click on connections to create reroute nodes
+            if (e.ClickCount != 2)
+            {
+                return;
+            }
+
+            if (DataContext is not EntityEditorViewModel editorViewModel)
+            {
+                return;
+            }
+
+            var currentTab = editorViewModel.SelectedTab;
+            if (currentTab == null)
+            {
+                return;
+            }
+
+            if (sender is not Nodify.NodifyEditor editor)
+            {
+                return;
+            }
+
+            var position = e.GetPosition(editor);
+            var hitElement = editor.InputHitTest(position) as DependencyObject;
+
+            // Check if we double-clicked on a connection/wire
+            if (hitElement != null)
+            {
+                var current = hitElement;
+                while (current != null && current != editor)
+                {
+                    if (current is Nodify.Connection connection && connection.DataContext is ConnectionViewModel connVm)
+                    {
+                        // Get graph position for creating the reroute node
+                        var graphPosition = GetGraphPosition(editor, position);
+
+                        // Create reroute node on the connection
+                        if (currentTab.CreateRerouteOnConnectionCommand.CanExecute((connVm, graphPosition)))
+                        {
+                            currentTab.CreateRerouteOnConnectionCommand.Execute((connVm, graphPosition));
+                            e.Handled = true;
+                        }
+                        return;
+                    }
+                    current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+                }
+            }
+        }
+        catch
+        {
+            // Silently handle errors
         }
     }
 

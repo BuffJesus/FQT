@@ -20,6 +20,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     public ObservableCollection<string> AvailableRegions { get; } = new();
     public ObservableCollection<string> AvailableMarkers { get; } = new();
     public ObservableCollection<string> AvailableEvents { get; } = new();
+    public ObservableCollection<VariableDefinition> Variables { get; } = new();
 
     [ObservableProperty]
     private string tabTitle;
@@ -53,6 +54,13 @@ public sealed partial class EntityTabViewModel : ObservableObject
     private string nodeSearchText = string.Empty;
 
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
+    public ObservableCollection<NodeCategoryGroup> GroupedFilteredNodes { get; } = new();
+
+    [ObservableProperty]
+    private string newVariableName = string.Empty;
+
+    [ObservableProperty]
+    private string newVariableType = "String";
 
     private int nodeSeed = 0;
 
@@ -773,27 +781,83 @@ public sealed partial class EntityTabViewModel : ObservableObject
     private void UpdateFilteredNodes()
     {
         FilteredNodes.Clear();
+        GroupedFilteredNodes.Clear();
 
-        var allNodes = SimpleNodes.Concat(AdvancedNodes);
+        var allNodes = SimpleNodes.Concat(AdvancedNodes).ToList();
+
+        // Add variable Get/Set nodes
+        foreach (var variable in Variables)
+        {
+            allNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "📥")
+            {
+                Type = $"var_get_{variable.Name}",
+                Definition = CreateGetVariableDefinition(variable)
+            });
+            allNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "📤")
+            {
+                Type = $"var_set_{variable.Name}",
+                Definition = CreateSetVariableDefinition(variable)
+            });
+        }
+
+        IEnumerable<NodeOption> filteredNodes;
 
         if (string.IsNullOrWhiteSpace(NodeSearchText))
         {
-            foreach (var node in allNodes)
-            {
-                FilteredNodes.Add(node);
-            }
+            filteredNodes = allNodes;
         }
         else
         {
             var searchLower = NodeSearchText.ToLower();
-            foreach (var node in allNodes.Where(n =>
+            filteredNodes = allNodes.Where(n =>
                 n.Label.ToLower().Contains(searchLower) ||
-                n.Category.ToLower().Contains(searchLower)))
+                n.Category.ToLower().Contains(searchLower) ||
+                (n.Type?.ToLower().Contains(searchLower) == true));
+        }
+
+        // Add nodes to flat list
+        foreach (var node in filteredNodes)
+        {
+            FilteredNodes.Add(node);
+        }
+
+        // Group nodes by category for better organization
+        var categoryOrder = new[] { "trigger", "action", "condition", "flow", "custom", "variable" };
+        var grouped = filteredNodes
+            .GroupBy(n => n.Category)
+            .OrderBy(g => Array.IndexOf(categoryOrder, g.Key) >= 0
+                ? Array.IndexOf(categoryOrder, g.Key)
+                : 999)
+            .ToList();
+
+        foreach (var group in grouped)
+        {
+            var categoryName = group.Key switch
             {
-                FilteredNodes.Add(node);
-            }
+                "trigger" => "Triggers (Events)",
+                "action" => "Actions",
+                "condition" => "Conditions",
+                "flow" => "Flow Control",
+                "custom" => "Custom Events",
+                "variable" => "Variables",
+                _ => group.Key
+            };
+
+            GroupedFilteredNodes.Add(new NodeCategoryGroup(categoryName, group.ToList()));
         }
     }
+
+    /// <summary>
+    /// Check if there's a pending connection (used for UI hints)
+    /// </summary>
+    public bool HasPendingConnection => PendingConnection?.Source != null;
+
+    /// <summary>
+    /// Get a description of what's being dragged
+    /// </summary>
+    public string PendingConnectionHint => PendingConnection?.Source != null
+        ? $"Release to connect from {PendingConnection.Source.Title}"
+        : "Right-click to add nodes";
 
     [RelayCommand]
     private void CreateRedirectionNode(System.Windows.Point location)
@@ -862,6 +926,264 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
 
         PendingConnection = null;
+    }
+
+    /// <summary>
+    /// Creates a reroute node on an existing connection (double-click on wire)
+    /// </summary>
+    [RelayCommand]
+    private void CreateRerouteOnConnection(object? parameter)
+    {
+        if (parameter is not ValueTuple<ConnectionViewModel, System.Windows.Point> tuple)
+        {
+            return;
+        }
+
+        var (existingConnection, location) = tuple;
+
+        if (existingConnection.Source == null || existingConnection.Target == null)
+        {
+            return;
+        }
+
+        // Get connector type from the existing connection
+        var connType = existingConnection.Source.ConnectorType;
+
+        // Create a minimal reroute node (UE5 style)
+        var rerouteNode = new NodeViewModel
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = "",
+            Category = "flow",
+            Icon = "◆",
+            Type = "reroute",
+            IsRerouteNode = true,
+            IsRedirectionNode = true,
+            Location = location
+        };
+
+        // Clear default connectors and add single input/output
+        rerouteNode.Input.Clear();
+        rerouteNode.Output.Clear();
+
+        rerouteNode.Input.Add(new ConnectorViewModel
+        {
+            Title = "",
+            ConnectorType = connType,
+            IsInput = true
+        });
+        rerouteNode.Output.Add(new ConnectorViewModel
+        {
+            Title = "",
+            ConnectorType = connType,
+            IsInput = false
+        });
+
+        Nodes.Add(rerouteNode);
+
+        // Store the original target
+        var originalSource = existingConnection.Source;
+        var originalTarget = existingConnection.Target;
+
+        // Remove the original connection
+        Connections.Remove(existingConnection);
+
+        // Create new connections: original source -> reroute -> original target
+        var rerouteInput = rerouteNode.Input.FirstOrDefault();
+        var rerouteOutput = rerouteNode.Output.FirstOrDefault();
+
+        if (rerouteInput != null && rerouteOutput != null)
+        {
+            // Source to reroute
+            Connections.Add(new ConnectionViewModel
+            {
+                Source = originalSource,
+                Target = rerouteInput
+            });
+
+            // Reroute to target
+            Connections.Add(new ConnectionViewModel
+            {
+                Source = rerouteOutput,
+                Target = originalTarget
+            });
+        }
+    }
+
+    /// <summary>
+    /// Creates a reroute node from the context menu (standalone, not connected)
+    /// </summary>
+    [RelayCommand]
+    private void CreateStandaloneRerouteNode()
+    {
+        var location = NodeMenuGraphPosition;
+
+        var rerouteNode = new NodeViewModel
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = "",
+            Category = "flow",
+            Icon = "◆",
+            Type = "reroute",
+            IsRerouteNode = true,
+            IsRedirectionNode = true,
+            Location = location
+        };
+
+        rerouteNode.Input.Clear();
+        rerouteNode.Output.Clear();
+
+        // Default to Exec type for standalone reroute
+        var connType = PendingConnection?.Source?.ConnectorType ?? ConnectorType.Exec;
+
+        rerouteNode.Input.Add(new ConnectorViewModel
+        {
+            Title = "",
+            ConnectorType = connType,
+            IsInput = true
+        });
+        rerouteNode.Output.Add(new ConnectorViewModel
+        {
+            Title = "",
+            ConnectorType = connType,
+            IsInput = false
+        });
+
+        Nodes.Add(rerouteNode);
+
+        // If there's a pending connection, connect it to the reroute node
+        if (PendingConnection?.Source != null)
+        {
+            var targetConnector = rerouteNode.Input.FirstOrDefault();
+            if (targetConnector != null)
+            {
+                Connections.Add(new ConnectionViewModel
+                {
+                    Source = PendingConnection.Source,
+                    Target = targetConnector
+                });
+            }
+            PendingConnection = null;
+        }
+
+        IsNodeMenuOpen = false;
+    }
+
+    /// <summary>
+    /// Add a new variable to the entity
+    /// </summary>
+    [RelayCommand]
+    private void AddVariable()
+    {
+        if (string.IsNullOrWhiteSpace(NewVariableName))
+        {
+            return;
+        }
+
+        // Check for duplicate names
+        if (Variables.Any(v => v.Name.Equals(NewVariableName, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        var variable = new VariableDefinition
+        {
+            Name = NewVariableName,
+            Type = NewVariableType,
+            DefaultValue = GetDefaultValueForType(NewVariableType)
+        };
+
+        Variables.Add(variable);
+        NewVariableName = string.Empty;
+
+        // Update the node palette to include the new variable nodes
+        UpdateVariableNodes();
+    }
+
+    /// <summary>
+    /// Remove a variable from the entity
+    /// </summary>
+    [RelayCommand]
+    private void RemoveVariable(VariableDefinition? variable)
+    {
+        if (variable == null)
+        {
+            return;
+        }
+
+        Variables.Remove(variable);
+        UpdateVariableNodes();
+    }
+
+    private static string GetDefaultValueForType(string type)
+    {
+        return type switch
+        {
+            "Boolean" => "false",
+            "Integer" => "0",
+            "Float" => "0.0",
+            "String" => "",
+            _ => ""
+        };
+    }
+
+    private void UpdateVariableNodes()
+    {
+        // Remove existing variable nodes from palette
+        var variableNodesToRemove = SimpleNodes.Where(n => n.Type?.StartsWith("var_") == true).ToList();
+        foreach (var node in variableNodesToRemove)
+        {
+            SimpleNodes.Remove(node);
+        }
+
+        // Add Get/Set nodes for each variable
+        foreach (var variable in Variables)
+        {
+            SimpleNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "📥")
+            {
+                Type = $"var_get_{variable.Name}",
+                Definition = CreateGetVariableDefinition(variable)
+            });
+
+            SimpleNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "📤")
+            {
+                Type = $"var_set_{variable.Name}",
+                Definition = CreateSetVariableDefinition(variable)
+            });
+        }
+    }
+
+    private static NodeDefinition CreateGetVariableDefinition(VariableDefinition variable)
+    {
+        return new NodeDefinition
+        {
+            Type = $"var_get_{variable.Name}",
+            Label = $"Get {variable.Name}",
+            Category = "variable",
+            Icon = "📥",
+            IsAdvanced = false,
+            Description = $"Gets the value of variable '{variable.Name}'",
+            Properties = new List<NodeProperty>(),
+            CodeTemplate = $"local {variable.Name}_value = Quest:GetStateBool(\"{variable.Name}\")\n{{CHILDREN}}"
+        };
+    }
+
+    private static NodeDefinition CreateSetVariableDefinition(VariableDefinition variable)
+    {
+        return new NodeDefinition
+        {
+            Type = $"var_set_{variable.Name}",
+            Label = $"Set {variable.Name}",
+            Category = "variable",
+            Icon = "📤",
+            IsAdvanced = false,
+            Description = $"Sets the value of variable '{variable.Name}'",
+            Properties = new List<NodeProperty>
+            {
+                new() { Name = "value", Type = variable.Type.ToLower(), Label = "Value", DefaultValue = variable.DefaultValue }
+            },
+            CodeTemplate = $"Quest:SetStateBool(\"{variable.Name}\", {{value}})\n{{CHILDREN}}"
+        };
     }
 
     private static NodeViewModel CreateNode(NodeDefinition nodeDef, double x, double y)

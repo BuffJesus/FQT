@@ -51,6 +51,7 @@ public sealed partial class NodeViewModel : ObservableObject
         "condition" => "#F39C12",  // Orange for conditions (branches)
         "flow" => "#9B59B6",       // Purple for flow control
         "custom" => "#E91E63",     // Pink for custom events
+        "variable" => "#00AA66",   // Teal for variables (UE5 style)
         _ => "#3498DB"
     };
 
@@ -64,6 +65,7 @@ public sealed partial class NodeViewModel : ObservableObject
         "condition" => "#D68910",
         "flow" => "#7D3C98",
         "custom" => "#C2185B",
+        "variable" => "#008855",
         _ => "#2980B9"
     };
 

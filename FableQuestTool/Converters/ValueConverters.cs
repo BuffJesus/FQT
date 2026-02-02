@@ -141,3 +141,23 @@ public class NullToBoolConverter : IValueConverter
         throw new NotSupportedException("NullToBoolConverter is one-way only.");
     }
 }
+
+/// <summary>
+/// Converts a Point to a Thickness for positioning elements via Margin
+/// </summary>
+public class PointToThicknessConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is WpfPoint point)
+        {
+            return new Thickness(point.X, point.Y, 0, 0);
+        }
+        return new Thickness(0);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("PointToThicknessConverter is one-way only.");
+    }
+}

@@ -75,38 +75,6 @@ public sealed class ContainerReward
 
     // Whether to auto-give items when quest completes or require player to open
     public bool AutoGiveOnComplete { get; set; } = true;
-
-    /// <summary>
-    /// When true, uses generic object reward mode instead of container APIs.
-    /// This allows any OBJECT_ type to be used, not just chests.
-    /// Items are given directly when the hero interacts with the object.
-    /// </summary>
-    public bool UseGenericObjectMode { get; set; } = false;
-
-    /// <summary>
-    /// Gold to give when using generic object mode
-    /// </summary>
-    public int Gold { get; set; }
-
-    /// <summary>
-    /// Experience to give when using generic object mode
-    /// </summary>
-    public int Experience { get; set; }
-
-    /// <summary>
-    /// Whether to destroy the object after giving rewards (generic mode only)
-    /// </summary>
-    public bool DestroyAfterReward { get; set; } = true;
-
-    /// <summary>
-    /// Whether to show a message when giving rewards (generic mode only)
-    /// </summary>
-    public bool ShowRewardMessage { get; set; } = true;
-
-    /// <summary>
-    /// Custom message to display (generic mode only)
-    /// </summary>
-    public string? CustomMessage { get; set; }
 }
 
 public enum ContainerSpawnLocation

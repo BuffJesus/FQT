@@ -232,47 +232,6 @@
                                                       IsChecked="{Binding Project.Rewards.Container.AutoGiveOnComplete}"
                                                       ToolTip="If checked, items are automatically given when quest completes. If unchecked, player must manually open container." />
                                         </StackPanel>
-
-                                        <Separator Margin="0,12,0,8" />
-
-                                        <CheckBox x:Name="UseGenericObjectModeCheckBox"
-                                                  Content="Use Generic Object Mode (Any OBJECT_ type)"
-                                                  IsChecked="{Binding Project.Rewards.Container.UseGenericObjectMode}"
-                                                  Margin="0,0,0,8"
-                                                  ToolTip="When enabled, items are given directly on interaction instead of using container APIs. This allows any OBJECT_ type (barrels, crates, etc.) to work as reward containers, not just chests." />
-
-                                        <StackPanel Visibility="{Binding IsChecked, ElementName=UseGenericObjectModeCheckBox, Converter={StaticResource BoolToVisibility}}">
-                                            <TextBlock Text="Generic Mode Options" FontWeight="SemiBold" Margin="0,0,0,8" />
-
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="Gold:" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                                <TextBox Grid.Column="1" Text="{Binding Project.Rewards.Container.Gold, UpdateSourceTrigger=PropertyChanged}"
-                                                         ToolTip="Gold to give when object is opened" />
-                                                <TextBlock Grid.Column="2" Text="Experience:" VerticalAlignment="Center" Margin="12,0,8,0" />
-                                                <TextBox Grid.Column="3" Text="{Binding Project.Rewards.Container.Experience, UpdateSourceTrigger=PropertyChanged}"
-                                                         ToolTip="Experience to give when object is opened" />
-                                            </Grid>
-
-                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                                <CheckBox Content="Destroy After Reward"
-                                                          IsChecked="{Binding Project.Rewards.Container.DestroyAfterReward}"
-                                                          Margin="0,0,12,0"
-                                                          ToolTip="Destroy the object after giving rewards" />
-                                                <CheckBox Content="Show Reward Message"
-                                                          IsChecked="{Binding Project.Rewards.Container.ShowRewardMessage}"
-                                                          ToolTip="Display a message showing what rewards were given" />
-                                            </StackPanel>
-
-                                            <TextBlock Text="Custom Message (optional)" Margin="0,8,0,4" />
-                                            <TextBox Text="{Binding Project.Rewards.Container.CustomMessage, UpdateSourceTrigger=PropertyChanged}"
-                                                     ToolTip="Custom message to show when giving rewards. Leave empty for automatic message." />
-                                        </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
                             </Expander>

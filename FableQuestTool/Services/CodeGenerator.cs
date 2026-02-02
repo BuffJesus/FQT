@@ -55,14 +55,6 @@ public sealed class CodeGenerator
             GenerateUserThread(sb, thread);
         }
 
-        // Generate reward object interaction thread if needed (for generic object mode with manual opening)
-        if (quest.Rewards.Container != null &&
-            quest.Rewards.Container.UseGenericObjectMode &&
-            !quest.Rewards.Container.AutoGiveOnComplete)
-        {
-            GenerateRewardObjectInteractionThread(sb, quest);
-        }
-
         // CompleteQuest logic is now inlined in MonitorQuestCompletion thread to preserve thread context
 
         return sb.ToString();
@@ -643,17 +635,7 @@ public sealed class CodeGenerator
 
     private void GenerateContainerReward(StringBuilder sb, QuestProject quest)
     {
-        var container = quest.Rewards.Container!;
-
-        // Use generic object mode or traditional container mode
-        if (container.UseGenericObjectMode)
-        {
-            GenerateGenericObjectReward(sb, quest);
-        }
-        else
-        {
-            GenerateTraditionalContainerReward(sb, quest);
-        }
+        GenerateTraditionalContainerReward(sb, quest);
     }
 
     /// <summary>
@@ -682,20 +664,23 @@ public sealed class CodeGenerator
         sb.AppendLine("                Quest:EntitySetTargetable(container, true)");
         sb.AppendLine("                Quest:Log(\"Container set as targetable\")");
 
-        // Add items to container
-        foreach (string item in container.Items)
-        {
-            sb.AppendLine($"                Quest:AddItemToContainer(container, \"{item}\")");
-        }
-
         if (container.AutoGiveOnComplete)
         {
-            // Automatically give all items from container
-            sb.AppendLine("                Quest:GiveHeroItemsFromContainer(container, true) -- true = show UI");
+            // Give items directly to hero (more reliable than GiveHeroItemsFromContainer)
+            foreach (string item in container.Items)
+            {
+                sb.AppendLine($"                Quest:GiveHeroObject(\"{item}\", 1)");
+            }
         }
         else
         {
-            // Just highlight the container for player to open manually
+            // Add items to container for manual opening
+            foreach (string item in container.Items)
+            {
+                sb.AppendLine($"                Quest:AddItemToContainer(container, \"{item}\")");
+            }
+
+            // Highlight the container for player to find
             if (container.HighlightContainer)
             {
                 sb.AppendLine("                Quest:SetThingHasInformation(container, true)");
@@ -704,60 +689,6 @@ public sealed class CodeGenerator
 
         sb.AppendLine("            else");
         sb.AppendLine("                Quest:Log(\"WARNING: Failed to spawn container!\")");
-        sb.AppendLine("            end");
-    }
-
-    /// <summary>
-    /// Generates generic object rewards that work with any OBJECT_ type.
-    /// Items are given directly when the hero interacts with the object.
-    /// </summary>
-    private void GenerateGenericObjectReward(StringBuilder sb, QuestProject quest)
-    {
-        var container = quest.Rewards.Container!;
-
-        sb.AppendLine();
-        sb.AppendLine("            -- Generic object reward: Spawn object and give rewards on interaction");
-        sb.AppendLine("            Quest:Log(\"Spawning reward object...\")");
-
-        // Generate spawn position code
-        GenerateContainerSpawnPosition(sb, container, "            ");
-
-        // Spawn the object
-        sb.AppendLine($"            Quest:Log(\"Creating object: {container.ContainerDefName} at position...\")");
-        sb.AppendLine($"            local rewardObject = Quest:CreateObject(\"{container.ContainerDefName}\", containerPos, \"{container.ContainerScriptName}\")");
-        sb.AppendLine("            if rewardObject ~= nil then");
-        sb.AppendLine("                Quest:Log(\"Reward object spawned successfully!\")");
-
-        // Make interactive
-        sb.AppendLine("                Quest:EntitySetTargetable(rewardObject, true)");
-        if (container.HighlightContainer)
-        {
-            sb.AppendLine("                Quest:SetThingHasInformation(rewardObject, true)");
-        }
-
-        if (container.AutoGiveOnComplete)
-        {
-            // Auto-give: Give rewards immediately
-            sb.AppendLine();
-            sb.AppendLine("                -- Auto-give rewards immediately");
-            GenerateGenericRewardGiving(sb, container, "                ");
-
-            if (container.DestroyAfterReward)
-            {
-                sb.AppendLine("                Quest:SetThingAsKilled(rewardObject)");
-            }
-        }
-        else
-        {
-            // Manual: Start a thread to wait for interaction
-            sb.AppendLine();
-            sb.AppendLine("                -- Store object reference for interaction thread");
-            sb.AppendLine($"                Quest:SetStateString(\"RewardObjectScript\", \"{container.ContainerScriptName}\")");
-            sb.AppendLine($"                Quest:CreateThread(\"WaitForRewardObjectInteraction\", {{region=\"{quest.Regions.FirstOrDefault() ?? "Oakvale"}\" }})");
-        }
-
-        sb.AppendLine("            else");
-        sb.AppendLine("                Quest:Log(\"WARNING: Failed to spawn reward object!\")");
         sb.AppendLine("            end");
     }
 
@@ -797,98 +728,6 @@ public sealed class CodeGenerator
                 sb.AppendLine($"{indent}local containerPos = {{x={x}, y={y}, z={z}}}");
                 break;
         }
-    }
-
-    /// <summary>
-    /// Generates the reward giving code for generic object mode
-    /// </summary>
-    private void GenerateGenericRewardGiving(StringBuilder sb, ContainerReward container, string indent)
-    {
-        // Give gold
-        if (container.Gold > 0)
-        {
-            sb.AppendLine($"{indent}Quest:GiveHeroGold(\"{container.Gold}\", 1)");
-        }
-
-        // Give experience
-        if (container.Experience > 0)
-        {
-            sb.AppendLine($"{indent}Quest:GiveHeroExperience({container.Experience})");
-        }
-
-        // Give items
-        foreach (string item in container.Items)
-        {
-            sb.AppendLine($"{indent}Quest:GiveHeroObject(\"{item}\", 1)");
-        }
-
-        // Show message
-        if (container.ShowRewardMessage)
-        {
-            if (!string.IsNullOrWhiteSpace(container.CustomMessage))
-            {
-                sb.AppendLine($"{indent}Quest:ShowMessage(\"{Escape(container.CustomMessage)}\", 3.0)");
-            }
-            else
-            {
-                // Build default message
-                var messageParts = new List<string>();
-                if (container.Gold > 0) messageParts.Add($"{container.Gold} gold");
-                if (container.Experience > 0) messageParts.Add($"{container.Experience} XP");
-                if (container.Items.Count > 0) messageParts.Add($"{container.Items.Count} item(s)");
-                string defaultMessage = "Received: " + string.Join(", ", messageParts);
-                sb.AppendLine($"{indent}Quest:ShowMessage(\"{defaultMessage}\", 3.0)");
-            }
-        }
-    }
-
-    /// <summary>
-    /// Generates the thread that waits for hero interaction with the reward object
-    /// </summary>
-    private void GenerateRewardObjectInteractionThread(StringBuilder sb, QuestProject quest)
-    {
-        var container = quest.Rewards.Container!;
-
-        sb.AppendLine("function WaitForRewardObjectInteraction(questObject)");
-        sb.AppendLine("    Quest = questObject");
-        sb.AppendLine($"    Quest:Log(\"{quest.Name}: Waiting for hero to interact with reward object...\")");
-        sb.AppendLine();
-        sb.AppendLine("    -- Get the reward object");
-        sb.AppendLine($"    local rewardObject = Quest:GetThingWithScriptName(\"{container.ContainerScriptName}\")");
-        sb.AppendLine("    if rewardObject == nil then");
-        sb.AppendLine($"        Quest:Log(\"{quest.Name}: ERROR - Could not find reward object!\")");
-        sb.AppendLine("        return");
-        sb.AppendLine("    end");
-        sb.AppendLine();
-        sb.AppendLine("    -- Wait for hero to interact");
-        sb.AppendLine("    while true do");
-        sb.AppendLine("        if rewardObject:MsgIsUsedByHero() then");
-        sb.AppendLine($"            Quest:Log(\"{quest.Name}: Hero interacted with reward object!\")");
-        sb.AppendLine();
-
-        // Generate reward giving code
-        GenerateGenericRewardGiving(sb, container, "            ");
-
-        // Destroy object if configured
-        if (container.DestroyAfterReward)
-        {
-            sb.AppendLine();
-            sb.AppendLine("            Quest:SetThingAsKilled(rewardObject)");
-        }
-        else if (container.HighlightContainer)
-        {
-            sb.AppendLine();
-            sb.AppendLine("            Quest:ClearThingHasInformation(rewardObject)");
-        }
-
-        sb.AppendLine("            break");
-        sb.AppendLine("        end");
-        sb.AppendLine();
-        sb.AppendLine("        if rewardObject:IsNull() then break end");
-        sb.AppendLine("        if not Quest:NewScriptFrame(rewardObject) then break end");
-        sb.AppendLine("    end");
-        sb.AppendLine("end");
-        sb.AppendLine();
     }
 
     /// <summary>

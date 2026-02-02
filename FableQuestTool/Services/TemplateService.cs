@@ -34,6 +34,7 @@ public class TemplateService
             ObjectiveText = "Talk to the villager",
             ObjectiveRegion1 = "Oakvale",
             UseQuestStartScreen = true,
+            UseQuestEndScreen = true,
             IsStoryQuest = false,
             IsGoldQuest = true
         };
@@ -207,7 +208,8 @@ public class TemplateService
             QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
             ObjectiveText = "Defeat 5 bandits",
             ObjectiveRegion1 = "BarrowFields",
-            UseQuestStartScreen = true
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true
         };
 
         project.Rewards = new QuestRewards
@@ -248,7 +250,8 @@ public class TemplateService
             QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
             ObjectiveText = "Bring the item to the merchant",
             ObjectiveRegion1 = "Oakvale",
-            UseQuestStartScreen = true
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true
         };
 
         project.Rewards = new QuestRewards
@@ -281,7 +284,8 @@ public class TemplateService
             ObjectiveText = "Escort the merchant safely",
             ObjectiveRegion1 = "Oakvale",
             ObjectiveRegion2 = "BarrowFields",
-            UseQuestStartScreen = true
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true
         };
 
         project.Rewards = new QuestRewards
@@ -313,7 +317,8 @@ public class TemplateService
             QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
             ObjectiveText = "Make deliveries to three towns",
             ObjectiveRegion1 = "Oakvale",
-            UseQuestStartScreen = true
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true
         };
 
         project.Rewards = new QuestRewards
@@ -355,6 +360,7 @@ public class TemplateService
             ObjectiveText = "Speak with the mysterious stranger",
             ObjectiveRegion1 = "Oakvale",
             UseQuestStartScreen = true,
+            UseQuestEndScreen = true,
             IsStoryQuest = true
         };
 
@@ -447,7 +453,8 @@ public class TemplateService
             QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
             ObjectiveText = "Defeat the Arena Champion",
             ObjectiveRegion1 = "Arena",
-            UseQuestStartScreen = true
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true
         };
 
         project.Rewards = new QuestRewards
@@ -582,7 +589,8 @@ public class TemplateService
             QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
             ObjectiveText = "Investigate the missing artifact",
             ObjectiveRegion1 = "Bowerstone",
-            UseQuestStartScreen = true
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true
         };
 
         project.Rewards = new QuestRewards

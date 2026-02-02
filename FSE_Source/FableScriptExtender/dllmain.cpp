@@ -1,3 +1,40 @@
+/**
+ * @file dllmain.cpp
+ * @brief Fable Script Extender (FSE) - Main DLL entry point and memory hooking system.
+ *
+ * This file is the core of the Fable Script Extender modding framework. It implements:
+ *
+ * 1. DLL INJECTION SYSTEM
+ *    - DllMain: Entry point when FSE_Launcher.exe injects this DLL into Fable.exe
+ *    - InstallHook: Patches game memory at 0xCDB355 to redirect to our custom code
+ *    - MyHook: Naked assembly trampoline that preserves registers and FPU state
+ *
+ * 2. SCRIPT REGISTRATION SYSTEM
+ *    - Reads quests.lua configuration file to discover custom quests
+ *    - Creates CScriptInfo structures for each quest to register with Fable's script manager
+ *    - Uses template-based allocator pools (QuestAllocator<N>, EntityAllocator<N>) to
+ *      instantiate LuaQuestHost and LuaEntityHost objects when the game needs them
+ *
+ * 3. MEMORY MANAGEMENT
+ *    - Custom allocator pools handle quest and entity script instantiation
+ *    - VTable arrays (g_LuaQuestHostVTable, g_LuaEntityHostVTable) define C++ virtual
+ *      function tables that match Fable's expected interface layout
+ *    - Reference counting system for entity hosts with custom deleter
+ *
+ * ARCHITECTURE OVERVIEW:
+ * When Fable loads a level, it calls the registered CScriptInfo::pAllocFunc for each
+ * active quest. This triggers QuestAllocator<N> which creates a LuaQuestHost instance.
+ * The LuaQuestHost then manages its Lua script lifecycle (Init, Main, OnPersist) and
+ * can spawn LuaEntityHost instances for entity scripts via EntityAllocator<N>.
+ *
+ * @note This code uses assembly-level hooking and reverse-engineered Fable structures.
+ *       Memory addresses are ASLR-adjusted using the ASLR<T> template.
+ *
+ * @see LuaQuestHost - Lua wrapper for quest scripts
+ * @see LuaEntityHost - Lua wrapper for entity scripts
+ * @see LuaManager - Singleton managing Lua VM lifecycle
+ * @see GameInterface - Direct access to Fable engine functions
+ */
 #include "FableAPI.h"
 #include "GameInterface.h"
 #include "LuaManager.h"
@@ -9,9 +46,10 @@
 #include <list>
 #include <algorithm>
 #include <sstream>
-#include <Shlwapi.h> 
-#include <direct.h>  
+#include <Shlwapi.h>
+#include <direct.h>
 
+/** @brief Flag indicating if the memory hook has been installed */
 static bool g_bHookInitialized = false;
 static bool g_bScriptsRegisteredWithGame = false;
 static int g_loadCount = 0;

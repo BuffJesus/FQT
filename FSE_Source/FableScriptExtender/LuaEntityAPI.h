@@ -1,3 +1,60 @@
+/**
+ * @file LuaEntityAPI.h
+ * @brief Entity-level Lua API - exposed as the "Me" object in entity scripts.
+ *
+ * LuaEntityAPI provides the API that entity scripts use to control their bound entity.
+ * When an entity script is loaded, a LuaEntityAPI instance is bound to the "Me" variable,
+ * allowing the script to command the entity's movement, animations, dialogue, and more.
+ *
+ * THE API COVERS THESE AREAS:
+ *
+ * 1. CONTROL MANAGEMENT
+ *    - AcquireControl: Take control of the entity for scripted behavior
+ *    - ReleaseControl: Return entity to AI control
+ *    - TakeExclusiveControl: Prevent other systems from controlling entity
+ *    - MakeBehavioral: Enable behavioral AI system
+ *
+ * 2. MOVEMENT
+ *    - MoveToPosition: Walk/run to world coordinates
+ *    - MoveToThing: Walk/run to another entity's position
+ *    - FollowThing: Continuously follow another entity
+ *    - StopFollowingThing: Cancel follow behavior
+ *    - FollowPreCalculatedRoute: Follow a waypoint path
+ *
+ * 3. ANIMATIONS
+ *    - PlayAnimation: Play a one-shot animation
+ *    - PlayLoopingAnimation: Repeat animation N times
+ *    - PlayCombatAnimation: Play attack/combat animation
+ *    - ClearAllActions: Stop current animations
+ *
+ * 4. DIALOGUE
+ *    - SpeakAndWait: Show dialogue text and wait for completion
+ *    - Speak_Blocking: Speak to a target entity
+ *    - Converse_NonBlocking: Start conversation without blocking
+ *
+ * 5. INTERACTION
+ *    - SetAsUsable: Allow hero to interact with entity
+ *    - MsgIsUsedByHero: Check if hero interacted
+ *    - MsgIsTalkedToByHero: Check if hero initiated dialogue
+ *    - MsgIsHitByHero: Check if hero attacked entity
+ *
+ * 6. STATE QUERIES
+ *    - IsAlive, IsDead, IsUnconscious: Health state
+ *    - IsFollowingThing: Movement state
+ *    - IsAwareOfHero: Perception state
+ *    - GetPos, GetHomePos: Position queries
+ *
+ * BLOCKING vs NON-BLOCKING:
+ * Methods with _NonBlocking suffix queue the action and return immediately.
+ * Methods without _NonBlocking wait for the action to complete.
+ * Non-blocking methods are useful for parallel behaviors.
+ *
+ * IMPORTANT: Entity scripts should regularly call Quest:NewScriptFrame()
+ * to yield control back to the game loop, especially in long-running loops.
+ *
+ * @see LuaQuestState - Quest-level API exposed as "Quest"
+ * @see LuaEntityHost - Host class that manages entity script execution
+ */
 #pragma once
 #include "FableAPI.h"
 #include "EntityScriptingAPI.h"
@@ -7,6 +64,13 @@
 
 class CGameScriptInterfaceBase;
 
+/**
+ * @brief Entity-level Lua API exposed as "Me" object to entity scripts.
+ *
+ * Provides methods for controlling entity movement, animation, dialogue,
+ * and querying entity state. Each method operates on the entity bound
+ * to the current LuaEntityHost.
+ */
 class LuaEntityAPI {
 public:
     void SetGameInterface(CGameScriptInterfaceBase* pInterface);

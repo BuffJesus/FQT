@@ -1,3 +1,61 @@
+/**
+ * @file LuaQuestState.h
+ * @brief The main Lua API for quest scripts - exposed as the "Quest" object in Lua.
+ *
+ * LuaQuestState provides the comprehensive API that quest scripts use to interact with
+ * the Fable game engine. When a quest script is loaded, a LuaQuestState instance is
+ * created and bound to the "Quest" variable in the Lua environment.
+ *
+ * THE API COVERS THESE MAJOR AREAS:
+ *
+ * 1. QUEST MANAGEMENT
+ *    - ActivateQuest, DeactivateQuest, SetQuestAsCompleted, SetQuestAsFailed
+ *    - AddQuestCard, SetQuestCardObjective, KickOffQuestStartScreen
+ *    - Quest state persistence (SetState*, GetState*, PersistTransfer*)
+ *
+ * 2. HERO INTERACTION
+ *    - GiveHeroGold, GiveHeroItem, GiveHeroExperience, GiveHeroMorality
+ *    - Hero inventory, equipment, abilities, expressions
+ *    - Tutorial system, death handling, teleportation
+ *
+ * 3. ENTITY MANAGEMENT
+ *    - CreateCreature, CreateObject, CreateEffect, CreateLight
+ *    - GetThingWithScriptName, GetHero, GetAllThingsWithDefName
+ *    - Entity properties (health, faction, behavior, combat)
+ *
+ * 4. WORLD CONTROL
+ *    - Time of day, weather, environment themes
+ *    - Creature generators, teleporters, region management
+ *    - Faction relationships, opinion system
+ *
+ * 5. UI AND PRESENTATION
+ *    - ShowMessage, FadeScreenIn/Out, Letterbox (StartMovieSequence/EndMovieSequence)
+ *    - Quest info UI elements (bars, timers, counters)
+ *    - Minimap markers, HUD control
+ *
+ * 6. CAMERA AND CINEMATICS
+ *    - CameraCircleAroundThing, CameraMoveToPosAndLookAtThing
+ *    - CameraDoConversation, CameraUseCameraPoint
+ *    - Screen effects (RadialBlur, ScreenFilter, ColorFilter)
+ *
+ * 7. DIALOGUE AND CONVERSATION
+ *    - StartAmbientConversation, AddLineToConversation
+ *    - Rumour/gossip system
+ *
+ * 8. SCRIPTING FLOW
+ *    - NewScriptFrame: CRITICAL - must be called to yield to game loop
+ *    - CreateThread: Spawn parallel execution contexts
+ *    - Pause: Non-blocking wait
+ *
+ * IMPORTANT NOTES FOR SCRIPT AUTHORS:
+ * - Always call Quest:NewScriptFrame() after blocking operations to yield to the game
+ * - Use Set/GetState* for quest-local state that persists in saves
+ * - Use Set/GetGlobal* for cross-quest communication
+ * - Entity pointers (CScriptThing) can become invalid - always check IsNull()
+ *
+ * @see LuaEntityAPI - Entity-level API exposed as "Me" in entity scripts
+ * @see LuaQuestHost - Host class that manages this state object
+ */
 #pragma once
 #include "FableAPI.h"
 #include "sol/sol.hpp"
@@ -9,6 +67,13 @@
 
 class LuaQuestHost;
 
+/**
+ * @brief Quest-level Lua API exposed as "Quest" object to Lua scripts.
+ *
+ * Provides comprehensive access to Fable game systems including quest management,
+ * hero control, entity manipulation, world state, UI, camera, and more.
+ * Each method wraps one or more calls to the game's internal script interface.
+ */
 class LuaQuestState {
 public:
     LuaQuestState(LuaQuestHost* parent, CGameScriptInterfaceBase* gameInterface);

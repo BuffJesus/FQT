@@ -6,6 +6,34 @@ using FableQuestTool.Data;
 
 namespace FableQuestTool.ViewModels;
 
+/// <summary>
+/// ViewModel for a single node in the visual behavior graph editor.
+///
+/// NodeViewModel represents the visual state of a BehaviorNode in the Nodify-based
+/// graph editor. It manages the node's appearance (title, icon, category colors),
+/// position, connectors (input/output pins), and configuration properties.
+///
+/// The visual editor uses UE5 Blueprint-style coloring:
+/// - Green: Triggers/Events (entry points)
+/// - Blue: Actions (do something)
+/// - Orange: Conditions (branching logic)
+/// - Purple: Flow control (loops, sequences)
+/// - Pink: Custom events (user-defined)
+/// - Teal: Variables (state access)
+/// </summary>
+/// <remarks>
+/// NodeViewModel maintains two-way binding:
+/// - From BehaviorNode model: Type, Config, position loaded when opening project
+/// - To BehaviorNode model: Changes saved back via EntityTabViewModel.SaveTabs()
+///
+/// Connectors are dynamically created based on node type:
+/// - Triggers have no input connector (they're entry points)
+/// - Branching nodes have multiple output connectors (True/False or custom labels)
+/// - Regular nodes have one input and one output connector
+///
+/// The Properties dictionary stores node-specific configuration values that
+/// correspond to the Config in BehaviorNode model.
+/// </remarks>
 public sealed partial class NodeViewModel : ObservableObject
 {
     [ObservableProperty]

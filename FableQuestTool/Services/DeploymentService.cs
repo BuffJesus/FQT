@@ -8,17 +8,73 @@ using System.Text.RegularExpressions;
 
 namespace FableQuestTool.Services;
 
+/// <summary>
+/// Handles deployment of quest projects to the Fable game installation.
+///
+/// DeploymentService manages the complete deployment pipeline that takes a QuestProject
+/// and installs it into the Fable: The Lost Chapters game directory so it can be played.
+///
+/// The deployment process includes:
+/// 1. Ensuring FSE (Fable Script Extender) is installed in the game directory
+/// 2. Generating Lua scripts from the quest project via CodeGenerator
+/// 3. Creating the quest folder structure in FSE directory
+/// 4. Registering the quest in quests.lua (FSE's quest configuration)
+/// 5. Registering the quest in FinalAlbion.qst (Fable's quest registry)
+/// 6. Adding quest activation to FSE_Master.lua (auto-starts the quest)
+/// </summary>
+/// <remarks>
+/// File structure created during deployment:
+/// <code>
+/// Fable/
+/// ├── FSE_Launcher.exe        (FSE launcher, installed if missing)
+/// ├── FableScriptExtender.dll (FSE DLL, installed if missing)
+/// └── FSE/
+///     ├── quests.lua          (Quest registration, updated)
+///     ├── Master/
+///     │   └── FSE_Master.lua  (Master quest, updated with activation)
+///     └── [QuestName]/
+///         ├── [QuestName].lua (Main quest script, generated)
+///         └── Entities/
+///             └── *.lua       (Entity scripts, generated)
+/// </code>
+///
+/// The service also supports:
+/// - Deleting deployed quests (removes all traces)
+/// - Toggling quests enabled/disabled (comments/uncomments in config files)
+/// - Launching the game via FSE_Launcher.exe
+/// </remarks>
 public sealed class DeploymentService
 {
     private readonly FableConfig config;
     private readonly CodeGenerator codeGenerator;
 
+    /// <summary>
+    /// Creates a new DeploymentService instance.
+    /// </summary>
+    /// <param name="config">Fable configuration containing installation path</param>
+    /// <param name="codeGenerator">Code generator for producing Lua scripts</param>
     public DeploymentService(FableConfig config, CodeGenerator codeGenerator)
     {
         this.config = config;
         this.codeGenerator = codeGenerator;
     }
 
+    /// <summary>
+    /// Deploys a quest project to the Fable game installation.
+    ///
+    /// This method performs the complete deployment pipeline:
+    /// 1. Validates Fable installation path
+    /// 2. Ensures FSE is installed (copies binaries if needed)
+    /// 3. Creates quest folder structure
+    /// 4. Generates and writes quest script
+    /// 5. Generates and writes entity scripts
+    /// 6. Registers quest in quests.lua
+    /// 7. Registers quest in FinalAlbion.qst
+    /// 8. Adds quest activation to FSE_Master.lua
+    /// </summary>
+    /// <param name="quest">The quest project to deploy</param>
+    /// <param name="message">Output message describing result or error</param>
+    /// <returns>True if deployment succeeded, false otherwise</returns>
     public bool DeployQuest(QuestProject quest, out string message)
     {
         message = string.Empty;
@@ -329,6 +385,18 @@ public sealed class DeploymentService
         }
     }
 
+    /// <summary>
+    /// Deletes a deployed quest from the Fable installation.
+    ///
+    /// Removes all traces of the quest:
+    /// - Quest folder and all scripts from FSE directory
+    /// - Quest entry from quests.lua
+    /// - Quest entry from FinalAlbion.qst
+    /// - Quest activation from FSE_Master.lua
+    /// </summary>
+    /// <param name="questName">Name of the quest to delete</param>
+    /// <param name="message">Output message describing what was deleted</param>
+    /// <returns>True if any quest files were found and deleted</returns>
     public bool DeleteQuest(string questName, out string message)
     {
         message = string.Empty;
@@ -469,6 +537,21 @@ public sealed class DeploymentService
         }
     }
 
+    /// <summary>
+    /// Enables or disables a deployed quest without removing it.
+    ///
+    /// Toggling works by commenting/uncommenting quest entries in:
+    /// - quests.lua (Lua comments using --)
+    /// - FinalAlbion.qst (adds/removes quest entry)
+    /// - FSE_Master.lua (comments/uncomments activation line)
+    ///
+    /// This allows temporarily disabling quests for testing without losing
+    /// the deployment, or enabling previously disabled quests.
+    /// </summary>
+    /// <param name="questName">Name of the quest to toggle</param>
+    /// <param name="enable">True to enable, false to disable</param>
+    /// <param name="message">Output message describing what was toggled</param>
+    /// <returns>True if toggle succeeded</returns>
     public bool ToggleQuest(string questName, bool enable, out string message)
     {
         message = string.Empty;
@@ -822,6 +905,15 @@ end
         }
     }
 
+    /// <summary>
+    /// Launches the game using FSE_Launcher.exe.
+    ///
+    /// Ensures FSE is installed first, then starts the launcher which
+    /// will inject FableScriptExtender.dll into the game process.
+    /// This enables all deployed quests to run.
+    /// </summary>
+    /// <param name="message">Output message describing result or error</param>
+    /// <returns>True if launch succeeded</returns>
     public bool LaunchFse(out string message)
     {
         message = string.Empty;

@@ -24,9 +24,16 @@ public sealed partial class ApiReferenceViewModel : ObservableObject
     [ObservableProperty]
     private ApiFunction? selectedFunction;
 
+    [ObservableProperty]
+    private string apiStatus = string.Empty;
+
+    [ObservableProperty]
+    private bool hasApiData;
+
     public ObservableCollection<string> Categories { get; } = new()
     {
         "All",
+        "General",
         "Entity API",
         "Quest API",
         "Hero API",
@@ -50,9 +57,15 @@ public sealed partial class ApiReferenceViewModel : ObservableObject
             {
                 allFunctions = apiParser.ParseHeaderFile(path);
                 UpdateFilteredFunctions();
+                HasApiData = allFunctions.Count > 0;
+                ApiStatus = HasApiData ? string.Empty : "API header found, but no functions were parsed.";
                 return;
             }
         }
+
+        HasApiData = false;
+        ApiStatus = "API header not found. Expected one of these paths:" + Environment.NewLine +
+            string.Join(Environment.NewLine, possiblePaths);
     }
 
     private static string[] BuildPossibleApiPaths()

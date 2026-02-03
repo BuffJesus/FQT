@@ -58,7 +58,7 @@ public class ApiParser
     {
         // Basic check for function declaration
         return line.Contains("(") && line.Contains(")") && line.EndsWith(";") 
-            && !line.StartsWith("//") && !line.StartsWith("/*");
+            && !line.StartsWith("//") && !line.StartsWith("/*") && !line.StartsWith("#");
     }
 
     private ApiFunction? ParseFunction(string line, string category)
@@ -74,11 +74,11 @@ public class ApiParser
 
             string beforeParen = line.Substring(0, openParen).Trim();
             string[] parts = beforeParen.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-            
+
             if (parts.Length < 2) return null;
 
-            string returnType = parts[0];
             string functionName = parts[parts.Length - 1];
+            string returnType = string.Join(" ", parts.Take(parts.Length - 1));
 
             // Extract parameters
             int closeParen = line.LastIndexOf(')');
@@ -119,7 +119,17 @@ public class ApiParser
             string trimmed = part.Trim();
             if (string.IsNullOrWhiteSpace(trimmed)) continue;
 
-            bool isOptional = trimmed.Contains("sol::optional");
+            bool hasDefaultValue = trimmed.Contains("=");
+            bool isOptional = trimmed.Contains("sol::optional") || hasDefaultValue;
+
+            if (hasDefaultValue)
+            {
+                int equalsIndex = trimmed.IndexOf('=');
+                if (equalsIndex > 0)
+                {
+                    trimmed = trimmed.Substring(0, equalsIndex).Trim();
+                }
+            }
             
             // Extract type and name
             string[] tokens = trimmed.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);

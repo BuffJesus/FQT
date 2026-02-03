@@ -65,6 +65,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
     [ObservableProperty]
     private int nodeMenuSelectedIndex = -1;
 
+    private ConnectorViewModel? menuConnectionSource;
+
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
     public ObservableCollection<NodeCategoryGroup> GroupedFilteredNodes { get; } = new();
 
@@ -771,7 +773,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     [RelayCommand]
     private void AddOutputPin()
     {
-        if (SelectedNode == null || SelectedNode.Category != "flow")
+        if (SelectedNode == null || SelectedNode.Category != "flow" || SelectedNode.IsRerouteNode)
         {
             return;
         }
@@ -786,7 +788,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     [RelayCommand]
     private void RemoveOutputPin()
     {
-        if (SelectedNode == null || SelectedNode.Output.Count <= 1 || SelectedNode.Category != "flow")
+        if (SelectedNode == null || SelectedNode.Output.Count <= 1 || SelectedNode.Category != "flow" || SelectedNode.IsRerouteNode)
         {
             return;
         }
@@ -953,6 +955,16 @@ public sealed partial class EntityTabViewModel : ObservableObject
             NodeMenuGraphPosition = position;
         }
 
+        if (PendingConnection?.Source != null)
+        {
+            menuConnectionSource = PendingConnection.Source;
+            PendingConnection = null;
+        }
+        else
+        {
+            menuConnectionSource = null;
+        }
+
         NodeSearchText = string.Empty;
         UpdateFilteredNodes();
         IsNodeMenuOpen = true;
@@ -963,6 +975,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     {
         IsNodeMenuOpen = false;
         NodeSearchText = string.Empty;
+        menuConnectionSource = null;
     }
 
     [RelayCommand]
@@ -978,19 +991,20 @@ public sealed partial class EntityTabViewModel : ObservableObject
         var newNode = CreateNode(option.Definition, NodeMenuGraphPosition.X, NodeMenuGraphPosition.Y);
         Nodes.Add(newNode);
 
-        if (PendingConnection?.Source != null)
+        var source = menuConnectionSource;
+        if (source != null)
         {
             var targetConnector = newNode.Input.FirstOrDefault();
             if (targetConnector != null)
             {
                 var connection = new ConnectionViewModel
                 {
-                    Source = PendingConnection.Source,
+                    Source = source,
                     Target = targetConnector
                 };
                 Connections.Add(connection);
             }
-            PendingConnection = null;
+            menuConnectionSource = null;
         }
 
         IsNodeMenuOpen = false;
@@ -1007,6 +1021,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         GroupedFilteredNodes.Clear();
 
         var allNodes = SimpleNodes.Concat(AdvancedNodes).ToList();
+        bool hideTriggers = ShouldHideTriggerNodes();
 
         IEnumerable<NodeOption> filteredNodes;
 
@@ -1021,6 +1036,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 n.Label.ToLower().Contains(searchLower) ||
                 n.Category.ToLower().Contains(searchLower) ||
                 (n.Type?.ToLower().Contains(searchLower) == true));
+        }
+
+        if (hideTriggers)
+        {
+            filteredNodes = filteredNodes.Where(n => n.Category != "trigger");
         }
 
         // Add nodes to flat list
@@ -1070,13 +1090,15 @@ public sealed partial class EntityTabViewModel : ObservableObject
     /// <summary>
     /// Check if there's a pending connection (used for UI hints)
     /// </summary>
-    public bool HasPendingConnection => PendingConnection?.Source != null;
+    public bool HasPendingConnection => PendingConnection?.Source != null || menuConnectionSource != null;
 
     /// <summary>
     /// Get a description of what's being dragged
     /// </summary>
     public string PendingConnectionHint => PendingConnection?.Source != null
         ? $"Release to connect from {PendingConnection.Source.Title}"
+        : menuConnectionSource != null
+            ? $"Release to connect from {menuConnectionSource.Title}"
         : "Right-click to add nodes";
 
     [RelayCommand]
@@ -1254,7 +1276,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         rerouteNode.Output.Clear();
 
         // Default to Exec type for standalone reroute
-        var connType = PendingConnection?.Source?.ConnectorType ?? ConnectorType.Exec;
+        var connType = menuConnectionSource?.ConnectorType ?? PendingConnection?.Source?.ConnectorType ?? ConnectorType.Exec;
 
         rerouteNode.Input.Add(new ConnectorViewModel
         {
@@ -1272,21 +1294,32 @@ public sealed partial class EntityTabViewModel : ObservableObject
         Nodes.Add(rerouteNode);
 
         // If there's a pending connection, connect it to the reroute node
-        if (PendingConnection?.Source != null)
+        if (menuConnectionSource != null)
         {
             var targetConnector = rerouteNode.Input.FirstOrDefault();
             if (targetConnector != null)
             {
                 Connections.Add(new ConnectionViewModel
                 {
-                    Source = PendingConnection.Source,
+                    Source = menuConnectionSource,
                     Target = targetConnector
                 });
             }
-            PendingConnection = null;
+            menuConnectionSource = null;
         }
 
         IsNodeMenuOpen = false;
+    }
+
+    private bool ShouldHideTriggerNodes()
+    {
+        if (menuConnectionSource == null)
+        {
+            return false;
+        }
+
+        var sourceNode = Nodes.FirstOrDefault(n => n.Output.Contains(menuConnectionSource));
+        return sourceNode?.Category == "trigger";
     }
 
     /// <summary>

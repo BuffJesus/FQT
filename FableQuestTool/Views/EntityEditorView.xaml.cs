@@ -267,6 +267,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 if (currentTab.OpenNodeMenuCommand.CanExecute((position, graphPosition)))
                 {
                     currentTab.OpenNodeMenuCommand.Execute((position, graphPosition));
+                    CancelEditorDrag(editor, currentTab);
                     FocusNodeSearchBox();
                     // Mark as handled to prevent Nodify from clearing the pending connection
                     e.Handled = true;
@@ -339,9 +340,37 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             if (currentTab.OpenNodeMenuCommand.CanExecute((position, graphPosition)))
             {
                 currentTab.OpenNodeMenuCommand.Execute((position, graphPosition));
+                CancelEditorDrag(editor, currentTab);
                 FocusNodeSearchBox();
                 e.Handled = true;
             }
+        }
+        catch
+        {
+            // Silently handle any errors
+        }
+    }
+
+    private void CancelEditorDrag(Nodify.NodifyEditor editor, EntityTabViewModel currentTab)
+    {
+        try
+        {
+            currentTab.PendingConnection = null;
+            _redirectNodeCreated = false;
+            if (Mouse.Captured != null)
+            {
+                Mouse.Capture(null);
+            }
+
+            var escapeEvent = new System.Windows.Input.KeyEventArgs(
+                Keyboard.PrimaryDevice,
+                Keyboard.PrimaryDevice.ActiveSource,
+                0,
+                Key.Escape)
+            {
+                RoutedEvent = Keyboard.KeyDownEvent
+            };
+            editor.RaiseEvent(escapeEvent);
         }
         catch
         {

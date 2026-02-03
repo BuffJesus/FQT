@@ -27,6 +27,19 @@ FQT is a WPF-based visual editor that allows you to create quests for Fable: The
 
 ## Installation
 
+### Prerequisites: Installing FSE
+
+**IMPORTANT:** FQT requires the Fable Script Extender (FSE) to be installed separately. FSE is not included with FQT.
+
+1. Download FSE from the official repository: https://github.com/eeeeeAeoN/FableScriptExtender
+2. Follow the installation instructions in the FSE repository
+3. Extract FSE files to your Fable: The Lost Chapters installation directory
+4. Ensure you have:
+   - `FSE_Launcher.exe` in your Fable root directory
+   - `FableScriptExtender.dll` in your Fable root directory
+   - `Mods.ini` configured to enable FSE
+   - `FSE` folder with the proper structure
+
 ### For Users (Prebuilt Release)
 
 1. Download the latest release from the [Releases](https://github.com/BuffJesus/FQT/releases/tag/fable) page
@@ -34,6 +47,8 @@ FQT is a WPF-based visual editor that allows you to create quests for Fable: The
 3. Run `FableQuestTool.exe`
 
 No additional dependencies or .NET runtime installation required - everything is included in the standalone executable.
+
+**Note:** When you deploy a quest for the first time, FQT will check if FSE is installed and provide instructions if it's not found.
 
 ### For Developers (Build from Source)
 
@@ -98,7 +113,6 @@ FQT/
 │   ├── Views/            # UI views and controls
 │   ├── ViewModels/       # MVVM view models
 │   └── Resources/        # Styles and themes
-├── FSE_Source/           # FSE C++ source code reference
 └── SampleQuests/         # Example quests
 ```
 

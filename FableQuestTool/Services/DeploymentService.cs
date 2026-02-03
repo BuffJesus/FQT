@@ -797,112 +797,24 @@ public sealed class DeploymentService
             return true;
         }
 
-        // Install FSE from packaged binaries (included with the application)
-        string appDirectory = AppContext.BaseDirectory;
-        string fseBinariesFolder = Path.Combine(appDirectory, "FSE_Binaries");
+        // FSE not found - direct user to download from GitHub
+        error = @"Fable Script Extender (FSE) is required but not installed.
 
-        string sourceLauncher = Path.Combine(fseBinariesFolder, "FSE_Launcher.exe");
-        string sourceDll = Path.Combine(fseBinariesFolder, "FableScriptExtender.dll");
+Please download FSE from the official repository:
+https://github.com/eeeeeAeoN/FableScriptExtender
 
-        if (!File.Exists(sourceLauncher) || !File.Exists(sourceDll))
-        {
-            error = $"FSE binaries not found in application folder.\n\nExpected location: {fseBinariesFolder}\n\nPlease reinstall the application or contact support.";
-            return false;
-        }
+Installation instructions:
+1. Download the latest release from the GitHub repository
+2. Extract the contents to your Fable installation directory:
+   " + config.FablePath + @"
+3. You should have the following files:
+   - FSE_Launcher.exe (in your Fable root directory)
+   - FableScriptExtender.dll (in your Fable root directory)
+   - Mods.ini (in your Fable root directory)
+   - FSE folder with quests and Master folder
 
-        try
-        {
-            // Copy FSE files to Fable directory
-            File.Copy(sourceLauncher, launcherPath, overwrite: true);
-            File.Copy(sourceDll, dllPath, overwrite: true);
-
-            // Create Mods.ini to enable FSE
-            string modsIniPath = Path.Combine(config.FablePath, "Mods.ini");
-            if (!File.Exists(modsIniPath))
-            {
-                File.WriteAllText(modsIniPath, "[Mods]\nFableScriptExtender.dll=1\n");
-            }
-
-            // Create FSE folder if it doesn't exist
-            string fseFolder = Path.Combine(config.FablePath, "FSE");
-            Directory.CreateDirectory(fseFolder);
-
-            // Create Master folder for FSE_Master.lua
-            string masterFolder = Path.Combine(fseFolder, "Master");
-            Directory.CreateDirectory(masterFolder);
-
-            // Create FSE_Master.lua if it doesn't exist
-            string masterLuaPath = Path.Combine(masterFolder, "FSE_Master.lua");
-            if (!File.Exists(masterLuaPath))
-            {
-                string masterLuaContent = @"-- FSE_Master.lua - Master quest for FSE
-Quest = nil
-
-function Init(quest)
-    Quest = quest
-    Quest:Log(""FSE_Master Init()"")
-end
-
-function Main(quest)
-    Quest = quest
-    Quest:Log(""FSE_Master Main() started"")
-
-    -- Custom quests will be auto-activated here by the deployment tool
-
-    Quest:Log(""FSE_Master Main() completed"")
-end
-
-function OnPersist(quest, context)
-    Quest = quest
-end
-";
-                File.WriteAllText(masterLuaPath, masterLuaContent);
-            }
-
-            // Ensure FSE_Master is registered in quests.lua
-            string questsLuaPath = Path.Combine(fseFolder, "quests.lua");
-            if (!File.Exists(questsLuaPath))
-            {
-                string questsLuaContent = @"Quests = {
-    FSE_Master = {
-        name = ""FSE_Master"",
-        file = ""Master/FSE_Master"",
-        id = 1,
-        master = true,
-        entity_scripts = {}
-    },
-}
-";
-                File.WriteAllText(questsLuaPath, questsLuaContent);
-            }
-            else
-            {
-                // Check if FSE_Master is already registered
-                string questsContent = File.ReadAllText(questsLuaPath);
-                if (!questsContent.Contains("FSE_Master"))
-                {
-                    // Add FSE_Master to existing quests.lua
-                    int insertPos = questsContent.IndexOf("Quests = {") + "Quests = {".Length;
-                    string fseMasterEntry = @"
-    FSE_Master = {
-        name = ""FSE_Master"",
-        file = ""Master/FSE_Master"",
-        id = 1,
-        master = true,
-        entity_scripts = {}
-    },";
-                    questsContent = questsContent.Insert(insertPos, fseMasterEntry);
-                    File.WriteAllText(questsLuaPath, questsContent);
-                }
-            }
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            error = $"Failed to install FSE: {ex.Message}";
-            return false;
-        }
+After installing FSE, try deploying your quest again.";
+        return false;
     }
 
     /// <summary>

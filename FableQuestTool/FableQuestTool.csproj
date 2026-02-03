@@ -22,12 +22,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="FSE_Binaries\**\*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
         <None Include="tools\**\*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

@@ -1144,13 +1144,15 @@ public sealed partial class EntityTabViewModel : ObservableObject
         {
             Title = "",
             ConnectorType = connType,
-            IsInput = true
+            IsInput = true,
+            IsRerouteAnchor = true
         });
         rerouteNode.Output.Add(new ConnectorViewModel
         {
             Title = "",
             ConnectorType = connType,
-            IsInput = false
+            IsInput = false,
+            IsRerouteAnchor = true
         });
 
         Nodes.Add(rerouteNode);
@@ -1212,13 +1214,15 @@ public sealed partial class EntityTabViewModel : ObservableObject
         {
             Title = "",
             ConnectorType = connType,
-            IsInput = true
+            IsInput = true,
+            IsRerouteAnchor = true
         });
         rerouteNode.Output.Add(new ConnectorViewModel
         {
             Title = "",
             ConnectorType = connType,
-            IsInput = false
+            IsInput = false,
+            IsRerouteAnchor = true
         });
 
         Nodes.Add(rerouteNode);
@@ -1282,13 +1286,15 @@ public sealed partial class EntityTabViewModel : ObservableObject
         {
             Title = "",
             ConnectorType = connType,
-            IsInput = true
+            IsInput = true,
+            IsRerouteAnchor = true
         });
         rerouteNode.Output.Add(new ConnectorViewModel
         {
             Title = "",
             ConnectorType = connType,
-            IsInput = false
+            IsInput = false,
+            IsRerouteAnchor = true
         });
 
         Nodes.Add(rerouteNode);

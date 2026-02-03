@@ -245,3 +245,24 @@ public class IntEqualsConverter : IMultiValueConverter
         throw new NotSupportedException("IntEqualsConverter is one-way only.");
     }
 }
+
+/// <summary>
+/// Returns a wire offset for connectors, collapsing reroute anchors to the dot center.
+/// </summary>
+public class RerouteConnectorOffsetConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is FableQuestTool.ViewModels.ConnectorViewModel connector && connector.IsRerouteAnchor)
+        {
+            return new WpfPoint(0, 0);
+        }
+
+        return new WpfPoint(12, 0);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("RerouteConnectorOffsetConverter is one-way only.");
+    }
+}

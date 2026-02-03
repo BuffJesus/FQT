@@ -52,6 +52,12 @@ public sealed partial class ConnectorViewModel : ObservableObject
     private bool isConnected;
 
     /// <summary>
+    /// Whether this connector belongs to a reroute node (used for wire offsets).
+    /// </summary>
+    [ObservableProperty]
+    private bool isRerouteAnchor;
+
+    /// <summary>
     /// Gets the color for this connector type (UE5 Blueprint colors)
     /// </summary>
     public string ConnectorColor => ConnectorType switch

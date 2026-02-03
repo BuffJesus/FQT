@@ -34,6 +34,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             _editor.PreviewMouseLeftButtonDown -= OnEditorMouseLeftButtonDown;
             _editor.PreviewMouseRightButtonDown -= OnEditorRightClickDown;
             _editor.PreviewMouseRightButtonUp -= OnEditorRightClick;
+            _editor.LayoutUpdated -= OnEditorLayoutUpdated;
             _editor = null;
         }
     }
@@ -62,6 +63,9 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 _editor.PreviewMouseRightButtonDown += OnEditorRightClickDown;
                 _editor.PreviewMouseRightButtonUp -= OnEditorRightClick;
                 _editor.PreviewMouseRightButtonUp += OnEditorRightClick;
+
+                _editor.LayoutUpdated -= OnEditorLayoutUpdated;
+                _editor.LayoutUpdated += OnEditorLayoutUpdated;
             }
         }
         catch
@@ -375,6 +379,58 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         catch
         {
             // Silently handle any errors
+        }
+    }
+
+    private void OnEditorLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (_editor == null)
+        {
+            return;
+        }
+
+        try
+        {
+            UpdateRerouteAnchors(_editor);
+        }
+        catch
+        {
+            // Silently handle any errors
+        }
+    }
+
+    private static void UpdateRerouteAnchors(Nodify.NodifyEditor editor)
+    {
+        int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(editor);
+        for (int i = 0; i < count; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(editor, i);
+            UpdateRerouteAnchorsRecursive(child, editor);
+        }
+    }
+
+    private static void UpdateRerouteAnchorsRecursive(DependencyObject node, Nodify.NodifyEditor editor)
+    {
+        if (node is Nodify.Node nodifyNode &&
+            nodifyNode.DataContext is NodeViewModel viewModel &&
+            (viewModel.IsRerouteNode || viewModel.IsRedirectionNode))
+        {
+            if (viewModel.Input.Count > 0 && viewModel.Output.Count > 0)
+            {
+                var center = new System.Windows.Point(
+                    nodifyNode.ActualWidth / 2.0,
+                    nodifyNode.ActualHeight / 2.0);
+                var anchor = nodifyNode.TranslatePoint(center, editor);
+                viewModel.Input[0].Anchor = anchor;
+                viewModel.Output[0].Anchor = anchor;
+            }
+        }
+
+        int childCount = System.Windows.Media.VisualTreeHelper.GetChildrenCount(node);
+        for (int i = 0; i < childCount; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(node, i);
+            UpdateRerouteAnchorsRecursive(child, editor);
         }
     }
 

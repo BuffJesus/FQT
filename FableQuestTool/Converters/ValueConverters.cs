@@ -161,3 +161,61 @@ public class PointToThicknessConverter : IValueConverter
         throw new NotSupportedException("PointToThicknessConverter is one-way only.");
     }
 }
+
+/// <summary>
+/// Converts a node property type to a color brush for badges.
+/// </summary>
+public class PropertyTypeToColorBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string type || string.IsNullOrWhiteSpace(type))
+        {
+            return new SolidColorBrush(Colors.Gray);
+        }
+
+        return type switch
+        {
+            "bool" => new SolidColorBrush(Colors.IndianRed),
+            "int" => new SolidColorBrush(Colors.CadetBlue),
+            "float" => new SolidColorBrush(Colors.YellowGreen),
+            "string" => new SolidColorBrush(Colors.HotPink),
+            "text" => new SolidColorBrush(Colors.HotPink),
+            _ => new SolidColorBrush(Colors.Gray)
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("PropertyTypeToColorBrushConverter is one-way only.");
+    }
+}
+
+/// <summary>
+/// Converts a node property type to a short badge label.
+/// </summary>
+public class PropertyTypeToLabelConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string type || string.IsNullOrWhiteSpace(type))
+        {
+            return "UNKNOWN";
+        }
+
+        return type switch
+        {
+            "bool" => "BOOL",
+            "int" => "INT",
+            "float" => "FLOAT",
+            "string" => "STRING",
+            "text" => "STRING",
+            _ => type.ToUpperInvariant()
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("PropertyTypeToLabelConverter is one-way only.");
+    }
+}

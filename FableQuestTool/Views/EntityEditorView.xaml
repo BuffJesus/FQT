@@ -17,6 +17,8 @@
         <converters:StringToColorConverter x:Key="StringToColor" />
         <converters:HeaderGradientConverter x:Key="HeaderGradient" />
         <converters:PointToThicknessConverter x:Key="PointToThickness" />
+        <converters:PropertyTypeToColorBrushConverter x:Key="PropertyTypeToColorBrush" />
+        <converters:PropertyTypeToLabelConverter x:Key="PropertyTypeToLabel" />
 
         <!-- UE5 Blueprint Colors -->
         <SolidColorBrush x:Key="BlueprintGridColor" Color="#1A1F2E" />
@@ -910,15 +912,74 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Margin="0,0,0,8">
-                                                        <TextBlock Text="{Binding Label}" FontSize="10" Margin="0,0,0,2" />
-                                                        <TextBox Height="24"
+                                                        <Grid Margin="0,0,0,2">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="10" />
+                                                            <Border Grid.Column="1"
+                                                                    Background="{Binding Type, Converter={StaticResource PropertyTypeToColorBrush}}"
+                                                                    CornerRadius="2"
+                                                                    Padding="4,1"
+                                                                    Margin="6,0,0,0">
+                                                                <TextBlock Text="{Binding Type, Converter={StaticResource PropertyTypeToLabel}}"
+                                                                           FontSize="8"
+                                                                           Foreground="White"
+                                                                           FontWeight="SemiBold" />
+                                                            </Border>
+                                                            <CheckBox x:Name="BindToggle"
+                                                                      Grid.Column="2"
+                                                                      Content="Bind"
+                                                                      FontSize="9"
+                                                                      Margin="8,0,0,0"
+                                                                      VerticalAlignment="Center"
+                                                                      Tag="{Binding Name}"
+                                                                      Loaded="OnPropertyBindToggleLoaded"
+                                                                      Checked="OnPropertyBindChecked"
+                                                                      Unchecked="OnPropertyBindUnchecked" />
+                                                        </Grid>
+                                                        <ComboBox x:Name="VariableCombo"
+                                                                  Height="24"
+                                                                  Padding="4,2"
+                                                                  Margin="0,0,0,4"
+                                                                  Tag="{Binding Name}"
+                                                                  DisplayMemberPath="Name"
+                                                                  SelectedValuePath="Name"
+                                                                  Loaded="OnPropertyVariableComboLoaded"
+                                                                  SelectionChanged="OnPropertyVariableSelectionChanged">
+                                                            <ComboBox.Style>
+                                                                <Style TargetType="ComboBox">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsChecked, ElementName=BindToggle}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ComboBox.Style>
+                                                        </ComboBox>
+                                                        <TextBox x:Name="PropertyTextBox"
+                                                               Height="24"
                                                                Padding="4,2"
                                                                Tag="{Binding Name}"
                                                                Loaded="OnPropertyTextBoxLoaded"
                                                                TextChanged="OnPropertyTextBoxChanged"
                                                                AllowDrop="True"
                                                                DragOver="OnPropertyTextBoxDragOver"
-                                                               Drop="OnPropertyTextBoxDrop" />
+                                                               Drop="OnPropertyTextBoxDrop">
+                                                            <TextBox.Style>
+                                                                <Style TargetType="TextBox">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsChecked, ElementName=BindToggle}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBox.Style>
+                                                        </TextBox>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>

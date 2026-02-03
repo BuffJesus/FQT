@@ -14,6 +14,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
     private bool _redirectNodeCreated = false;
     private System.Windows.Point? _rightClickDownPosition;
     private System.Windows.Point? _variableDragStart;
+    private readonly Dictionary<string, string> _literalPropertyCache = new();
 
     public EntityEditorView()
     {
@@ -481,6 +482,189 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         currentTab.SelectedNode.SetProperty(propertyName, textBox.Text);
     }
 
+    private void OnPropertyBindToggleLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.CheckBox checkBox)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab?.SelectedNode == null)
+        {
+            return;
+        }
+
+        string? propertyName = checkBox.Tag as string;
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            return;
+        }
+
+        if (currentTab.SelectedNode.Properties.TryGetValue(propertyName, out var value) &&
+            value is string strValue &&
+            strValue.StartsWith("$", StringComparison.Ordinal))
+        {
+            checkBox.IsChecked = true;
+        }
+    }
+
+    private void OnPropertyBindChecked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.CheckBox checkBox)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab?.SelectedNode == null)
+        {
+            return;
+        }
+
+        string? propertyName = checkBox.Tag as string;
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            return;
+        }
+
+        CacheLiteralIfPresent(currentTab, propertyName);
+
+        var variable = currentTab.Variables.FirstOrDefault();
+        if (variable == null)
+        {
+            return;
+        }
+
+        if (!TryBindVariableToProperty(currentTab, propertyName, variable.Name))
+        {
+            checkBox.IsChecked = false;
+        }
+    }
+
+    private void OnPropertyBindUnchecked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.CheckBox checkBox)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab?.SelectedNode == null)
+        {
+            return;
+        }
+
+        string? propertyName = checkBox.Tag as string;
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            return;
+        }
+
+        string cacheKey = BuildPropertyCacheKey(currentTab, propertyName);
+        if (_literalPropertyCache.TryGetValue(cacheKey, out string cachedValue))
+        {
+            currentTab.SelectedNode.SetProperty(propertyName, cachedValue);
+        }
+        else
+        {
+            var propertyDefinition = currentTab.SelectedNode.Definition?.Properties
+                .FirstOrDefault(p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
+
+            string defaultValue = propertyDefinition?.DefaultValue?.ToString() ?? string.Empty;
+            currentTab.SelectedNode.SetProperty(propertyName, defaultValue);
+        }
+    }
+
+    private void OnPropertyVariableComboLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.ComboBox comboBox)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab?.SelectedNode == null)
+        {
+            return;
+        }
+
+        string? propertyName = comboBox.Tag as string;
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            return;
+        }
+
+        var propertyDefinition = currentTab.SelectedNode.Definition?.Properties
+            .FirstOrDefault(p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
+
+        string? expectedType = propertyDefinition?.Type;
+        var compatible = currentTab.Variables
+            .Where(v => IsVariableTypeCompatible(v.Type, expectedType))
+            .ToList();
+
+        comboBox.ItemsSource = compatible;
+
+        if (currentTab.SelectedNode.Properties.TryGetValue(propertyName, out var value) &&
+            value is string strValue &&
+            strValue.StartsWith("$", StringComparison.Ordinal))
+        {
+            comboBox.SelectedValue = strValue.Substring(1);
+        }
+    }
+
+    private void OnPropertyVariableSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.ComboBox comboBox)
+        {
+            return;
+        }
+
+        if (comboBox.SelectedValue is not string variableName || string.IsNullOrWhiteSpace(variableName))
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab?.SelectedNode == null)
+        {
+            return;
+        }
+
+        string? propertyName = comboBox.Tag as string;
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            return;
+        }
+
+        TryBindVariableToProperty(currentTab, propertyName, variableName);
+    }
+
     private void OnVariableDragStart(object sender, MouseButtonEventArgs e)
     {
         if (e.OriginalSource is System.Windows.Controls.Button)
@@ -651,6 +835,57 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         }
 
         return normalizedExpected == normalizedVariable;
+    }
+
+    private bool TryBindVariableToProperty(EntityTabViewModel currentTab, string propertyName, string variableName)
+    {
+        string? variableType = currentTab.Variables
+            .FirstOrDefault(v => v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase))
+            ?.Type;
+
+        string? expectedType = currentTab.SelectedNode?.Definition?.Properties
+            .FirstOrDefault(p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
+            ?.Type;
+
+        if (!IsVariableTypeCompatible(variableType, expectedType))
+        {
+            System.Windows.MessageBox.Show(
+                $"Variable '{variableName}' is {variableType ?? "Unknown"}, but '{propertyName}' expects {expectedType ?? "Unknown"}.",
+                "Variable Type Mismatch",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return false;
+        }
+
+        currentTab.SelectedNode?.SetProperty(propertyName, $"${variableName}");
+        return true;
+    }
+
+    private void CacheLiteralIfPresent(EntityTabViewModel currentTab, string propertyName)
+    {
+        if (currentTab.SelectedNode == null)
+        {
+            return;
+        }
+
+        if (!currentTab.SelectedNode.Properties.TryGetValue(propertyName, out var value))
+        {
+            return;
+        }
+
+        if (value is not string strValue || strValue.StartsWith("$", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        string cacheKey = BuildPropertyCacheKey(currentTab, propertyName);
+        _literalPropertyCache[cacheKey] = strValue;
+    }
+
+    private static string BuildPropertyCacheKey(EntityTabViewModel currentTab, string propertyName)
+    {
+        string nodeId = currentTab.SelectedNode?.Id ?? string.Empty;
+        return $"{nodeId}::{propertyName}";
     }
 
     private static string? NormalizePropertyType(string? type)

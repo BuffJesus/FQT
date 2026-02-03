@@ -62,6 +62,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
     [ObservableProperty]
     private string nodeSearchText = string.Empty;
 
+    [ObservableProperty]
+    private int nodeMenuSelectedIndex = -1;
+
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
     public ObservableCollection<NodeCategoryGroup> GroupedFilteredNodes { get; } = new();
 
@@ -525,6 +528,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
         entity.Connections.Clear();
         foreach (var conn in Connections)
         {
+            if (conn.Source == null || conn.Target == null)
+            {
+                continue;
+            }
+
             var sourceNode = Nodes.FirstOrDefault(n => n.Output.Contains(conn.Source));
             var targetNode = Nodes.FirstOrDefault(n => n.Input.Contains(conn.Target));
 
@@ -674,14 +682,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             return;
         }
 
-        var connectionsToRemove = Connections.Where(c =>
-            c.Source?.Equals(SelectedNode.Output.FirstOrDefault()) == true ||
-            c.Target?.Equals(SelectedNode.Input.FirstOrDefault()) == true).ToList();
-
-        foreach (var conn in connectionsToRemove)
-        {
-            Connections.Remove(conn);
-        }
+        RemoveConnectionsForNode(SelectedNode);
 
         Nodes.Remove(SelectedNode);
         SelectedNode = null;
@@ -706,6 +707,65 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         Nodes.Add(duplicate);
         SelectedNode = duplicate;
+    }
+
+    [RelayCommand]
+    private void DeleteNodeFromContext(NodeViewModel? node)
+    {
+        if (node == null)
+        {
+            return;
+        }
+
+        SelectedNode = node;
+        DeleteNode();
+    }
+
+    [RelayCommand]
+    private void DuplicateNodeFromContext(NodeViewModel? node)
+    {
+        if (node == null)
+        {
+            return;
+        }
+
+        SelectedNode = node;
+        DuplicateNode();
+    }
+
+    [RelayCommand]
+    private void BreakNodeLinksFromContext(NodeViewModel? node)
+    {
+        if (node == null)
+        {
+            return;
+        }
+
+        RemoveConnectionsForNode(node);
+    }
+
+    [RelayCommand]
+    private void AddOutputPinFromContext(NodeViewModel? node)
+    {
+        if (node == null)
+        {
+            return;
+        }
+
+        SelectedNode = node;
+        AddOutputPin();
+    }
+
+    [RelayCommand]
+    private void RemoveOutputPinFromContext(NodeViewModel? node)
+    {
+        if (node == null)
+        {
+            return;
+        }
+
+        SelectedNode = node;
+        RemoveOutputPin();
     }
 
     [RelayCommand]
@@ -741,6 +801,59 @@ public sealed partial class EntityTabViewModel : ObservableObject
             }
 
             SelectedNode.Output.Remove(lastOutput);
+        }
+    }
+
+    [RelayCommand]
+    private void BreakConnection(ConnectionViewModel? connection)
+    {
+        if (connection == null)
+        {
+            return;
+        }
+
+        Connections.Remove(connection);
+    }
+
+    [RelayCommand]
+    private void InsertRerouteOnConnectionFromContext(ConnectionViewModel? connection)
+    {
+        if (connection?.Source == null || connection.Target == null)
+        {
+            return;
+        }
+
+        var source = connection.Source.Anchor;
+        var target = connection.Target.Anchor;
+        var location = new System.Windows.Point((source.X + target.X) / 2.0, (source.Y + target.Y) / 2.0);
+        CreateRerouteOnConnection((connection, location));
+    }
+
+    private void RemoveConnectionsForNode(NodeViewModel node)
+    {
+        if (node.Input.Count == 0 && node.Output.Count == 0)
+        {
+            return;
+        }
+
+        var connectors = new HashSet<ConnectorViewModel>();
+        foreach (var input in node.Input)
+        {
+            connectors.Add(input);
+        }
+
+        foreach (var output in node.Output)
+        {
+            connectors.Add(output);
+        }
+
+        var connectionsToRemove = Connections.Where(c =>
+            (c.Source != null && connectors.Contains(c.Source)) ||
+            (c.Target != null && connectors.Contains(c.Target))).ToList();
+
+        foreach (var conn in connectionsToRemove)
+        {
+            Connections.Remove(conn);
         }
     }
 
@@ -860,6 +973,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             return;
         }
 
+        NodeMenuSelectedIndex = option.MenuIndex;
         nodeSeed++;
         var newNode = CreateNode(option.Definition, NodeMenuGraphPosition.X, NodeMenuGraphPosition.Y);
         Nodes.Add(newNode);
@@ -910,9 +1024,21 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
 
         // Add nodes to flat list
+        int menuIndex = 0;
         foreach (var node in filteredNodes)
         {
+            node.MenuIndex = menuIndex;
             FilteredNodes.Add(node);
+            menuIndex++;
+        }
+
+        if (FilteredNodes.Count > 0)
+        {
+            NodeMenuSelectedIndex = Math.Clamp(NodeMenuSelectedIndex, 0, FilteredNodes.Count - 1);
+        }
+        else
+        {
+            NodeMenuSelectedIndex = -1;
         }
 
         // Group nodes by category for better organization

@@ -12,7 +12,6 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 {
     private Nodify.NodifyEditor? _editor;
     private bool _redirectNodeCreated = false;
-    private System.Windows.Point? _rightClickDownPosition;
     private System.Windows.Point? _variableDragStart;
     private readonly Dictionary<string, string> _literalPropertyCache = new();
 
@@ -231,6 +230,11 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 return;
             }
 
+            if (currentTab.IsNodeMenuOpen && IsSourceWithinNodeMenu(e.OriginalSource as DependencyObject))
+            {
+                return;
+            }
+
             if (sender is not Nodify.NodifyEditor editor)
             {
                 return;
@@ -319,6 +323,17 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
             var position = e.GetPosition(editor);
             var graphPosition = GetGraphPosition(editor, position);
+            var hitElement = editor.InputHitTest(position) as DependencyObject;
+
+            if (IsSourceWithinNodeMenu(hitElement))
+            {
+                return;
+            }
+
+            if (IsGraphElement(hitElement, editor))
+            {
+                return;
+            }
 
             // Open node menu at right-click position
             if (currentTab.OpenNodeMenuCommand.CanExecute((position, graphPosition)))
@@ -332,6 +347,199 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         {
             // Silently handle any errors
         }
+    }
+
+    private void OnRootPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab == null || !currentTab.IsNodeMenuOpen)
+        {
+            return;
+        }
+
+        if (IsSourceWithinNodeMenu(e.OriginalSource as DependencyObject))
+        {
+            return;
+        }
+
+        if (currentTab.CloseNodeMenuCommand.CanExecute(null))
+        {
+            currentTab.CloseNodeMenuCommand.Execute(null);
+        }
+    }
+
+    private void OnNodeSearchKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab == null || !currentTab.IsNodeMenuOpen)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Escape)
+        {
+            if (currentTab.CloseNodeMenuCommand.CanExecute(null))
+            {
+                currentTab.CloseNodeMenuCommand.Execute(null);
+                e.Handled = true;
+            }
+            return;
+        }
+
+        if (currentTab.FilteredNodes.Count == 0)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Up || e.Key == Key.Down)
+        {
+            int count = currentTab.FilteredNodes.Count;
+            int index = currentTab.NodeMenuSelectedIndex;
+            if (index < 0 || index >= count)
+            {
+                index = 0;
+            }
+
+            index = e.Key == Key.Up
+                ? (index - 1 + count) % count
+                : (index + 1) % count;
+
+            currentTab.NodeMenuSelectedIndex = index;
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key != Key.Enter)
+        {
+            return;
+        }
+
+        int selectedIndex = currentTab.NodeMenuSelectedIndex;
+        if (selectedIndex < 0 || selectedIndex >= currentTab.FilteredNodes.Count)
+        {
+            selectedIndex = 0;
+        }
+
+        var selected = currentTab.FilteredNodes[selectedIndex];
+        if (currentTab.SelectNodeFromMenuCommand.CanExecute(selected))
+        {
+            currentTab.SelectNodeFromMenuCommand.Execute(selected);
+            e.Handled = true;
+        }
+    }
+
+    private void OnNodePreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement element)
+        {
+            return;
+        }
+
+        if (element.DataContext is not NodeViewModel node)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab == null)
+        {
+            return;
+        }
+
+        currentTab.SelectedNode = node;
+    }
+
+    private bool IsSourceWithinNodeMenu(DependencyObject? source)
+    {
+        if (source == null)
+        {
+            return false;
+        }
+
+        var menuBorder = FindVisualChild<FrameworkElement>(this, "NodeMenuBorder");
+        if (menuBorder == null)
+        {
+            return false;
+        }
+
+        var current = source;
+        while (current != null)
+        {
+            if (current == menuBorder)
+            {
+                return true;
+            }
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
+    private static bool IsGraphElement(DependencyObject? source, Nodify.NodifyEditor editor)
+    {
+        if (source == null)
+        {
+            return false;
+        }
+
+        var current = source;
+        while (current != null && current != editor)
+        {
+            if (current is Nodify.Node ||
+                current is Nodify.Connection ||
+                current is Nodify.Connector)
+            {
+                return true;
+            }
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
+    private void OnNodeContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (sender is not FrameworkElement element || element.ContextMenu == null)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        element.ContextMenu.DataContext = editorViewModel.SelectedTab;
+    }
+
+    private void OnConnectionContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (sender is not FrameworkElement element || element.ContextMenu == null)
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        element.ContextMenu.DataContext = editorViewModel.SelectedTab;
     }
 
     private void FocusNodeSearchBox()
@@ -584,7 +792,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         }
 
         string cacheKey = BuildPropertyCacheKey(currentTab, propertyName);
-        if (_literalPropertyCache.TryGetValue(cacheKey, out string cachedValue))
+        if (_literalPropertyCache.TryGetValue(cacheKey, out string? cachedValue) && cachedValue != null)
         {
             currentTab.SelectedNode.SetProperty(propertyName, cachedValue);
         }

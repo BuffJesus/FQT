@@ -219,3 +219,29 @@ public class PropertyTypeToLabelConverter : IValueConverter
         throw new NotSupportedException("PropertyTypeToLabelConverter is one-way only.");
     }
 }
+
+/// <summary>
+/// Compares two integers and returns true if they are equal.
+/// </summary>
+public class IntEqualsConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length < 2)
+        {
+            return false;
+        }
+
+        if (values[0] is int left && values[1] is int right)
+        {
+            return left == right;
+        }
+
+        return false;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("IntEqualsConverter is one-way only.");
+    }
+}

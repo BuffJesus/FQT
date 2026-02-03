@@ -16,4 +16,5 @@ public sealed class NodeOption
     public string Icon { get; }
     public string Type { get; init; } = string.Empty;
     public NodeDefinition? Definition { get; init; }
+    public int MenuIndex { get; set; } = -1;
 }

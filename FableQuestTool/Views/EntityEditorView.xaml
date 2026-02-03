@@ -19,6 +19,7 @@
         <converters:PointToThicknessConverter x:Key="PointToThickness" />
         <converters:PropertyTypeToColorBrushConverter x:Key="PropertyTypeToColorBrush" />
         <converters:PropertyTypeToLabelConverter x:Key="PropertyTypeToLabel" />
+        <converters:IntEqualsConverter x:Key="IntEquals" />
 
         <!-- UE5 Blueprint Colors -->
         <SolidColorBrush x:Key="BlueprintGridColor" Color="#1A1F2E" />
@@ -120,7 +121,8 @@
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
-    <Grid Background="{DynamicResource BackgroundPrimary}">
+    <Grid Background="{DynamicResource BackgroundPrimary}"
+          PreviewMouseLeftButtonDown="OnRootPreviewMouseLeftButtonDown">
         <TabControl SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
                     Background="{DynamicResource BackgroundPrimary}"
                     BorderThickness="0">
@@ -578,7 +580,18 @@
                                                              Stroke="{Binding WireColor, Converter={StaticResource StringToColorBrush}}"
                                                              StrokeThickness="3"
                                                              SourceOffset="12,0"
-                                                             TargetOffset="12,0">
+                                                             TargetOffset="12,0"
+                                                             ContextMenuOpening="OnConnectionContextMenuOpening">
+                                                <nodify:Connection.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Insert Reroute"
+                                                                  Command="{Binding InsertRerouteOnConnectionFromContextCommand}"
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="Break Link"
+                                                                  Command="{Binding BreakConnectionCommand}"
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                    </ContextMenu>
+                                                </nodify:Connection.ContextMenu>
                                                 <nodify:Connection.Effect>
                                                     <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.3" Color="White" />
                                                 </nodify:Connection.Effect>
@@ -606,7 +619,29 @@
                                         <DataTemplate>
                                             <nodify:Node Input="{Binding Input}"
                                                        Output="{Binding Output}"
-                                                       Padding="0">
+                                                       Padding="0"
+                                                       PreviewMouseRightButtonDown="OnNodePreviewMouseRightButtonDown"
+                                                       ContextMenuOpening="OnNodeContextMenuOpening">
+                                                <nodify:Node.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Duplicate Node"
+                                                                  Command="{Binding DuplicateNodeFromContextCommand}"
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="Delete Node"
+                                                                  Command="{Binding DeleteNodeFromContextCommand}"
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="Break Links"
+                                                                  Command="{Binding BreakNodeLinksFromContextCommand}"
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <Separator />
+                                                        <MenuItem Header="Add Output Pin"
+                                                                  Command="{Binding AddOutputPinFromContextCommand}"
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="Remove Output Pin"
+                                                                  Command="{Binding RemoveOutputPinFromContextCommand}"
+                                                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                    </ContextMenu>
+                                                </nodify:Node.ContextMenu>
                                                 <!-- UE5-style Input Connector -->
                                                 <nodify:Node.InputConnectorTemplate>
                                                     <DataTemplate>
@@ -781,7 +816,8 @@
                                 </nodify:NodifyEditor>
 
                                 <!-- Node Creation Menu (UE5 Blueprint-style) -->
-                                <Border Background="{DynamicResource PanelBackground}"
+                                <Border x:Name="NodeMenuBorder"
+                                        Background="{DynamicResource PanelBackground}"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="4"
@@ -806,7 +842,8 @@
                                         <TextBox x:Name="NodeSearchTextBox"
                                                Text="{Binding NodeSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                Padding="6,4" Margin="0,0,0,8"
-                                               Tag="Search nodes..." />
+                                               Tag="Search nodes..."
+                                               KeyDown="OnNodeSearchKeyDown" />
 
                                         <!-- Quick Actions -->
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -849,6 +886,15 @@
                                                                                         <Trigger Property="IsMouseOver" Value="True">
                                                                                             <Setter Property="Background" Value="#2A3040" />
                                                                                         </Trigger>
+                                                                                        <DataTrigger Value="True">
+                                                                                            <DataTrigger.Binding>
+                                                                                                <MultiBinding Converter="{StaticResource IntEquals}">
+                                                                                                    <Binding Path="MenuIndex" />
+                                                                                                    <Binding Path="DataContext.NodeMenuSelectedIndex" ElementName="GroupedNodesControl" />
+                                                                                                </MultiBinding>
+                                                                                            </DataTrigger.Binding>
+                                                                                            <Setter Property="Background" Value="#3A4156" />
+                                                                                        </DataTrigger>
                                                                                     </Style.Triggers>
                                                                                 </Style>
                                                                             </Button.Style>

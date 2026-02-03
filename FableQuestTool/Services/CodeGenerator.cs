@@ -382,7 +382,7 @@ public sealed class CodeGenerator
             sb.AppendLine("    -- Configure quest card");
             if (quest.IsGuildQuest)
             {
-                sb.AppendLine($"    Quest:AddGuildQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\", false, false)");
+                sb.AppendLine($"    Quest:AddQuestCard(\"{quest.QuestCardObject}\", \"{quest.Name}\", false, false)");
             }
             else if (quest.GiveCardDirectly)
             {
@@ -461,13 +461,15 @@ public sealed class CodeGenerator
     {
         sb.AppendLine("function OnPersist(questObject, context)");
         sb.AppendLine("    Quest = questObject");
-        sb.AppendLine("    Quest:PersistTransferBool(context, \"QuestCompleted\")");
+        sb.AppendLine("    local QuestCompleted_value = Quest:GetStateBool(\"QuestCompleted\")");
+        sb.AppendLine("    QuestCompleted_value = Quest:PersistTransferBool(context, \"QuestCompleted\", QuestCompleted_value)");
+        sb.AppendLine("    Quest:SetStateBool(\"QuestCompleted\", QuestCompleted_value)");
 
         foreach (QuestState state in quest.States)
         {
             if (state.Persist)
             {
-                sb.AppendLine(RenderStatePersist(state));
+                sb.Append(RenderStatePersist(state));
             }
         }
 
@@ -688,7 +690,7 @@ public sealed class CodeGenerator
         sb.AppendLine("            -- Give rewards");
         if (quest.Rewards.Gold > 0)
         {
-            sb.AppendLine($"            Quest:GiveHeroGold(\"{quest.Rewards.Gold}\", 1)");
+            sb.AppendLine($"            Quest:GiveHeroGold({quest.Rewards.Gold})");
         }
         if (quest.Rewards.Experience > 0)
         {
@@ -938,7 +940,7 @@ public sealed class CodeGenerator
         // Give gold
         if (reward.Gold > 0)
         {
-            sb.AppendLine($"            Quest:GiveHeroGold(\"{reward.Gold}\", 1)");
+            sb.AppendLine($"            Quest:GiveHeroGold({reward.Gold})");
         }
 
         // Give experience
@@ -1067,7 +1069,7 @@ public sealed class CodeGenerator
         {
             "bool" => $"    Quest:SetStateBool(\"{state.Name}\", {value.ToLowerInvariant()})",
             "int" => $"    Quest:SetStateInt(\"{state.Name}\", {value})",
-            "float" => $"    Quest:SetStateFloat(\"{state.Name}\", {value})",
+            "float" => $"    Quest:SetStateString(\"{state.Name}\", \"{value}\")",
             "string" => $"    Quest:SetStateString(\"{state.Name}\", \"{value}\")",
             _ => $"    Quest:SetStateBool(\"{state.Name}\", false) -- Unknown type: {state.Type}"
         };
@@ -1077,11 +1079,21 @@ public sealed class CodeGenerator
     {
         return state.Type.ToLowerInvariant() switch
         {
-            "bool" => $"    Quest:PersistTransferBool(context, \"{state.Name}\")",
-            "int" => $"    Quest:PersistTransferInt(context, \"{state.Name}\")",
-            "float" => $"    Quest:PersistTransferFloat(context, \"{state.Name}\")",
-            "string" => $"    Quest:PersistTransferString(context, \"{state.Name}\")",
-            _ => $"    Quest:PersistTransferBool(context, \"{state.Name}\") -- Unknown type: {state.Type}"
+            "bool" => $"    local {state.Name}_value = Quest:GetStateBool(\"{state.Name}\")\n" +
+                      $"    {state.Name}_value = Quest:PersistTransferBool(context, \"{state.Name}\", {state.Name}_value)\n" +
+                      $"    Quest:SetStateBool(\"{state.Name}\", {state.Name}_value)\n",
+            "int" => $"    local {state.Name}_value = Quest:GetStateInt(\"{state.Name}\")\n" +
+                     $"    {state.Name}_value = Quest:PersistTransferInt(context, \"{state.Name}\", {state.Name}_value)\n" +
+                     $"    Quest:SetStateInt(\"{state.Name}\", {state.Name}_value)\n",
+            "float" => $"    local {state.Name}_value = Quest:GetStateString(\"{state.Name}\")\n" +
+                       $"    {state.Name}_value = Quest:PersistTransferString(context, \"{state.Name}\", {state.Name}_value)\n" +
+                       $"    Quest:SetStateString(\"{state.Name}\", {state.Name}_value)\n",
+            "string" => $"    local {state.Name}_value = Quest:GetStateString(\"{state.Name}\")\n" +
+                        $"    {state.Name}_value = Quest:PersistTransferString(context, \"{state.Name}\", {state.Name}_value)\n" +
+                        $"    Quest:SetStateString(\"{state.Name}\", {state.Name}_value)\n",
+            _ => $"    local {state.Name}_value = Quest:GetStateBool(\"{state.Name}\")\n" +
+                 $"    {state.Name}_value = Quest:PersistTransferBool(context, \"{state.Name}\", {state.Name}_value)\n" +
+                 $"    Quest:SetStateBool(\"{state.Name}\", {state.Name}_value)\n"
         };
     }
 
@@ -1392,6 +1404,16 @@ public sealed class CodeGenerator
     /// </summary>
     private string GenerateNodeCode(BehaviorNode node, QuestEntity entity, string questName, int indent)
     {
+        if (string.Equals(node.Type, "randomChoice", StringComparison.OrdinalIgnoreCase))
+        {
+            return GenerateRandomChoiceNode(node, entity, questName, indent);
+        }
+
+        if (string.Equals(node.Type, "parallel", StringComparison.OrdinalIgnoreCase))
+        {
+            return GenerateParallelNode(node, entity, questName, indent);
+        }
+
         var nodeDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == node.Type);
         if (nodeDef == null)
         {
@@ -1442,6 +1464,76 @@ public sealed class CodeGenerator
             sb.Append(GenerateStructuredNode(node, nodeDef, entity, questName, indent));
         }
 
+        return sb.ToString();
+    }
+
+    private string GenerateParallelNode(BehaviorNode node, QuestEntity entity, string questName, int indent)
+    {
+        var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
+        var childNodes = connections
+            .Select(c => entity.Nodes.FirstOrDefault(n => n.Id == c.ToNodeId))
+            .Where(n => n != null)
+            .Distinct()
+            .ToList();
+
+        if (childNodes.Count == 0)
+        {
+            return GenerateIndent(indent) + "-- Parallel has no connected children\n";
+        }
+
+        // Parallel execution is not supported in entity scripts; execute sequentially.
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine(GenerateIndent(indent) + "-- Parallel execution is not supported in entity scripts; running sequentially");
+
+        foreach (var child in childNodes)
+        {
+            sb.Append(GenerateNodeCode(child!, entity, questName, indent));
+        }
+
+        return sb.ToString();
+    }
+
+    private string GenerateRandomChoiceNode(BehaviorNode node, QuestEntity entity, string questName, int indent)
+    {
+        var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
+        var childNodes = connections
+            .Select(c => entity.Nodes.FirstOrDefault(n => n.Id == c.ToNodeId))
+            .Where(n => n != null)
+            .Distinct()
+            .ToList();
+
+        if (childNodes.Count == 0)
+        {
+            return GenerateIndent(indent) + "-- Random choice has no connected children\n";
+        }
+
+        // Order children by position for deterministic output
+        childNodes.Sort((a, b) =>
+        {
+            int xCompare = a!.X.CompareTo(b!.X);
+            return xCompare != 0 ? xCompare : a.Y.CompareTo(b!.Y);
+        });
+
+        int choiceCount = childNodes.Count;
+        if (node.Config.TryGetValue("maxChoice", out object? maxValue) &&
+            int.TryParse(maxValue?.ToString(), out int configuredMax) &&
+            configuredMax > 0)
+        {
+            choiceCount = Math.Min(choiceCount, configuredMax);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine(GenerateIndent(indent) + $"-- Random choice (1 to {choiceCount})");
+        sb.AppendLine(GenerateIndent(indent) + $"local randomChoice = math.random(1, {choiceCount})");
+
+        for (int i = 0; i < choiceCount; i++)
+        {
+            string keyword = i == 0 ? "if" : "elseif";
+            sb.AppendLine(GenerateIndent(indent) + $"{keyword} randomChoice == {i + 1} then");
+            sb.Append(GenerateNodeCode(childNodes[i]!, entity, questName, indent + 1));
+        }
+
+        sb.AppendLine(GenerateIndent(indent) + "end");
         return sb.ToString();
     }
 

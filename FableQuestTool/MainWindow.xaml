@@ -24,6 +24,9 @@
             <MenuItem Header="_Tools">
                 <MenuItem Header="_Manage Deployed Quests" Command="{Binding ManageQuestsCommand}" />
                 <Separator />
+                <MenuItem Header="_Validate Project" Command="{Binding ValidateProjectCommand}" />
+                <MenuItem Header="_Preview Generated Lua" Command="{Binding PreviewLuaCommand}" />
+                <Separator />
                 <MenuItem Header="_Browse Entities" Command="{Binding BrowseEntitiesCommand}" />
                 <MenuItem Header="_Export Entity Catalog" Command="{Binding ExportCatalogCommand}" />
                 <Separator />

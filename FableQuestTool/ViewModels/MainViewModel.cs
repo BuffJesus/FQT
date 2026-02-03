@@ -42,6 +42,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ExportService exportService;
     private readonly DeploymentService deploymentService;
     private readonly FableConfig fableConfig;
+    private readonly ProjectValidator projectValidator = new();
+    private QuestProject? trackedProject;
 
     [ObservableProperty]
     private QuestProject project = new();
@@ -182,6 +184,16 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        if (!ValidateQuestNameForFileOperations(Project.Name))
+        {
+            System.Windows.MessageBox.Show(
+                "Quest name is invalid for file operations. Please rename the quest before deleting.",
+                "Delete Quest",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
+            return;
+        }
+
         var result = System.Windows.MessageBox.Show(
             $"Are you sure you want to delete the quest '{Project.Name}'?\n\n" +
             "This will:\n" +
@@ -236,6 +248,11 @@ public sealed partial class MainViewModel : ObservableObject
         {
             // Save node graph data from all entity tabs back to entity models
             EntityEditorViewModel?.SaveAllTabs();
+
+            if (!ValidateProjectForDeployment())
+            {
+                return;
+            }
 
             if (deploymentService.DeployQuest(Project, out string message))
             {
@@ -393,5 +410,99 @@ public sealed partial class MainViewModel : ObservableObject
             System.Windows.MessageBoxImage.Warning);
 
         return result == System.Windows.MessageBoxResult.Yes;
+    }
+
+    partial void OnProjectChanged(QuestProject value)
+    {
+        if (trackedProject != null)
+        {
+            trackedProject.PropertyChanged -= Project_PropertyChanged;
+        }
+
+        trackedProject = value;
+        if (trackedProject != null)
+        {
+            trackedProject.PropertyChanged += Project_PropertyChanged;
+        }
+    }
+
+    private void Project_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        IsModified = true;
+    }
+
+    private bool ValidateProjectForDeployment()
+    {
+        var issues = projectValidator.Validate(Project);
+        var errors = issues.Where(i => i.Severity == ValidationSeverity.Error).ToList();
+        var warnings = issues.Where(i => i.Severity == ValidationSeverity.Warning).ToList();
+
+        if (errors.Count == 0)
+        {
+            if (warnings.Count > 0)
+            {
+                string warningText = "Warnings:\n\n" + string.Join("\n", warnings.Select(w => w.Message));
+                System.Windows.MessageBox.Show(warningText, "Validation Warnings", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+            return true;
+        }
+
+        string message = "Please fix the following before deploying:\n\n" + string.Join("\n", errors.Select(e => e.Message));
+        System.Windows.MessageBox.Show(message, "Invalid Quest Names", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        return false;
+    }
+
+    private static bool ValidateQuestNameForFileOperations(string questName)
+    {
+        var temp = new QuestProject { Name = questName };
+        var errors = NameValidation.ValidateProject(temp);
+        return errors.Count == 0;
+    }
+
+    [RelayCommand]
+    private void ValidateProject()
+    {
+        EntityEditorViewModel?.SaveAllTabs();
+
+        var issues = projectValidator.Validate(Project);
+        if (issues.Count == 0)
+        {
+            System.Windows.MessageBox.Show("No issues found.", "Validation", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            return;
+        }
+
+        var errorLines = issues.Where(i => i.Severity == ValidationSeverity.Error).Select(i => "ERROR: " + i.Message).ToList();
+        var warningLines = issues.Where(i => i.Severity == ValidationSeverity.Warning).Select(i => "WARN: " + i.Message).ToList();
+        var message = string.Join("\n", errorLines.Concat(warningLines));
+
+        System.Windows.MessageBox.Show(message, "Validation Results", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+    }
+
+    [RelayCommand]
+    private void PreviewLua()
+    {
+        EntityEditorViewModel?.SaveAllTabs();
+
+        var items = new System.Collections.ObjectModel.ObservableCollection<LuaPreviewItem>();
+        items.Add(new LuaPreviewItem("Quest", codeGenerator.GenerateQuestScript(Project)));
+
+        foreach (var entity in Project.Entities)
+        {
+            items.Add(new LuaPreviewItem($"Entity: {entity.ScriptName}", codeGenerator.GenerateEntityScript(Project, entity)));
+        }
+
+        if (codeGenerator.NeedsContainerEntityScript(Project))
+        {
+            var container = Project.Rewards.Container!;
+            items.Add(new LuaPreviewItem($"Entity: {container.ContainerScriptName}", codeGenerator.GenerateContainerEntityScript(Project, container)));
+        }
+
+        var view = new Views.LuaPreviewView
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+            DataContext = new LuaPreviewViewModel(items)
+        };
+
+        view.ShowDialog();
     }
 }

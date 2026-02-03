@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using FableQuestTool.Core;
 
 namespace FableQuestTool.Formats;
 
@@ -417,7 +418,7 @@ public sealed class QstFile
             sb.AppendLine($"AddQuest(\"{quest.Name}\", \t\t\t{enabledStr});");
         }
 
-        File.WriteAllText(path, sb.ToString());
+        FileWrite.WriteAllTextAtomic(path, sb.ToString());
     }
 }
 

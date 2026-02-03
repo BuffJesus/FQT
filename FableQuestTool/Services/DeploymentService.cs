@@ -1,4 +1,5 @@
 using FableQuestTool.Config;
+using FableQuestTool.Core;
 using FableQuestTool.Formats;
 using FableQuestTool.Models;
 using System;
@@ -78,6 +79,13 @@ public sealed class DeploymentService
     public bool DeployQuest(QuestProject quest, out string message)
     {
         message = string.Empty;
+
+        var nameErrors = NameValidation.ValidateProject(quest);
+        if (nameErrors.Count > 0)
+        {
+            message = "Quest contains invalid names:\n" + string.Join("\n", nameErrors);
+            return false;
+        }
 
         if (!config.EnsureFablePath())
         {
@@ -175,7 +183,7 @@ public sealed class DeploymentService
             // Create quests.lua if it doesn't exist
             if (!File.Exists(questsLuaPath))
             {
-                File.WriteAllText(questsLuaPath, "Quests = {}\n");
+                FileWrite.WriteAllTextAtomic(questsLuaPath, "Quests = {}\n", createBackup: false);
             }
 
             string content = File.ReadAllText(questsLuaPath);
@@ -239,7 +247,7 @@ public sealed class DeploymentService
                 }
             }
 
-            File.WriteAllText(questsLuaPath, content);
+            FileWrite.WriteAllTextAtomic(questsLuaPath, content);
             return true;
         }
         catch (Exception ex)
@@ -305,16 +313,15 @@ public sealed class DeploymentService
                 return true;
             }
 
-            // Find the Main function and add activation before the end
-            int mainFuncStart = content.IndexOf("function Main(quest)");
+            // Find the Main function and add activation before its matching "end"
+            int mainFuncStart = FindLuaFunctionStart(content, "Main");
             if (mainFuncStart == -1)
             {
                 error = "Could not find Main function in FSE_Master.lua";
                 return false;
             }
 
-            // Find the end of Main function
-            int mainFuncEnd = content.IndexOf("end", mainFuncStart);
+            int mainFuncEnd = FindLuaFunctionEnd(content, mainFuncStart);
             if (mainFuncEnd == -1)
             {
                 error = "Could not find end of Main function in FSE_Master.lua";
@@ -327,7 +334,7 @@ public sealed class DeploymentService
                                $"    quest:Log(\"FSE_Master: Activated {questName}\")\n";
 
             content = content.Insert(mainFuncEnd, activation);
-            File.WriteAllText(masterPath, content);
+            FileWrite.WriteAllTextAtomic(masterPath, content);
 
             return true;
         }
@@ -401,6 +408,13 @@ public sealed class DeploymentService
     {
         message = string.Empty;
 
+        var nameErrors = NameValidation.ValidateProject(new QuestProject { Name = questName });
+        if (nameErrors.Count > 0)
+        {
+            message = "Quest name is invalid for file operations.";
+            return false;
+        }
+
         if (!config.EnsureFablePath())
         {
             message = "Fable installation path not configured.";
@@ -464,7 +478,7 @@ public sealed class DeploymentService
 
                                     // Remove the entire quest entry
                                     content = content.Remove(startPos, endPos - startPos);
-                                    File.WriteAllText(questsLuaPath, content);
+                                    FileWrite.WriteAllTextAtomic(questsLuaPath, content);
                                     questsLuaUpdated = true;
                                     break;
                                 }
@@ -507,7 +521,7 @@ public sealed class DeploymentService
 
                     if (newContent != content)
                     {
-                        File.WriteAllText(masterPath, newContent);
+                        FileWrite.WriteAllTextAtomic(masterPath, newContent);
                         masterUpdated = true;
                     }
                 }
@@ -705,7 +719,7 @@ public sealed class DeploymentService
         {
             // Preserve original line ending style
             string lineEnding = content.Contains("\r\n") ? "\r\n" : "\n";
-            File.WriteAllText(filePath, string.Join(lineEnding, lines));
+            FileWrite.WriteAllTextAtomic(filePath, string.Join(lineEnding, lines));
         }
 
         return found;
@@ -771,7 +785,7 @@ public sealed class DeploymentService
         {
             // Preserve original line ending style
             string lineEnding = content.Contains("\r\n") ? "\r\n" : "\n";
-            File.WriteAllText(masterPath, string.Join(lineEnding, lines));
+            FileWrite.WriteAllTextAtomic(masterPath, string.Join(lineEnding, lines));
         }
 
         return found;
@@ -868,5 +882,104 @@ After installing FSE, try deploying your quest again.";
             message = $"Failed to launch FSE: {ex.Message}";
             return false;
         }
+    }
+
+    private static int FindLuaFunctionStart(string content, string functionName)
+    {
+        var match = Regex.Match(
+            content,
+            $@"function\s+{Regex.Escape(functionName)}\s*\(",
+            RegexOptions.IgnoreCase);
+
+        return match.Success ? match.Index : -1;
+    }
+
+    private static int FindLuaFunctionEnd(string content, int functionStart)
+    {
+        bool inString = false;
+        char stringChar = '\0';
+        bool inLineComment = false;
+        int depth = 0;
+
+        for (int i = functionStart; i < content.Length; i++)
+        {
+            char c = content[i];
+
+            if (inLineComment)
+            {
+                if (c == '\n')
+                {
+                    inLineComment = false;
+                }
+                continue;
+            }
+
+            if (inString)
+            {
+                if (c == '\\' && i + 1 < content.Length)
+                {
+                    i++;
+                    continue;
+                }
+
+                if (c == stringChar)
+                {
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (c == '-' && i + 1 < content.Length && content[i + 1] == '-')
+            {
+                inLineComment = true;
+                i++;
+                continue;
+            }
+
+            if (c == '"' || c == '\'')
+            {
+                inString = true;
+                stringChar = c;
+                continue;
+            }
+
+            if (IsWordAt(content, i, "function"))
+            {
+                depth++;
+                i += "function".Length - 1;
+                continue;
+            }
+
+            if (IsWordAt(content, i, "end"))
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    return i;
+                }
+                i += "end".Length - 1;
+            }
+        }
+
+        return -1;
+    }
+
+    private static bool IsWordAt(string content, int index, string word)
+    {
+        if (index < 0 || index + word.Length > content.Length)
+        {
+            return false;
+        }
+
+        if (!content.AsSpan(index, word.Length).Equals(word.AsSpan(), StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        bool beforeOk = index == 0 || !char.IsLetterOrDigit(content[index - 1]);
+        int end = index + word.Length;
+        bool afterOk = end >= content.Length || !char.IsLetterOrDigit(content[end]);
+
+        return beforeOk && afterOk;
     }
 }

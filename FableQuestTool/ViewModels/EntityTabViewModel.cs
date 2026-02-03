@@ -100,7 +100,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         AttachNodeHandlers();
         UpdateAvailableEvents();
         UpdateVariableUsageCounts();
-        LoadDropdownData(config);
+        LoadDropdownDataAsync(config);
         LoadAvailableRewardItems();
         SyncObjectRewardItemsFromEntity();
 
@@ -113,7 +113,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         };
     }
 
-    private void LoadDropdownData(FableConfig config)
+    private async void LoadDropdownDataAsync(FableConfig config)
     {
         try
         {
@@ -128,7 +128,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             System.Diagnostics.Debug.WriteLine($"EntityTabViewModel: Loading entities from {config.FablePath}");
 
             // Load all entities to populate dropdowns
-            allEntities = entityBrowserService.GetAllEntities();
+            allEntities = await System.Threading.Tasks.Task.Run(() => entityBrowserService.GetAllEntities());
 
             if (allEntities == null || allEntities.Count == 0)
             {

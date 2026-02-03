@@ -1,0 +1,102 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using FableQuestTool.Data;
+using FableQuestTool.Models;
+
+namespace FableQuestTool.Services;
+
+public enum ValidationSeverity
+{
+    Error,
+    Warning
+}
+
+public sealed record ValidationIssue(ValidationSeverity Severity, string Message);
+
+public sealed class ProjectValidator
+{
+    public List<ValidationIssue> Validate(QuestProject project)
+    {
+        var issues = new List<ValidationIssue>();
+
+        if (project == null)
+        {
+            issues.Add(new ValidationIssue(ValidationSeverity.Error, "Project is null."));
+            return issues;
+        }
+
+        foreach (var error in NameValidation.ValidateProject(project))
+        {
+            issues.Add(new ValidationIssue(ValidationSeverity.Error, error));
+        }
+
+        if (project.Id < 50000)
+        {
+            issues.Add(new ValidationIssue(ValidationSeverity.Warning, $"Quest ID {project.Id} is below 50000 and may conflict with base game quests."));
+        }
+
+        if (project.Regions.Count == 0)
+        {
+            issues.Add(new ValidationIssue(ValidationSeverity.Warning, "Quest has no regions configured."));
+        }
+
+        var knownNodeTypes = new HashSet<string>(NodeDefinitions.GetAllNodes().Select(n => n.Type), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entity in project.Entities)
+        {
+            if (entity == null)
+            {
+                continue;
+            }
+
+            if (entity.Nodes.Count == 0)
+            {
+                issues.Add(new ValidationIssue(ValidationSeverity.Warning, $"Entity '{entity.ScriptName}' has no behavior nodes."));
+                continue;
+            }
+
+            bool hasTrigger = entity.Nodes.Any(n => string.Equals(n.Category, "trigger", StringComparison.OrdinalIgnoreCase));
+            if (!hasTrigger)
+            {
+                issues.Add(new ValidationIssue(ValidationSeverity.Warning, $"Entity '{entity.ScriptName}' has no trigger nodes."));
+            }
+
+            var nodeIds = new HashSet<string>(entity.Nodes.Select(n => n.Id));
+
+            foreach (var node in entity.Nodes)
+            {
+                if (IsVariableNode(node.Type) || string.Equals(node.Type, "reroute", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!knownNodeTypes.Contains(node.Type))
+                {
+                    issues.Add(new ValidationIssue(ValidationSeverity.Error, $"Entity '{entity.ScriptName}' uses unknown node type '{node.Type}'."));
+                }
+
+                if (string.Equals(node.Type, "parallel", StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add(new ValidationIssue(ValidationSeverity.Warning, $"Entity '{entity.ScriptName}' uses Parallel; entity scripts run it sequentially."));
+                }
+            }
+
+            foreach (var connection in entity.Connections)
+            {
+                if (!nodeIds.Contains(connection.FromNodeId) || !nodeIds.Contains(connection.ToNodeId))
+                {
+                    issues.Add(new ValidationIssue(ValidationSeverity.Error, $"Entity '{entity.ScriptName}' has a connection to a missing node."));
+                }
+            }
+        }
+
+        return issues;
+    }
+
+    private static bool IsVariableNode(string type)
+    {
+        return type.StartsWith("var_get_", StringComparison.OrdinalIgnoreCase) ||
+               type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase);
+    }
+}

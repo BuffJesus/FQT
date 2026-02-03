@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -36,6 +37,7 @@ public sealed partial class EntityEditorViewModel : ObservableObject
         foreach (var entity in mainViewModel.Project.Entities)
         {
             var tab = new EntityTabViewModel(entity);
+            AttachDirtyTracking(tab);
             EntityTabs.Add(tab);
         }
 
@@ -62,6 +64,7 @@ public sealed partial class EntityEditorViewModel : ObservableObject
         mainViewModel.Project.Entities.Add(newEntity);
 
         var newTab = new EntityTabViewModel(newEntity);
+        AttachDirtyTracking(newTab);
         EntityTabs.Add(newTab);
 
         SelectedTabIndex = EntityTabs.Count - 1;
@@ -165,6 +168,7 @@ public sealed partial class EntityEditorViewModel : ObservableObject
         mainViewModel.Project.Entities.Add(duplicate);
 
         var newTab = new EntityTabViewModel(duplicate);
+        AttachDirtyTracking(newTab);
         EntityTabs.Add(newTab);
 
         SelectedTabIndex = EntityTabs.Count - 1;
@@ -203,5 +207,52 @@ public sealed partial class EntityEditorViewModel : ObservableObject
     partial void OnSelectedTabChanged(EntityTabViewModel? value)
     {
         // Could add logic here to save previous tab or perform cleanup
+    }
+
+    private void AttachDirtyTracking(EntityTabViewModel tab)
+    {
+        tab.Entity.PropertyChanged += (_, __) => MarkModified();
+
+        tab.Nodes.CollectionChanged += (_, e) =>
+        {
+            MarkModified();
+            HandleNodeCollectionChanged(e);
+        };
+
+        foreach (var node in tab.Nodes)
+        {
+            node.PropertyChanged += Node_PropertyChanged;
+        }
+
+        tab.Connections.CollectionChanged += (_, __) => MarkModified();
+
+        void HandleNodeCollectionChanged(NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems != null)
+            {
+                foreach (NodeViewModel node in e.NewItems)
+                {
+                    node.PropertyChanged += Node_PropertyChanged;
+                }
+            }
+
+            if (e.OldItems != null)
+            {
+                foreach (NodeViewModel node in e.OldItems)
+                {
+                    node.PropertyChanged -= Node_PropertyChanged;
+                }
+            }
+        }
+    }
+
+    private void Node_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        MarkModified();
+    }
+
+    private void MarkModified()
+    {
+        mainViewModel.IsModified = true;
     }
 }

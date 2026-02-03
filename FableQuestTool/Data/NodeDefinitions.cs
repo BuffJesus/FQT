@@ -5,7 +5,14 @@ namespace FableQuestTool.Data;
 
 public static class NodeDefinitions
 {
+    private static readonly List<NodeDefinition> AllNodesCache = BuildAllNodes();
+
     public static List<NodeDefinition> GetAllNodes()
+    {
+        return new List<NodeDefinition>(AllNodesCache);
+    }
+
+    private static List<NodeDefinition> BuildAllNodes()
     {
         List<NodeDefinition> nodes = new();
         nodes.AddRange(GetTriggerNodes());
@@ -126,7 +133,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "stateName", Type = "string", Label = "State Name", DefaultValue = "progress" },
                     new NodeProperty { Name = "value", Type = "float", Label = "Value", DefaultValue = "0.0" }
                 },
-                CodeTemplate = "if Quest:GetStateFloat(\"{stateName}\") == {value} then\n{CHILDREN}\nend" },
+                CodeTemplate = "if tonumber(Quest:GetStateString(\"{stateName}\")) == {value} then\n{CHILDREN}\nend" },
 
             new() { Type = "onStateChangeString", Label = "When State Changes (String)", Category = "trigger", Icon = "🔄", IsAdvanced = true,
                 Description = "Triggered when a string state variable reaches a specific value",
@@ -165,7 +172,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "item", Type = "string", Label = "Item (optional)", DefaultValue = "", Options = new List<string>(GameData.Objects) },
                     new NodeProperty { Name = "amount", Type = "int", Label = "Item Amount", DefaultValue = "1" }
                 },
-                CodeTemplate = "if {gold} > 0 then Quest:GiveHeroGold(\"{gold}\", 1) end\nlocal itemToGive = \"{item}\"\nif itemToGive ~= \"\" and itemToGive ~= nil then Quest:GiveHeroObject(\"{item}\", {amount}) end\n{CHILDREN}" },
+                CodeTemplate = "if {gold} > 0 then Quest:GiveHeroGold({gold}) end\nlocal itemToGive = \"{item}\"\nif itemToGive ~= \"\" and itemToGive ~= nil then Quest:GiveHeroObject(\"{item}\", {amount}) end\n{CHILDREN}" },
 
             new() { Type = "giveItem", Label = "Give Item", Category = "action", Icon = "🎁", IsAdvanced = false,
                 Description = "Give specific item(s) to hero",
@@ -212,7 +219,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "name", Type = "string", Label = "Variable Name", DefaultValue = "progress" },
                     new NodeProperty { Name = "value", Type = "float", Label = "Value", DefaultValue = "0.0" }
                 },
-                CodeTemplate = "Quest:SetStateFloat(\"{name}\", {value})\n{CHILDREN}" },
+                CodeTemplate = "Quest:SetStateString(\"{name}\", tostring({value}))\n{CHILDREN}" },
 
             new() { Type = "setStateString", Label = "Set State (String)", Category = "action", Icon = "💾", IsAdvanced = true,
                 Description = "Set a string quest state variable",
@@ -445,9 +452,11 @@ public static class NodeDefinitions
                 CodeTemplate = "Me:FollowThing(hero, {distance}, true)\n{CHILDREN}" },
 
             new() { Type = "stopFollowing", Label = "Stop Following", Category = "action", Icon = "🛑", IsAdvanced = false,
-                Description = "Stop following the hero",
-                Properties = new(),
-                CodeTemplate = "Me:StopFollowing()\n{CHILDREN}" },
+                Description = "Stop following a target entity",
+                Properties = new() {
+                    new NodeProperty { Name = "target", Type = "string", Label = "Target Script Name", DefaultValue = "Hero" }
+                },
+                CodeTemplate = "local followTarget = \"{target}\"\nlocal followThing = nil\nif followTarget == \"Hero\" then\n    followThing = Quest:GetHero()\nelse\n    followThing = Quest:GetThingWithScriptName(followTarget)\nend\nif followThing ~= nil then\n    Me:StopFollowingThing(followThing)\nend\n{CHILDREN}" },
 
             new() { Type = "sheatheWeapons", Label = "Sheathe Weapons", Category = "action", Icon = "🔒🗡️", IsAdvanced = true,
                 Description = "Put weapons away",
@@ -585,7 +594,7 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "progress" },
                     new NodeProperty { Name = "value", Type = "float", Label = "Expected Value", DefaultValue = "0.0" }
                 },
-                CodeTemplate = "if Quest:GetStateFloat(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
+                CodeTemplate = "if tonumber(Quest:GetStateString(\"{name}\")) == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
 
             new() { Type = "checkStateString", Label = "Check State (String)", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
                 Description = "Check if string state variable equals value",
@@ -667,7 +676,7 @@ public static class NodeDefinitions
                 CodeTemplate = "{CHILDREN}" },
             
             new() { Type = "parallel", Label = "Parallel", Category = "flow", Icon = "⫼", IsAdvanced = true,
-                Description = "Execute children simultaneously via threads",
+                Description = "Execute children in parallel (falls back to sequential in entity scripts)",
                 Properties = new(),
                 CodeTemplate = "-- Parallel execution\n{CHILDREN}" },
             

@@ -15,7 +15,7 @@ namespace FableQuestTool.Models;
 /// Supported types:
 /// - "bool": True/false values (default: false)
 /// - "int": Integer numbers (default: 0)
-/// - "float": Decimal numbers (default: 0.0)
+/// - "float": Decimal numbers (default: 0.0) stored as string due to FSE API limitations
 /// - "string": Text values (default: "")
 /// </remarks>
 /// <example>

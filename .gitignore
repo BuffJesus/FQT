@@ -137,3 +137,7 @@ Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
+
+# FSE files for local development/testing (not included in public repo)
+FSE_Source/
+FableQuestTool/FSE_Binaries/

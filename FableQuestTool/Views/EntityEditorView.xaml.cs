@@ -480,6 +480,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
         // Update node property and trigger title update
         currentTab.SelectedNode.SetProperty(propertyName, textBox.Text);
+        CacheLiteralIfPresent(currentTab, propertyName);
     }
 
     private void OnPropertyBindToggleLoaded(object sender, RoutedEventArgs e)
@@ -540,9 +541,15 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
         CacheLiteralIfPresent(currentTab, propertyName);
 
-        var variable = currentTab.Variables.FirstOrDefault();
+        var propertyDefinition = currentTab.SelectedNode.Definition?.Properties
+            .FirstOrDefault(p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
+        string? expectedType = propertyDefinition?.Type;
+
+        var variable = currentTab.Variables
+            .FirstOrDefault(v => IsVariableTypeCompatible(v.Type, expectedType));
         if (variable == null)
         {
+            checkBox.IsChecked = false;
             return;
         }
 
@@ -622,6 +629,24 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         var compatible = currentTab.Variables
             .Where(v => IsVariableTypeCompatible(v.Type, expectedType))
             .ToList();
+
+        if (currentTab.SelectedNode.Properties.TryGetValue(propertyName, out var existingValue) &&
+            existingValue is string existingStr &&
+            existingStr.StartsWith("$", StringComparison.Ordinal))
+        {
+            string boundName = existingStr.Substring(1);
+            var boundVariable = currentTab.Variables.FirstOrDefault(v =>
+                v.Name.Equals(boundName, StringComparison.OrdinalIgnoreCase));
+            if (boundVariable != null && !compatible.Contains(boundVariable))
+            {
+                compatible.Add(boundVariable);
+            }
+        }
+
+        if (compatible.Count == 0)
+        {
+            compatible = currentTab.Variables.ToList();
+        }
 
         comboBox.ItemsSource = compatible;
 

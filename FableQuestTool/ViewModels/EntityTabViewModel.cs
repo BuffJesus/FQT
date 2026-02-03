@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -91,9 +91,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         LoadNodePalette();
         LoadVariablesFromEntity();
         UpdateVariableNodes();
-        UpdateVariableUsageCounts();
-LoadExistingNodes();
+        LoadExistingNodes();
         AttachNodeHandlers();
+        UpdateAvailableEvents();
         UpdateVariableUsageCounts();
         LoadDropdownData(config);
         LoadAvailableRewardItems();
@@ -894,21 +894,6 @@ LoadExistingNodes();
 
         var allNodes = SimpleNodes.Concat(AdvancedNodes).ToList();
 
-        // Add variable Get/Set nodes
-        foreach (var variable in Variables)
-        {
-            allNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "📥")
-            {
-                Type = $"var_get_{variable.Name}",
-                Definition = CreateGetVariableDefinition(variable)
-            });
-            allNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "📤")
-            {
-                Type = $"var_set_{variable.Name}",
-                Definition = CreateSetVariableDefinition(variable)
-            });
-        }
-
         IEnumerable<NodeOption> filteredNodes;
 
         if (string.IsNullOrWhiteSpace(NodeSearchText))
@@ -993,7 +978,7 @@ LoadExistingNodes();
             Id = Guid.NewGuid().ToString(),
             Title = "",  // No title for reroute nodes
             Category = "flow",
-            Icon = "◆",  // Diamond icon
+            Icon = "â—†",  // Diamond icon
             Type = "reroute",
             IsRerouteNode = true,
             IsRedirectionNode = true,  // Keep for backwards compatibility
@@ -1064,7 +1049,7 @@ LoadExistingNodes();
             Id = Guid.NewGuid().ToString(),
             Title = "",
             Category = "flow",
-            Icon = "◆",
+            Icon = "â—†",
             Type = "reroute",
             IsRerouteNode = true,
             IsRedirectionNode = true,
@@ -1132,7 +1117,7 @@ LoadExistingNodes();
             Id = Guid.NewGuid().ToString(),
             Title = "",
             Category = "flow",
-            Icon = "◆",
+            Icon = "â—†",
             Type = "reroute",
             IsRerouteNode = true,
             IsRedirectionNode = true,
@@ -1208,8 +1193,7 @@ LoadExistingNodes();
         // Update the node palette to include the new variable nodes
         UpdateVariableNodes();
         UpdateVariableUsageCounts();
-        UpdateVariableUsageCounts();
-}
+    }
 
     /// <summary>
     /// Remove a variable from the entity
@@ -1225,8 +1209,7 @@ LoadExistingNodes();
         Variables.Remove(variable);
         UpdateVariableNodes();
         UpdateVariableUsageCounts();
-        UpdateVariableUsageCounts();
-}
+    }
 
     private static string GetDefaultValueForType(string type)
     {
@@ -1252,13 +1235,13 @@ LoadExistingNodes();
         // Add Get/Set nodes for each variable
         foreach (var variable in Variables)
         {
-            SimpleNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "📥")
+            SimpleNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "ðŸ“¥")
             {
                 Type = $"var_get_{variable.Name}",
                 Definition = CreateGetVariableDefinition(variable)
             });
 
-            SimpleNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "📤")
+            SimpleNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "ðŸ“¤")
             {
                 Type = $"var_set_{variable.Name}",
                 Definition = CreateSetVariableDefinition(variable)
@@ -1412,7 +1395,7 @@ LoadExistingNodes();
             Type = $"var_get_{variable.Name}",
             Label = $"Get {variable.Name}",
             Category = "variable",
-            Icon = "📥",
+            Icon = "ðŸ“¥",
             IsAdvanced = false,
             Description = $"Gets the value of variable '{variable.Name}'",
             Properties = new List<NodeProperty>(),
@@ -1432,7 +1415,7 @@ LoadExistingNodes();
             Type = $"var_set_{variable.Name}",
             Label = $"Set {variable.Name}",
             Category = "variable",
-            Icon = "📤",
+            Icon = "ðŸ“¤",
             IsAdvanced = false,
             Description = $"Sets the value of variable '{variable.Name}'",
             Properties = new List<NodeProperty>
@@ -1515,11 +1498,11 @@ LoadExistingNodes();
     {
         return type switch
         {
-            EntityType.Creature => "👤",
-            EntityType.Object => "📦",
-            EntityType.Effect => "✨",
-            EntityType.Light => "💡",
-            _ => "❓"
+            EntityType.Creature => "ðŸ‘¤",
+            EntityType.Object => "ðŸ“¦",
+            EntityType.Effect => "âœ¨",
+            EntityType.Light => "ðŸ’¡",
+            _ => "â“"
         };
     }
 
@@ -1760,5 +1743,6 @@ LoadExistingNodes();
         }
     }
 }
+
 
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -71,6 +72,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     private string newVariableType = "String";
 
     private int nodeSeed = 0;
+    private readonly Dictionary<string, int> variableUsageIndices = new(StringComparer.OrdinalIgnoreCase);
 
     public EntityTabViewModel(QuestEntity entity)
     {
@@ -1266,6 +1268,7 @@ LoadExistingNodes();
 
     private void UpdateVariableUsageCounts()
     {
+        variableUsageIndices.Clear();
         foreach (var variable in Variables)
         {
             variable.UsageCount = 0;
@@ -1304,6 +1307,36 @@ LoadExistingNodes();
                 }
             }
         }
+    }
+
+    [RelayCommand]
+    private void FindVariableUsage(VariableDefinition? variable)
+    {
+        if (variable == null)
+        {
+            return;
+        }
+
+        var matchingNodes = Nodes
+            .Where(n => n.Properties.Values
+                .OfType<string>()
+                .Any(v => v.StartsWith("$", StringComparison.Ordinal) &&
+                          v.Substring(1).Equals(variable.Name, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        if (matchingNodes.Count == 0)
+        {
+            return;
+        }
+
+        int index = 0;
+        if (variableUsageIndices.TryGetValue(variable.Name, out int currentIndex))
+        {
+            index = (currentIndex + 1) % matchingNodes.Count;
+        }
+
+        variableUsageIndices[variable.Name] = index;
+        SelectedNode = matchingNodes[index];
     }
 
     private void LoadVariablesFromEntity()

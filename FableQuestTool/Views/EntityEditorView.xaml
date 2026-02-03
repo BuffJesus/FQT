@@ -486,16 +486,26 @@
                                                                          VerticalAlignment="Center" FontSize="11" />
 
                                                                 <!-- Usage count -->
-                                                                <Border Grid.Column="2"
+                                                                <Button Grid.Column="2"
                                                                       Background="#2A3040"
-                                                                      CornerRadius="2"
+                                                                      BorderThickness="0"
                                                                       Padding="4,1"
                                                                       Margin="6,0,0,0"
-                                                                      VerticalAlignment="Center">
+                                                                      VerticalAlignment="Center"
+                                                                      Command="{Binding DataContext.FindVariableUsageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                      CommandParameter="{Binding}"
+                                                                      ToolTip="Jump to next usage">
+                                                                    <Button.Template>
+                                                                        <ControlTemplate TargetType="Button">
+                                                                            <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                            </Border>
+                                                                        </ControlTemplate>
+                                                                    </Button.Template>
                                                                     <TextBlock Text="{Binding UsageCount}"
                                                                              FontSize="9"
                                                                              Foreground="#AAB8C2" />
-                                                                </Border>
+                                                                </Button>
 
                                                                 <!-- Delete button -->
                                                                 <Button Grid.Column="3" Content="x"

@@ -489,21 +489,25 @@ public sealed class DeploymentService
             }
 
             // Remove from FinalAlbion.qst
-            string qstPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion.qst");
-            if (File.Exists(qstPath))
+            string? fablePath = config.FablePath;
+            if (!string.IsNullOrWhiteSpace(fablePath))
             {
-                try
+                string qstPath = Path.Combine(fablePath, "data", "Levels", "FinalAlbion.qst");
+                if (File.Exists(qstPath))
                 {
-                    QstFile qstFile = QstFile.Load(qstPath);
-                    if (qstFile.RemoveQuest(questName))
+                    try
                     {
-                        qstFile.Save();
-                        qstFileUpdated = true;
+                        QstFile qstFile = QstFile.Load(qstPath);
+                        if (qstFile.RemoveQuest(questName))
+                        {
+                            qstFile.Save();
+                            qstFileUpdated = true;
+                        }
                     }
-                }
-                catch
-                {
-                    // If QST removal fails, continue anyway
+                    catch
+                    {
+                        // If QST removal fails, continue anyway
+                    }
                 }
             }
 

@@ -9,7 +9,8 @@ namespace FableQuestTool.Models;
 /// without starting from scratch.
 /// </summary>
 /// <remarks>
-/// Templates are stored in the Templates directory and loaded by TemplateService.
+/// Templates are provided by TemplateService from built-in defaults and optional
+/// files stored in the Templates directory next to the app or working directory.
 /// Users can create their own templates by saving existing quests as templates.
 ///
 /// Common template categories:

@@ -450,7 +450,41 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
                 Nodes.Add(nodeVm);
             }
+            else if (node.Type == "reroute")
+            {
+                var rerouteNode = new NodeViewModel
+                {
+                    Id = node.Id,
+                    Title = string.Empty,
+                    Category = "flow",
+                    Icon = "◇",
+                    Type = "reroute",
+                    IsRerouteNode = true,
+                    IsRedirectionNode = true,
+                    Location = new System.Windows.Point(node.X, node.Y)
+                };
+
+                rerouteNode.Input.Clear();
+                rerouteNode.Output.Clear();
+
+                rerouteNode.Input.Add(new ConnectorViewModel
+                {
+                    Title = string.Empty,
+                    ConnectorType = ConnectorType.Exec,
+                    IsInput = true
+                });
+                rerouteNode.Output.Add(new ConnectorViewModel
+                {
+                    Title = string.Empty,
+                    ConnectorType = ConnectorType.Exec,
+                    IsInput = false
+                });
+
+                Nodes.Add(rerouteNode);
+            }
         }
+
+        EnsureFlowOutputConnectors();
 
         // Load connections from entity model
         foreach (var conn in entity.Connections)
@@ -551,6 +585,125 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    private void EnsureFlowOutputConnectors()
+    {
+        var flowNodes = Nodes.Where(n => n.Category == "flow").ToList();
+        if (flowNodes.Count == 0)
+        {
+            return;
+        }
+
+        var connectionsBySource = entity.Connections
+            .GroupBy(c => c.FromNodeId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var sourceNode in flowNodes)
+        {
+            if (!connectionsBySource.TryGetValue(sourceNode.Id, out var sourceConnections))
+            {
+                // Ensure a single default output pin exists
+                if (sourceNode.Output.Count == 0)
+                {
+                    sourceNode.Output.Add(new ConnectorViewModel
+                    {
+                        Title = "▶",
+                        ConnectorType = ConnectorType.Exec,
+                        IsInput = false
+                    });
+                }
+
+                // Remove extra unused outputs
+                while (sourceNode.Output.Count > 1)
+                {
+                    sourceNode.Output.RemoveAt(sourceNode.Output.Count - 1);
+                }
+
+                continue;
+            }
+
+            var requiredPorts = sourceConnections
+                .Select(c => c.FromPort)
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (requiredPorts.Count == 0)
+            {
+                if (sourceNode.Output.Count == 0)
+                {
+                    sourceNode.Output.Add(new ConnectorViewModel
+                    {
+                        Title = "▶",
+                        ConnectorType = ConnectorType.Exec,
+                        IsInput = false
+                    });
+                }
+
+                while (sourceNode.Output.Count > 1)
+                {
+                    sourceNode.Output.RemoveAt(sourceNode.Output.Count - 1);
+                }
+
+                continue;
+            }
+
+            // Dedupe existing outputs by title, keep the first instance.
+            var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = sourceNode.Output.Count - 1; i >= 0; i--)
+            {
+                var title = sourceNode.Output[i].Title ?? string.Empty;
+                if (existing.Contains(title))
+                {
+                    sourceNode.Output.RemoveAt(i);
+                }
+                else
+                {
+                    existing.Add(title);
+                }
+            }
+
+            // Add any missing ports from saved connections.
+            foreach (var port in requiredPorts)
+            {
+                bool exists = sourceNode.Output.Any(o =>
+                    string.Equals(o.Title, port, StringComparison.OrdinalIgnoreCase));
+
+                if (!exists)
+                {
+                    sourceNode.Output.Add(new ConnectorViewModel
+                    {
+                        Title = port,
+                        ConnectorType = ConnectorType.Exec,
+                        IsInput = false
+                    });
+                }
+            }
+
+            // Remove outputs that are no longer referenced.
+            for (int i = sourceNode.Output.Count - 1; i >= 0; i--)
+            {
+                var title = sourceNode.Output[i].Title ?? string.Empty;
+                if (!requiredPorts.Contains(title, StringComparer.OrdinalIgnoreCase))
+                {
+                    sourceNode.Output.RemoveAt(i);
+                }
+            }
+
+            // Order outputs to match connection port order.
+            var ordered = requiredPorts
+                .Select(port => sourceNode.Output.FirstOrDefault(o =>
+                    string.Equals(o.Title, port, StringComparison.OrdinalIgnoreCase)))
+                .Where(o => o != null)
+                .ToList();
+
+            sourceNode.Output.Clear();
+            foreach (var output in ordered)
+            {
+                sourceNode.Output.Add(output!);
+            }
+        }
+    }
+
     private void AttachNodeHandlers()
     {
         foreach (var node in Nodes)
@@ -584,6 +737,10 @@ public sealed partial class EntityTabViewModel : ObservableObject
         if (e.PropertyName == nameof(NodeViewModel.Properties))
         {
             UpdateVariableUsageCounts();
+        }
+        else if (e.PropertyName == nameof(NodeViewModel.Location) && sender is NodeViewModel node)
+        {
+            UpdateReroutePositionsForNode(node);
         }
     }
 
@@ -815,6 +972,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
 
         Connections.Remove(connection);
+        UpdateReroutePositionsForConnection(connection);
     }
 
     [RelayCommand]
@@ -856,7 +1014,96 @@ public sealed partial class EntityTabViewModel : ObservableObject
         foreach (var conn in connectionsToRemove)
         {
             Connections.Remove(conn);
+            UpdateReroutePositionsForConnection(conn);
         }
+    }
+
+    private bool isUpdatingReroutePositions;
+
+    private void UpdateReroutePositionsForNode(NodeViewModel movedNode)
+    {
+        if (isUpdatingReroutePositions)
+        {
+            return;
+        }
+
+        var connectedReroutes = new HashSet<NodeViewModel>();
+        foreach (var conn in Connections)
+        {
+            var sourceNode = GetNodeForConnector(conn.Source, isOutput: true);
+            var targetNode = GetNodeForConnector(conn.Target, isOutput: false);
+
+            if (sourceNode == movedNode && targetNode?.IsRerouteNode == true)
+            {
+                connectedReroutes.Add(targetNode);
+            }
+            else if (targetNode == movedNode && sourceNode?.IsRerouteNode == true)
+            {
+                connectedReroutes.Add(sourceNode);
+            }
+        }
+
+        foreach (var reroute in connectedReroutes)
+        {
+            UpdateReroutePosition(reroute);
+        }
+    }
+
+    private void UpdateReroutePositionsForConnection(ConnectionViewModel connection)
+    {
+        var sourceNode = GetNodeForConnector(connection.Source, isOutput: true);
+        var targetNode = GetNodeForConnector(connection.Target, isOutput: false);
+
+        if (sourceNode?.IsRerouteNode == true)
+        {
+            UpdateReroutePosition(sourceNode);
+        }
+        if (targetNode?.IsRerouteNode == true)
+        {
+            UpdateReroutePosition(targetNode);
+        }
+    }
+
+    private void UpdateReroutePosition(NodeViewModel rerouteNode)
+    {
+        if (!rerouteNode.IsRerouteNode || isUpdatingReroutePositions)
+        {
+            return;
+        }
+
+        var rerouteInput = rerouteNode.Input.FirstOrDefault();
+        var rerouteOutput = rerouteNode.Output.FirstOrDefault();
+        if (rerouteInput == null || rerouteOutput == null)
+        {
+            return;
+        }
+
+        var incoming = Connections.FirstOrDefault(c => c.Target == rerouteInput);
+        var outgoing = Connections.FirstOrDefault(c => c.Source == rerouteOutput);
+        if (incoming?.Source == null || outgoing?.Target == null)
+        {
+            return;
+        }
+
+        var from = incoming.Source.Anchor;
+        var to = outgoing.Target.Anchor;
+        var mid = new System.Windows.Point((from.X + to.X) / 2.0, (from.Y + to.Y) / 2.0);
+
+        isUpdatingReroutePositions = true;
+        rerouteNode.Location = mid;
+        isUpdatingReroutePositions = false;
+    }
+
+    private NodeViewModel? GetNodeForConnector(ConnectorViewModel? connector, bool isOutput)
+    {
+        if (connector == null)
+        {
+            return null;
+        }
+
+        return isOutput
+            ? Nodes.FirstOrDefault(n => n.Output.Contains(connector))
+            : Nodes.FirstOrDefault(n => n.Input.Contains(connector));
     }
 
     [RelayCommand]
@@ -901,8 +1148,29 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 return;
             }
 
+            var sourceConnector = PendingConnection.Source;
+
+            // Enforce output -> input only; swap if started from input.
+            if (sourceConnector.IsInput && !targetConnector.IsInput)
+            {
+                (sourceConnector, targetConnector) = (targetConnector, sourceConnector);
+            }
+            else if (sourceConnector.IsInput == targetConnector.IsInput)
+            {
+                PendingConnection = null;
+                return;
+            }
+
+            // Ensure only one connection per input connector.
+            var existingToTarget = Connections.Where(c => c.Target == targetConnector).ToList();
+            foreach (var conn in existingToTarget)
+            {
+                Connections.Remove(conn);
+                UpdateReroutePositionsForConnection(conn);
+            }
+
             var existingConnection = Connections.FirstOrDefault(c =>
-                c.Source == PendingConnection.Source && c.Target == targetConnector);
+                c.Source == sourceConnector && c.Target == targetConnector);
             if (existingConnection != null)
             {
                 PendingConnection = null;
@@ -911,11 +1179,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
             var connection = new ConnectionViewModel
             {
-                Source = PendingConnection.Source,
+                Source = sourceConnector,
                 Target = targetConnector
             };
 
             Connections.Add(connection);
+            UpdateReroutePositionsForConnection(connection);
             PendingConnection = null;
         }
         catch
@@ -938,6 +1207,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         foreach (var conn in connectionsToRemove)
         {
             Connections.Remove(conn);
+            UpdateReroutePositionsForConnection(conn);
         }
     }
 

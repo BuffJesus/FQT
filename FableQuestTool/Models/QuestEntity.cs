@@ -200,6 +200,13 @@ public sealed partial class QuestEntity : ObservableObject
     public List<BehaviorNode> Nodes { get; set; } = new();
 
     /// <summary>
+    /// Collection of variables scoped to this entity's script.
+    /// These are emitted as local Lua variables in the generated entity script.
+    /// </summary>
+    [JsonPropertyName("Variables")]
+    public ObservableCollection<EntityVariable> Variables { get; set; } = new();
+
+    /// <summary>
     /// Collection of connections between behavior nodes.
     /// Defines the execution flow of the entity's behavior script.
     /// </summary>

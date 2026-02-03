@@ -162,6 +162,7 @@ public sealed class CodeGenerator
         sb.AppendLine("    Me = meObject");
         sb.AppendLine($"    Quest:Log(\"{entity.ScriptName}: Main started\")");
         sb.AppendLine("    local hero = Quest:GetHero()");
+        AppendEntityVariableDeclarations(sb, entity, 1);
 
         // Entity properties
         if (entity.Invulnerable)
@@ -1208,9 +1209,181 @@ public sealed class CodeGenerator
         return sb.ToString();
     }
 
+    private void AppendEntityVariableDeclarations(StringBuilder sb, QuestEntity entity, int indent)
+    {
+        if (entity.Variables == null || entity.Variables.Count == 0)
+        {
+            return;
+        }
+
+        sb.AppendLine();
+        sb.AppendLine($"{GenerateIndent(indent)}-- Entity-local variables");
+
+        foreach (var variable in entity.Variables)
+        {
+            string luaName = BuildLuaVariableName(variable.Name);
+            string defaultValue = FormatLuaLiteral(variable.Type, variable.DefaultValue);
+            sb.AppendLine($"{GenerateIndent(indent)}local {luaName} = {defaultValue}");
+        }
+
+        sb.AppendLine();
+    }
+
+    private NodeDefinition? TryBuildVariableNodeDefinition(BehaviorNode node, QuestEntity entity)
+    {
+        const string getPrefix = "var_get_";
+        const string setPrefix = "var_set_";
+
+        if (!node.Type.StartsWith(getPrefix, StringComparison.OrdinalIgnoreCase) &&
+            !node.Type.StartsWith(setPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        string variableName = node.Type.StartsWith(getPrefix, StringComparison.OrdinalIgnoreCase)
+            ? node.Type.Substring(getPrefix.Length)
+            : node.Type.Substring(setPrefix.Length);
+
+        var variable = entity.Variables.FirstOrDefault(v =>
+            v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+
+        string variableType = variable?.Type ?? "String";
+        string luaName = BuildLuaVariableName(variableName);
+        string nodeType = MapVariableTypeToNodeType(variableType);
+
+        if (node.Type.StartsWith(getPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return new NodeDefinition
+            {
+                Type = node.Type,
+                Label = $"Get {variableName}",
+                Category = "variable",
+                Icon = "📥",
+                IsAdvanced = false,
+                Description = $"Gets the value of variable '{variableName}'",
+                Properties = new List<NodeProperty>(),
+                CodeTemplate = $"local {luaName}_value = {luaName}\n{{CHILDREN}}"
+            };
+        }
+
+        bool isString = nodeType == "string";
+        string valueTemplate = isString ? "\"{value}\"" : "{value}";
+
+        return new NodeDefinition
+        {
+            Type = node.Type,
+            Label = $"Set {variableName}",
+            Category = "variable",
+            Icon = "📤",
+            IsAdvanced = false,
+            Description = $"Sets the value of variable '{variableName}'",
+            Properties = new List<NodeProperty>
+            {
+                new() { Name = "value", Type = nodeType, Label = "Value", DefaultValue = variable?.DefaultValue ?? string.Empty }
+            },
+            CodeTemplate = $"{luaName} = {valueTemplate}\n{{CHILDREN}}"
+        };
+    }
+
+    private static string MapVariableTypeToNodeType(string variableType)
+    {
+        return variableType switch
+        {
+            "Boolean" => "bool",
+            "Integer" => "int",
+            "Float" => "float",
+            "String" => "string",
+            _ => "string"
+        };
+    }
+
+    private static string BuildLuaVariableName(string variableName)
+    {
+        if (string.IsNullOrWhiteSpace(variableName))
+        {
+            return "var_unnamed";
+        }
+
+        var chars = variableName.Select(c =>
+        {
+            if (c <= 127 && (char.IsLetterOrDigit(c) || c == '_'))
+            {
+                return c;
+            }
+
+            return '_';
+        }).ToArray();
+
+        string normalized = new string(chars);
+        if (char.IsDigit(normalized[0]))
+        {
+            normalized = "_" + normalized;
+        }
+
+        return "var_" + normalized;
+    }
+
+    private static string FormatLuaLiteral(string variableType, string? value)
+    {
+        string type = variableType ?? "String";
+        string rawValue = value ?? string.Empty;
+
+        return type switch
+        {
+            "Boolean" => bool.TryParse(rawValue, out bool b) ? b.ToString().ToLowerInvariant() : "false",
+            "Integer" => int.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int i) ? i.ToString(CultureInfo.InvariantCulture) : "0",
+            "Float" => double.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d.ToString(CultureInfo.InvariantCulture) : "0.0",
+            "String" => $"\"{Escape(rawValue)}\"",
+            _ => $"\"{Escape(rawValue)}\""
+        };
+    }
+
     private static string GenerateIndent(int level)
     {
         return new string(' ', level * 4);
+    }
+
+    private static string ReplacePlaceholderWithVariable(string code, string propName, string luaName)
+    {
+        string quotedPlaceholder = $"\"{{{propName}}}\"";
+        if (code.Contains(quotedPlaceholder))
+        {
+            code = code.Replace(quotedPlaceholder, luaName);
+        }
+
+        string placeholder = "{" + propName + "}";
+        return code.Replace(placeholder, luaName);
+    }
+
+    private static bool TryResolveVariableReference(QuestEntity entity, string value, out string luaName)
+    {
+        luaName = string.Empty;
+        if (string.IsNullOrWhiteSpace(value) || value[0] != '$')
+        {
+            return false;
+        }
+
+        string variableName = value.Substring(1).Trim();
+        if (string.IsNullOrWhiteSpace(variableName))
+        {
+            return false;
+        }
+
+        if (entity.Variables == null)
+        {
+            return false;
+        }
+
+        bool exists = entity.Variables.Any(v =>
+            v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+
+        if (!exists)
+        {
+            return false;
+        }
+
+        luaName = BuildLuaVariableName(variableName);
+        return true;
     }
 
     /// <summary>
@@ -1222,7 +1395,11 @@ public sealed class CodeGenerator
         var nodeDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == node.Type);
         if (nodeDef == null)
         {
-            return GenerateIndent(indent) + $"-- Unknown node type: {node.Type}\n";
+            nodeDef = TryBuildVariableNodeDefinition(node, entity);
+            if (nodeDef == null)
+            {
+                return GenerateIndent(indent) + $"-- Unknown node type: {node.Type}\n";
+            }
         }
 
         StringBuilder sb = new StringBuilder();
@@ -1234,7 +1411,7 @@ public sealed class CodeGenerator
         {
             // For linear actions, emit THIS node's code at current indent,
             // then emit children at SAME indent (not nested)
-            string code = ProcessNodeTemplate(nodeDef, node, questName);
+            string code = ProcessNodeTemplate(nodeDef, node, entity, questName);
             
             // Remove {CHILDREN} - we handle sequencing explicitly
             code = code.Replace("{CHILDREN}", "").TrimEnd();
@@ -1272,7 +1449,7 @@ public sealed class CodeGenerator
     /// Processes a node's template, replacing placeholders with config values.
     /// Text and string properties are escaped to prevent Lua syntax errors.
     /// </summary>
-    private string ProcessNodeTemplate(NodeDefinition nodeDef, BehaviorNode node, string questName)
+    private string ProcessNodeTemplate(NodeDefinition nodeDef, BehaviorNode node, QuestEntity entity, string questName)
     {
         string code = nodeDef.CodeTemplate;
 
@@ -1293,6 +1470,11 @@ public sealed class CodeGenerator
         {
             string placeholder = "{" + prop.Key + "}";
             string value = prop.Value?.ToString() ?? "";
+            if (TryResolveVariableReference(entity, value, out string luaName))
+            {
+                code = ReplacePlaceholderWithVariable(code, prop.Key, luaName);
+                continue;
+            }
 
             // Escape text and string properties to prevent Lua syntax errors from quotes/special chars
             if (propertyTypes.TryGetValue(prop.Key, out string? propType) &&
@@ -1313,6 +1495,11 @@ public sealed class CodeGenerator
                 if (code.Contains(placeholder))
                 {
                     string defaultValue = propDef.DefaultValue?.ToString() ?? "";
+                    if (TryResolveVariableReference(entity, defaultValue, out string luaName))
+                    {
+                        code = ReplacePlaceholderWithVariable(code, propDef.Name, luaName);
+                        continue;
+                    }
 
                     // Escape text and string default values
                     if (propDef.Type == "text" || propDef.Type == "string")
@@ -1335,7 +1522,7 @@ public sealed class CodeGenerator
     private string GenerateStructuredNode(BehaviorNode node, NodeDefinition nodeDef, QuestEntity entity, string questName, int indent)
     {
         StringBuilder sb = new StringBuilder();
-        string code = ProcessNodeTemplate(nodeDef, node, questName);
+        string code = ProcessNodeTemplate(nodeDef, node, entity, questName);
 
         // Handle children (connected nodes)
         var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();

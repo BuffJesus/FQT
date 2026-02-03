@@ -103,7 +103,38 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "stateName", Type = "string", Label = "State Name", DefaultValue = "questStarted" },
                     new NodeProperty { Name = "value", Type = "string", Label = "Value", DefaultValue = "true" }
                 },
-                CodeTemplate = "if Quest:GetStateBool(\"{stateName}\") == {value} then\n{CHILDREN}\nend" }
+                CodeTemplate = "if Quest:GetStateBool(\"{stateName}\") == {value} then\n{CHILDREN}\nend" },
+            new() { Type = "onStateChangeBool", Label = "When State Changes (Bool)", Category = "trigger", Icon = "🔄", IsAdvanced = true,
+                Description = "Triggered when a boolean state variable reaches a specific value",
+                Properties = new() {
+                    new NodeProperty { Name = "stateName", Type = "string", Label = "State Name", DefaultValue = "questStarted" },
+                    new NodeProperty { Name = "value", Type = "bool", Label = "Value", DefaultValue = "true" }
+                },
+                CodeTemplate = "if Quest:GetStateBool(\"{stateName}\") == {value} then\n{CHILDREN}\nend" },
+
+            new() { Type = "onStateChangeInt", Label = "When State Changes (Int)", Category = "trigger", Icon = "🔄", IsAdvanced = true,
+                Description = "Triggered when an integer state variable reaches a specific value",
+                Properties = new() {
+                    new NodeProperty { Name = "stateName", Type = "string", Label = "State Name", DefaultValue = "killCount" },
+                    new NodeProperty { Name = "value", Type = "int", Label = "Value", DefaultValue = "0" }
+                },
+                CodeTemplate = "if Quest:GetStateInt(\"{stateName}\") == {value} then\n{CHILDREN}\nend" },
+
+            new() { Type = "onStateChangeFloat", Label = "When State Changes (Float)", Category = "trigger", Icon = "🔄", IsAdvanced = true,
+                Description = "Triggered when a float state variable reaches a specific value",
+                Properties = new() {
+                    new NodeProperty { Name = "stateName", Type = "string", Label = "State Name", DefaultValue = "progress" },
+                    new NodeProperty { Name = "value", Type = "float", Label = "Value", DefaultValue = "0.0" }
+                },
+                CodeTemplate = "if Quest:GetStateFloat(\"{stateName}\") == {value} then\n{CHILDREN}\nend" },
+
+            new() { Type = "onStateChangeString", Label = "When State Changes (String)", Category = "trigger", Icon = "🔄", IsAdvanced = true,
+                Description = "Triggered when a string state variable reaches a specific value",
+                Properties = new() {
+                    new NodeProperty { Name = "stateName", Type = "string", Label = "State Name", DefaultValue = "questStage" },
+                    new NodeProperty { Name = "value", Type = "string", Label = "Value", DefaultValue = "started" }
+                },
+                CodeTemplate = "if Quest:GetStateString(\"{stateName}\") == \"{value}\" then\n{CHILDREN}\nend" }
         };
     }
 
@@ -159,6 +190,37 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "value", Type = "string", Label = "Value", DefaultValue = "true" }
                 },
                 CodeTemplate = "Quest:SetStateBool(\"{name}\", {value})\n{CHILDREN}" },
+            new() { Type = "setStateBool", Label = "Set State (Bool)", Category = "action", Icon = "💾", IsAdvanced = false,
+                Description = "Set a boolean quest state variable",
+                Properties = new() {
+                    new NodeProperty { Name = "name", Type = "string", Label = "Variable Name", DefaultValue = "questStarted" },
+                    new NodeProperty { Name = "value", Type = "bool", Label = "Value", DefaultValue = "true" }
+                },
+                CodeTemplate = "Quest:SetStateBool(\"{name}\", {value})\n{CHILDREN}" },
+
+            new() { Type = "setStateInt", Label = "Set State (Int)", Category = "action", Icon = "💾", IsAdvanced = true,
+                Description = "Set an integer quest state variable",
+                Properties = new() {
+                    new NodeProperty { Name = "name", Type = "string", Label = "Variable Name", DefaultValue = "killCount" },
+                    new NodeProperty { Name = "value", Type = "int", Label = "Value", DefaultValue = "0" }
+                },
+                CodeTemplate = "Quest:SetStateInt(\"{name}\", {value})\n{CHILDREN}" },
+
+            new() { Type = "setStateFloat", Label = "Set State (Float)", Category = "action", Icon = "💾", IsAdvanced = true,
+                Description = "Set a float quest state variable",
+                Properties = new() {
+                    new NodeProperty { Name = "name", Type = "string", Label = "Variable Name", DefaultValue = "progress" },
+                    new NodeProperty { Name = "value", Type = "float", Label = "Value", DefaultValue = "0.0" }
+                },
+                CodeTemplate = "Quest:SetStateFloat(\"{name}\", {value})\n{CHILDREN}" },
+
+            new() { Type = "setStateString", Label = "Set State (String)", Category = "action", Icon = "💾", IsAdvanced = true,
+                Description = "Set a string quest state variable",
+                Properties = new() {
+                    new NodeProperty { Name = "name", Type = "string", Label = "Variable Name", DefaultValue = "questStage" },
+                    new NodeProperty { Name = "value", Type = "string", Label = "Value", DefaultValue = "started" }
+                },
+                CodeTemplate = "Quest:SetStateString(\"{name}\", \"{value}\")\n{CHILDREN}" },
 
             new() { Type = "setGlobalState", Label = "Set Global", Category = "action", Icon = "🌍", IsAdvanced = true,
                 Description = "Set a global state variable (persists across quests)",
@@ -501,6 +563,37 @@ public static class NodeDefinitions
                     new NodeProperty { Name = "value", Type = "string", Label = "Expected Value", DefaultValue = "true" }
                 },
                 CodeTemplate = "if Quest:GetStateBool(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
+            new() { Type = "checkStateBool", Label = "Check State (Bool)", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
+                Description = "Check if boolean state variable equals value",
+                Properties = new() {
+                    new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "questStarted" },
+                    new NodeProperty { Name = "value", Type = "bool", Label = "Expected Value", DefaultValue = "true" }
+                },
+                CodeTemplate = "if Quest:GetStateBool(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkStateInt", Label = "Check State (Int)", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
+                Description = "Check if integer state variable equals value",
+                Properties = new() {
+                    new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "killCount" },
+                    new NodeProperty { Name = "value", Type = "int", Label = "Expected Value", DefaultValue = "0" }
+                },
+                CodeTemplate = "if Quest:GetStateInt(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkStateFloat", Label = "Check State (Float)", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
+                Description = "Check if float state variable equals value",
+                Properties = new() {
+                    new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "progress" },
+                    new NodeProperty { Name = "value", Type = "float", Label = "Expected Value", DefaultValue = "0.0" }
+                },
+                CodeTemplate = "if Quest:GetStateFloat(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
+
+            new() { Type = "checkStateString", Label = "Check State (String)", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
+                Description = "Check if string state variable equals value",
+                Properties = new() {
+                    new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "questStage" },
+                    new NodeProperty { Name = "value", Type = "string", Label = "Expected Value", DefaultValue = "started" }
+                },
+                CodeTemplate = "if Quest:GetStateString(\"{name}\") == \"{value}\" then\n{TRUE}\nelse\n{FALSE}\nend" },
 
             new() { Type = "checkGlobal", Label = "Check Global", Category = "condition", Icon = "?🌍", IsAdvanced = true, HasBranching = true,
                 Description = "Check a global state variable",
@@ -652,3 +745,4 @@ public class NodeProperty
     public object? DefaultValue { get; set; }
     public List<string>? Options { get; set; }
 }
+

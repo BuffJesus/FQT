@@ -457,7 +457,9 @@
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
                                                         <Border Background="{DynamicResource SurfaceBackground}"
-                                                              CornerRadius="3" Margin="0,0,0,4" Padding="6,4">
+                                                              CornerRadius="3" Margin="0,0,0,4" Padding="6,4"
+                                                              PreviewMouseLeftButtonDown="OnVariableDragStart"
+                                                              MouseMove="OnVariableMouseMove">
                                                             <Grid>
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto" />
@@ -494,7 +496,7 @@
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
 
-                                            <TextBlock Text="Tip: Use Get/Set nodes to access variables in your graph"
+                                            <TextBlock Text="Tip: Drag a variable onto a node property to bind it, or drop on the graph to create a Get node (Shift for Set)"
                                                      FontSize="9" Opacity="0.5" TextWrapping="Wrap" Margin="0,4,0,0" />
                                         </StackPanel>
                                     </Expander>
@@ -533,7 +535,10 @@
                                                      GridCellSize="20"
                                                      DisconnectConnectorCommand="{Binding DisconnectConnectorCommand}"
                                                      ConnectionCompletedCommand="{Binding FinishConnectionCommand}"
-                                                     ConnectionStartedCommand="{Binding StartConnectionCommand}">
+                                                     ConnectionStartedCommand="{Binding StartConnectionCommand}"
+                                                     AllowDrop="True"
+                                                     DragOver="OnEditorVariableDragOver"
+                                                     Drop="OnEditorVariableDrop">
                                     <nodify:NodifyEditor.ItemContainerStyle>
                                         <Style TargetType="nodify:ItemContainer">
                                             <Setter Property="Location" Value="{Binding Location, Mode=TwoWay}" />
@@ -910,7 +915,10 @@
                                                                Padding="4,2"
                                                                Tag="{Binding Name}"
                                                                Loaded="OnPropertyTextBoxLoaded"
-                                                               TextChanged="OnPropertyTextBoxChanged" />
+                                                               TextChanged="OnPropertyTextBoxChanged"
+                                                               AllowDrop="True"
+                                                               DragOver="OnPropertyTextBoxDragOver"
+                                                               Drop="OnPropertyTextBoxDrop" />
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>

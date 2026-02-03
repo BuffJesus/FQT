@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -86,6 +87,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
         entity.PropertyChanged += Entity_PropertyChanged;
 
         LoadNodePalette();
+        LoadVariablesFromEntity();
+        UpdateVariableNodes();
         LoadExistingNodes();
         LoadDropdownData(config);
         LoadAvailableRewardItems();
@@ -397,6 +400,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
         foreach (var node in entity.Nodes)
         {
             var nodeDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == node.Type);
+            if (nodeDef == null)
+            {
+                nodeDef = TryBuildVariableNodeDefinition(node);
+            }
+
             if (nodeDef != null)
             {
                 var nodeVm = new NodeViewModel
@@ -477,6 +485,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
     public void SaveToEntity()
     {
+        SaveVariablesToEntity();
+
         // Save nodes back to entity model
         entity.Nodes.Clear();
         foreach (var node in Nodes)
@@ -1206,8 +1216,74 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    private void LoadVariablesFromEntity()
+    {
+        Variables.Clear();
+        if (entity.Variables == null || entity.Variables.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var variable in entity.Variables)
+        {
+            Variables.Add(new VariableDefinition
+            {
+                Name = variable.Name,
+                Type = variable.Type,
+                DefaultValue = variable.DefaultValue
+            });
+        }
+    }
+
+    private void SaveVariablesToEntity()
+    {
+        entity.Variables.Clear();
+        foreach (var variable in Variables)
+        {
+            entity.Variables.Add(new EntityVariable
+            {
+                Name = variable.Name,
+                Type = variable.Type,
+                DefaultValue = variable.DefaultValue
+            });
+        }
+    }
+
+    private NodeDefinition? TryBuildVariableNodeDefinition(BehaviorNode node)
+    {
+        const string getPrefix = "var_get_";
+        const string setPrefix = "var_set_";
+
+        if (!node.Type.StartsWith(getPrefix) && !node.Type.StartsWith(setPrefix))
+        {
+            return null;
+        }
+
+        string variableName = node.Type.StartsWith(getPrefix)
+            ? node.Type.Substring(getPrefix.Length)
+            : node.Type.Substring(setPrefix.Length);
+
+        var variable = Variables.FirstOrDefault(v =>
+            v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+
+        if (variable == null)
+        {
+            variable = new VariableDefinition
+            {
+                Name = variableName,
+                Type = "String",
+                DefaultValue = string.Empty
+            };
+        }
+
+        return node.Type.StartsWith(getPrefix)
+            ? CreateGetVariableDefinition(variable)
+            : CreateSetVariableDefinition(variable);
+    }
+
     private static NodeDefinition CreateGetVariableDefinition(VariableDefinition variable)
     {
+        string luaName = BuildLuaVariableName(variable.Name);
         return new NodeDefinition
         {
             Type = $"var_get_{variable.Name}",
@@ -1217,12 +1293,17 @@ public sealed partial class EntityTabViewModel : ObservableObject
             IsAdvanced = false,
             Description = $"Gets the value of variable '{variable.Name}'",
             Properties = new List<NodeProperty>(),
-            CodeTemplate = $"local {variable.Name}_value = Quest:GetStateBool(\"{variable.Name}\")\n{{CHILDREN}}"
+            CodeTemplate = $"local {luaName}_value = {luaName}\n{{CHILDREN}}"
         };
     }
 
     private static NodeDefinition CreateSetVariableDefinition(VariableDefinition variable)
     {
+        string luaName = BuildLuaVariableName(variable.Name);
+        string nodeType = MapVariableTypeToNodeType(variable.Type);
+        bool isString = nodeType == "string";
+        string valueTemplate = isString ? "\"{value}\"" : "{value}";
+
         return new NodeDefinition
         {
             Type = $"var_set_{variable.Name}",
@@ -1233,10 +1314,48 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Description = $"Sets the value of variable '{variable.Name}'",
             Properties = new List<NodeProperty>
             {
-                new() { Name = "value", Type = variable.Type.ToLower(), Label = "Value", DefaultValue = variable.DefaultValue }
+                new() { Name = "value", Type = nodeType, Label = "Value", DefaultValue = variable.DefaultValue }
             },
-            CodeTemplate = $"Quest:SetStateBool(\"{variable.Name}\", {{value}})\n{{CHILDREN}}"
+            CodeTemplate = $"{luaName} = {valueTemplate}\n{{CHILDREN}}"
         };
+    }
+
+    private static string MapVariableTypeToNodeType(string variableType)
+    {
+        return variableType switch
+        {
+            "Boolean" => "bool",
+            "Integer" => "int",
+            "Float" => "float",
+            "String" => "string",
+            _ => "string"
+        };
+    }
+
+    private static string BuildLuaVariableName(string variableName)
+    {
+        if (string.IsNullOrWhiteSpace(variableName))
+        {
+            return "var_unnamed";
+        }
+
+        var chars = variableName.Select(c =>
+        {
+            if (c <= 127 && (char.IsLetterOrDigit(c) || c == '_'))
+            {
+                return c;
+            }
+
+            return '_';
+        }).ToArray();
+
+        string normalized = new string(chars);
+        if (char.IsDigit(normalized[0]))
+        {
+            normalized = "_" + normalized;
+        }
+
+        return "var_" + normalized;
     }
 
     private static NodeViewModel CreateNode(NodeDefinition nodeDef, double x, double y)
@@ -1285,6 +1404,29 @@ public sealed partial class EntityTabViewModel : ObservableObject
     {
         TabTitle = string.IsNullOrWhiteSpace(entity.ScriptName) ? "New Entity" : entity.ScriptName;
         EntityIcon = GetEntityIcon(entity.EntityType);
+    }
+
+    public void CreateVariableNodeAtPosition(string variableName, bool isSetNode, System.Windows.Point graphPosition)
+    {
+        if (string.IsNullOrWhiteSpace(variableName))
+        {
+            return;
+        }
+
+        var variable = Variables.FirstOrDefault(v =>
+            v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+
+        if (variable == null)
+        {
+            return;
+        }
+
+        NodeDefinition definition = isSetNode
+            ? CreateSetVariableDefinition(variable)
+            : CreateGetVariableDefinition(variable);
+
+        var node = CreateNode(definition, graphPosition.X, graphPosition.Y);
+        Nodes.Add(node);
     }
 
     #region Object Reward Properties
@@ -1495,3 +1637,4 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 }
+

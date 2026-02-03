@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -12,6 +13,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
     private Nodify.NodifyEditor? _editor;
     private bool _redirectNodeCreated = false;
     private System.Windows.Point? _rightClickDownPosition;
+    private System.Windows.Point? _variableDragStart;
 
     public EntityEditorView()
     {
@@ -477,6 +479,213 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
         // Update node property and trigger title update
         currentTab.SelectedNode.SetProperty(propertyName, textBox.Text);
+    }
+
+    private void OnVariableDragStart(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is System.Windows.Controls.Button)
+        {
+            return;
+        }
+
+        _variableDragStart = e.GetPosition(null);
+    }
+
+    private void OnVariableMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _variableDragStart == null)
+        {
+            return;
+        }
+
+        var currentPosition = e.GetPosition(null);
+        var delta = currentPosition - _variableDragStart.Value;
+
+        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        if (sender is not FrameworkElement element)
+        {
+            return;
+        }
+
+        if (element.DataContext is not VariableDefinition variable || string.IsNullOrWhiteSpace(variable.Name))
+        {
+            return;
+        }
+
+        DragDrop.DoDragDrop(element, variable.Name, System.Windows.DragDropEffects.Copy);
+        _variableDragStart = null;
+    }
+
+    private void OnPropertyTextBoxDragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(typeof(string)))
+        {
+            e.Effects = System.Windows.DragDropEffects.Copy;
+        }
+        else
+        {
+            e.Effects = System.Windows.DragDropEffects.None;
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnPropertyTextBoxDrop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        if (!e.Data.GetDataPresent(typeof(string)))
+        {
+            return;
+        }
+
+        if (e.Data.GetData(typeof(string)) is not string variableName || string.IsNullOrWhiteSpace(variableName))
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab?.SelectedNode == null)
+        {
+            return;
+        }
+
+        string? propertyName = textBox.Tag as string;
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            return;
+        }
+
+        string? variableType = currentTab.Variables
+            .FirstOrDefault(v => v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase))
+            ?.Type;
+
+        string? expectedType = currentTab.SelectedNode.Definition?.Properties
+            .FirstOrDefault(p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
+            ?.Type;
+
+        if (!IsVariableTypeCompatible(variableType, expectedType))
+        {
+            System.Windows.MessageBox.Show(
+                $"Variable '{variableName}' is {variableType ?? "Unknown"}, but '{propertyName}' expects {expectedType ?? "Unknown"}.",
+                "Variable Type Mismatch",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        textBox.Text = $"${variableName}";
+        e.Handled = true;
+    }
+
+    private void OnEditorVariableDragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(typeof(string)))
+        {
+            e.Effects = System.Windows.DragDropEffects.Copy;
+        }
+        else
+        {
+            e.Effects = System.Windows.DragDropEffects.None;
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnEditorVariableDrop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(typeof(string)))
+        {
+            return;
+        }
+
+        if (e.Data.GetData(typeof(string)) is not string variableName || string.IsNullOrWhiteSpace(variableName))
+        {
+            return;
+        }
+
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab == null)
+        {
+            return;
+        }
+
+        if (sender is not Nodify.NodifyEditor editor)
+        {
+            return;
+        }
+
+        bool isSetNode = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+        var viewPosition = e.GetPosition(editor);
+        var graphPosition = GetGraphPosition(editor, viewPosition);
+        currentTab.CreateVariableNodeAtPosition(variableName, isSetNode, graphPosition);
+        e.Handled = true;
+    }
+
+    private static bool IsVariableTypeCompatible(string? variableType, string? expectedType)
+    {
+        string? normalizedExpected = NormalizePropertyType(expectedType);
+        string? normalizedVariable = NormalizeVariableType(variableType);
+
+        if (string.IsNullOrWhiteSpace(normalizedExpected) || string.IsNullOrWhiteSpace(normalizedVariable))
+        {
+            return false;
+        }
+
+        return normalizedExpected == normalizedVariable;
+    }
+
+    private static string? NormalizePropertyType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+        {
+            return null;
+        }
+
+        return type switch
+        {
+            "text" => "string",
+            "string" => "string",
+            "bool" => "bool",
+            "int" => "int",
+            "float" => "float",
+            _ => null
+        };
+    }
+
+    private static string? NormalizeVariableType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+        {
+            return null;
+        }
+
+        return type switch
+        {
+            "String" => "string",
+            "Boolean" => "bool",
+            "Integer" => "int",
+            "Float" => "float",
+            _ => null
+        };
     }
 }
 

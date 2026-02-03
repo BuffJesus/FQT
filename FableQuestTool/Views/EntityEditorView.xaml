@@ -467,6 +467,7 @@
                                                                     <ColumnDefinition Width="Auto" />
                                                                     <ColumnDefinition Width="*" />
                                                                     <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="Auto" />
                                                                 </Grid.ColumnDefinitions>
 
                                                                 <!-- Type indicator -->
@@ -484,8 +485,20 @@
                                                                 <TextBlock Grid.Column="1" Text="{Binding Name}"
                                                                          VerticalAlignment="Center" FontSize="11" />
 
+                                                                <!-- Usage count -->
+                                                                <Border Grid.Column="2"
+                                                                      Background="#2A3040"
+                                                                      CornerRadius="2"
+                                                                      Padding="4,1"
+                                                                      Margin="6,0,0,0"
+                                                                      VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding UsageCount}"
+                                                                             FontSize="9"
+                                                                             Foreground="#AAB8C2" />
+                                                                </Border>
+
                                                                 <!-- Delete button -->
-                                                                <Button Grid.Column="2" Content="x"
+                                                                <Button Grid.Column="3" Content="x"
                                                                       Command="{Binding DataContext.RemoveVariableCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                                       CommandParameter="{Binding}"
                                                                       Width="18" Height="18" FontSize="10"

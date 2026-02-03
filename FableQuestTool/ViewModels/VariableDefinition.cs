@@ -16,6 +16,9 @@ public sealed partial class VariableDefinition : ObservableObject
     [ObservableProperty]
     private string defaultValue = string.Empty;
 
+    [ObservableProperty]
+    private int usageCount;
+
     /// <summary>
     /// Gets the color for this variable type (UE5 Blueprint colors)
     /// </summary>

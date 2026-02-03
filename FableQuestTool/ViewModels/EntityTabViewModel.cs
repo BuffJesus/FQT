@@ -89,13 +89,21 @@ public sealed partial class EntityTabViewModel : ObservableObject
         LoadNodePalette();
         LoadVariablesFromEntity();
         UpdateVariableNodes();
-        LoadExistingNodes();
+        UpdateVariableUsageCounts();
+LoadExistingNodes();
+        AttachNodeHandlers();
+        UpdateVariableUsageCounts();
         LoadDropdownData(config);
         LoadAvailableRewardItems();
         SyncObjectRewardItemsFromEntity();
 
-        // Listen for node collection changes to update available events
-        Nodes.CollectionChanged += (s, e) => UpdateAvailableEvents();
+        // Listen for node collection changes to update available events and variable usage
+        Nodes.CollectionChanged += (s, e) =>
+        {
+            UpdateAvailableEvents();
+            HandleNodeCollectionChanged(e);
+            UpdateVariableUsageCounts();
+        };
     }
 
     private void LoadDropdownData(FableConfig config)
@@ -528,6 +536,42 @@ public sealed partial class EntityTabViewModel : ObservableObject
                     ToPort = conn.Target?.Title ?? "Input"
                 });
             }
+        }
+    }
+
+    private void AttachNodeHandlers()
+    {
+        foreach (var node in Nodes)
+        {
+            node.PropertyChanged -= OnNodePropertyChanged;
+            node.PropertyChanged += OnNodePropertyChanged;
+        }
+    }
+
+    private void HandleNodeCollectionChanged(System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+        {
+            foreach (NodeViewModel node in e.NewItems)
+            {
+                node.PropertyChanged += OnNodePropertyChanged;
+            }
+        }
+
+        if (e.OldItems != null)
+        {
+            foreach (NodeViewModel node in e.OldItems)
+            {
+                node.PropertyChanged -= OnNodePropertyChanged;
+            }
+        }
+    }
+
+    private void OnNodePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(NodeViewModel.Properties))
+        {
+            UpdateVariableUsageCounts();
         }
     }
 
@@ -1161,7 +1205,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         // Update the node palette to include the new variable nodes
         UpdateVariableNodes();
-    }
+        UpdateVariableUsageCounts();
+        UpdateVariableUsageCounts();
+}
 
     /// <summary>
     /// Remove a variable from the entity
@@ -1176,7 +1222,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         Variables.Remove(variable);
         UpdateVariableNodes();
-    }
+        UpdateVariableUsageCounts();
+        UpdateVariableUsageCounts();
+}
 
     private static string GetDefaultValueForType(string type)
     {
@@ -1213,6 +1261,48 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 Type = $"var_set_{variable.Name}",
                 Definition = CreateSetVariableDefinition(variable)
             });
+        }
+    }
+
+    private void UpdateVariableUsageCounts()
+    {
+        foreach (var variable in Variables)
+        {
+            variable.UsageCount = 0;
+        }
+
+        if (Variables.Count == 0 || Nodes.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var node in Nodes)
+        {
+            foreach (var entry in node.Properties)
+            {
+                if (entry.Value is not string value)
+                {
+                    continue;
+                }
+
+                if (!value.StartsWith("$", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                string variableName = value.Substring(1).Trim();
+                if (string.IsNullOrWhiteSpace(variableName))
+                {
+                    continue;
+                }
+
+                var variable = Variables.FirstOrDefault(v =>
+                    v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+                if (variable != null)
+                {
+                    variable.UsageCount++;
+                }
+            }
         }
     }
 
@@ -1637,4 +1727,5 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 }
+
 

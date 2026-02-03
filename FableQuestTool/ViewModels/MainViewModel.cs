@@ -93,7 +93,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         Microsoft.Win32.OpenFileDialog dialog = new()
         {
-            Filter = "FSE Quest Project (*.fsequest)|*.fsequest|JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+            Filter = "FQT Project (*.fqtproj;*.fsequest)|*.fqtproj;*.fsequest|JSON Files (*.json)|*.json|All Files (*.*)|*.*"
         };
 
         if (dialog.ShowDialog() != true)
@@ -160,7 +160,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Microsoft.Win32.SaveFileDialog dialog = new()
         {
-            Filter = "FSE Quest Project (*.fsequest)|*.fsequest|JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+            Filter = "FQT Project (*.fqtproj;*.fsequest)|*.fqtproj;*.fsequest|JSON Files (*.json)|*.json|All Files (*.*)|*.*",
             FileName = Project.Name
         };
 

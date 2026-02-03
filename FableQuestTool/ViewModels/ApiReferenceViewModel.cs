@@ -1,4 +1,6 @@
+using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -40,13 +42,7 @@ public sealed partial class ApiReferenceViewModel : ObservableObject
 
     private void LoadApiData()
     {
-        // Try to find the API header file
-        string[] possiblePaths = new[]
-        {
-            @"D:\Documents\JetBrains\FQT\SourceFilesToReference\OldQuestManager\FseQuestEditor\data\script_extender\ALL-INTERFACE-FUNCTIONS-FOR-FSE.h",
-            @"data\script_extender\ALL-INTERFACE-FUNCTIONS-FOR-FSE.h",
-            @"..\..\SourceFilesToReference\OldQuestManager\FseQuestEditor\data\script_extender\ALL-INTERFACE-FUNCTIONS-FOR-FSE.h"
-        };
+        string[] possiblePaths = BuildPossibleApiPaths();
 
         foreach (string path in possiblePaths)
         {
@@ -57,6 +53,21 @@ public sealed partial class ApiReferenceViewModel : ObservableObject
                 return;
             }
         }
+    }
+
+    private static string[] BuildPossibleApiPaths()
+    {
+        string appBase = AppContext.BaseDirectory;
+        string cwd = Directory.GetCurrentDirectory();
+        string fseHeader = Path.Combine("FSE_Source", "ALL-INTERFACE-FUNCTIONS-FOR-FSE.h");
+
+        return new[]
+        {
+            Path.Combine(appBase, fseHeader),
+            Path.Combine(cwd, fseHeader),
+            Path.Combine(appBase, "data", "script_extender", "ALL-INTERFACE-FUNCTIONS-FOR-FSE.h"),
+            Path.Combine(cwd, "data", "script_extender", "ALL-INTERFACE-FUNCTIONS-FOR-FSE.h")
+        };
     }
 
     partial void OnSearchTextChanged(string value)

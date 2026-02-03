@@ -298,8 +298,8 @@ public sealed class DeploymentService
             string content = File.ReadAllText(masterPath);
 
             // Check if quest is already activated
-            string activationPattern = $@"quest:ActivateQuest\(""{questName}""\)";
-            if (Regex.IsMatch(content, Regex.Escape(activationPattern)))
+            string activationPattern = $@"quest:ActivateQuest\(""{Regex.Escape(questName)}""\)";
+            if (Regex.IsMatch(content, activationPattern, RegexOptions.IgnoreCase))
             {
                 // Already activated
                 return true;

@@ -1681,12 +1681,15 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
             var title = string.IsNullOrWhiteSpace(node.Title) ? node.Type : node.Title;
 
+            bool hasExecInput = node.Input.Any(c => c.ConnectorType == ConnectorType.Exec);
+            bool hasExecOutput = node.Output.Any(c => c.ConnectorType == ConnectorType.Exec);
+
             bool isEntry = node.Category == "trigger" || node.Type == "defineEvent";
-            if (isEntry && outgoing[node] == 0)
+            if (isEntry && hasExecOutput && outgoing[node] == 0)
             {
                 GraphWarnings.Add($"Entry node '{title}' has no outgoing connections.");
             }
-            else if (!isEntry && incoming[node] == 0)
+            else if (!isEntry && hasExecInput && incoming[node] == 0)
             {
                 GraphWarnings.Add($"Node '{title}' has no incoming connections.");
             }
@@ -2091,6 +2094,40 @@ public sealed partial class EntityTabViewModel : ObservableObject
         };
     }
 
+    private static string MapConnectorTypeToVariableType(ConnectorType connectorType)
+    {
+        return connectorType switch
+        {
+            ConnectorType.Boolean => "Boolean",
+            ConnectorType.Integer => "Integer",
+            ConnectorType.Float => "Float",
+            ConnectorType.String => "String",
+            _ => "String"
+        };
+    }
+
+    private string GenerateUniqueVariableName(string variableType)
+    {
+        string baseName = variableType switch
+        {
+            "Boolean" => "BoolVar",
+            "Integer" => "IntVar",
+            "Float" => "FloatVar",
+            "String" => "StrVar",
+            _ => "Var"
+        };
+
+        int index = 1;
+        string candidate = baseName + index;
+        while (Variables.Any(v => v.Name.Equals(candidate, StringComparison.OrdinalIgnoreCase)))
+        {
+            index++;
+            candidate = baseName + index;
+        }
+
+        return candidate;
+    }
+
     private void UpdateVariableNodes()
     {
         // Remove existing variable nodes from palette
@@ -2384,11 +2421,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
         EntityIcon = GetEntityIcon(entity.EntityType);
     }
 
-    public void CreateVariableNodeAtPosition(string variableName, bool isSetNode, System.Windows.Point graphPosition)
+    public NodeViewModel? CreateVariableNodeAtPosition(string variableName, bool isSetNode, System.Windows.Point graphPosition)
     {
         if (string.IsNullOrWhiteSpace(variableName))
         {
-            return;
+            return null;
         }
 
         var variable = Variables.FirstOrDefault(v =>
@@ -2396,7 +2433,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         if (variable == null)
         {
-            return;
+            return null;
         }
 
         NodeDefinition definition = isSetNode
@@ -2405,6 +2442,72 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         var node = CreateNode(definition, graphPosition.X, graphPosition.Y);
         Nodes.Add(node);
+        return node;
+    }
+
+    public NodeViewModel? CreateVariableNodeFromConnector(ConnectorViewModel sourceConnector, System.Windows.Point graphPosition)
+    {
+        if (sourceConnector.ConnectorType == ConnectorType.Exec)
+        {
+            return null;
+        }
+
+        string variableType = MapConnectorTypeToVariableType(sourceConnector.ConnectorType);
+        string variableName = GenerateUniqueVariableName(variableType);
+
+        var variable = new VariableDefinition
+        {
+            Name = variableName,
+            Type = variableType,
+            DefaultValue = GetDefaultValueForType(variableType)
+        };
+
+        Variables.Add(variable);
+        UpdateVariableNodes();
+        UpdateVariableUsageCounts();
+
+        bool createGetter = sourceConnector.IsInput;
+        NodeDefinition definition = createGetter
+            ? CreateGetVariableDefinition(variable)
+            : CreateSetVariableDefinition(variable);
+
+        var node = CreateNode(definition, graphPosition.X, graphPosition.Y);
+        Nodes.Add(node);
+
+        if (createGetter)
+        {
+            var getterOutput = node.Output.FirstOrDefault();
+            if (getterOutput != null)
+            {
+                Connections.Add(new ConnectionViewModel
+                {
+                    Source = getterOutput,
+                    Target = sourceConnector
+                });
+
+                var targetNode = GetNodeForConnector(sourceConnector, isOutput: false);
+                if (targetNode != null && !string.IsNullOrWhiteSpace(sourceConnector.PropertyName))
+                {
+                    targetNode.SetProperty(sourceConnector.PropertyName, $"${variableName}");
+                }
+            }
+        }
+        else
+        {
+            var setterValueInput = node.Input.FirstOrDefault(i =>
+                i.IsInput && string.Equals(i.PropertyName, "value", StringComparison.OrdinalIgnoreCase));
+
+            if (setterValueInput != null)
+            {
+                Connections.Add(new ConnectionViewModel
+                {
+                    Source = sourceConnector,
+                    Target = setterValueInput
+                });
+            }
+        }
+
+        return node;
     }
 
     #region Object Reward Properties

@@ -1213,7 +1213,7 @@ public sealed class CodeGenerator
             sb.AppendLine(GenerateIndent(indent) + $"local function Event_{eventName}()");
 
             // Generate code for child nodes (the event body)
-            var connections = entity.Connections.Where(c => c.FromNodeId == eventNode.Id).ToList();
+            var connections = GetExecConnections(eventNode, entity);
             if (connections.Count > 0)
             {
                 foreach (var conn in connections)
@@ -1416,6 +1416,49 @@ public sealed class CodeGenerator
         return true;
     }
 
+    private List<NodeConnection> GetExecConnections(BehaviorNode node, QuestEntity entity)
+    {
+        var nodeDef = NodeDefinitions.GetAllNodes().FirstOrDefault(n => n.Type == node.Type)
+            ?? TryBuildVariableNodeDefinition(node, entity);
+
+        if (nodeDef == null)
+        {
+            return new List<NodeConnection>();
+        }
+
+        return entity.Connections
+            .Where(c => c.FromNodeId == node.Id && IsExecPort(nodeDef, c.FromPort))
+            .ToList();
+    }
+
+    private static bool IsExecPort(NodeDefinition nodeDef, string? port)
+    {
+        if (nodeDef.Category == "variable")
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(port))
+        {
+            return true;
+        }
+
+        if (string.Equals(port, "▶", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(port, "Exec", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(port, "Output", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (nodeDef.BranchLabels != null &&
+            nodeDef.BranchLabels.Any(label => label.Equals(port, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Generates Lua code for a behavior node and its children.
     /// Handles both structured nodes (triggers, conditions) and linear action sequences.
@@ -1466,7 +1509,7 @@ public sealed class CodeGenerator
             }
 
             // Process children at SAME indent level (linear sequence, not nested)
-            var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
+            var connections = GetExecConnections(node, entity);
             foreach (var conn in connections)
             {
                 var childNode = entity.Nodes.FirstOrDefault(n => n.Id == conn.ToNodeId);
@@ -1487,7 +1530,7 @@ public sealed class CodeGenerator
 
     private string GenerateParallelNode(BehaviorNode node, QuestEntity entity, string questName, int indent)
     {
-        var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
+        var connections = GetExecConnections(node, entity);
         var childNodes = connections
             .Select(c => entity.Nodes.FirstOrDefault(n => n.Id == c.ToNodeId))
             .Where(n => n != null)
@@ -1513,7 +1556,7 @@ public sealed class CodeGenerator
 
     private string GenerateRandomChoiceNode(BehaviorNode node, QuestEntity entity, string questName, int indent)
     {
-        var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
+        var connections = GetExecConnections(node, entity);
         var childNodes = connections
             .Select(c => entity.Nodes.FirstOrDefault(n => n.Id == c.ToNodeId))
             .Where(n => n != null)
@@ -1635,7 +1678,7 @@ public sealed class CodeGenerator
         string code = ProcessNodeTemplate(nodeDef, node, entity, questName);
 
         // Handle children (connected nodes)
-        var connections = entity.Connections.Where(c => c.FromNodeId == node.Id).ToList();
+        var connections = GetExecConnections(node, entity);
         
         if (nodeDef.HasBranching)
         {

@@ -338,6 +338,19 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             // If we have a pending connection and clicked on empty space (not a connector)
             if (currentTab.PendingConnection != null && !clickedOnConnector && !_redirectNodeCreated)
             {
+                var sourceConnector = currentTab.PendingConnection.Source;
+                if (sourceConnector != null && sourceConnector.ConnectorType != ConnectorType.Exec)
+                {
+                    var created = currentTab.CreateVariableNodeFromConnector(sourceConnector, graphPosition);
+                    if (created != null)
+                    {
+                        CancelEditorDrag(editor, currentTab);
+                        currentTab.PendingConnection = null;
+                        e.Handled = true;
+                        return;
+                    }
+                }
+
                 // Show node menu to create and connect to a new node
                 if (currentTab.OpenNodeMenuCommand.CanExecute((position, graphPosition)))
                 {

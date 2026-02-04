@@ -563,6 +563,9 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
             ThreadFunctionInput.Text = thread.FunctionName;
             ThreadRegionInput.Text = thread.Region;
             ThreadDescriptionInput.Text = thread.Description;
+            ThreadIntervalInput.Text = thread.IntervalSeconds.ToString(CultureInfo.InvariantCulture);
+            ThreadExitStateInput.Text = thread.ExitStateName;
+            ThreadExitValueInput.IsChecked = thread.ExitStateValue;
         }
     }
 
@@ -579,11 +582,16 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
             return;
         }
 
+        float intervalSeconds = ParseInterval(ThreadIntervalInput.Text.Trim());
+
         QuestThread thread = new()
         {
             FunctionName = function,
             Region = ThreadRegionInput.Text.Trim(),
-            Description = ThreadDescriptionInput.Text.Trim()
+            Description = ThreadDescriptionInput.Text.Trim(),
+            IntervalSeconds = intervalSeconds,
+            ExitStateName = ThreadExitStateInput.Text.Trim(),
+            ExitStateValue = ThreadExitValueInput.IsChecked == true
         };
 
         ViewModel.Project.Threads.Add(thread);
@@ -603,6 +611,9 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         thread.FunctionName = ThreadFunctionInput.Text.Trim();
         thread.Region = ThreadRegionInput.Text.Trim();
         thread.Description = ThreadDescriptionInput.Text.Trim();
+        thread.IntervalSeconds = ParseInterval(ThreadIntervalInput.Text.Trim());
+        thread.ExitStateName = ThreadExitStateInput.Text.Trim();
+        thread.ExitStateValue = ThreadExitValueInput.IsChecked == true;
 
         // Refresh the list
         int index = ThreadsList.SelectedIndex;
@@ -636,6 +647,19 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         ThreadFunctionInput.Clear();
         ThreadRegionInput.Clear();
         ThreadDescriptionInput.Clear();
+        ThreadIntervalInput.Clear();
+        ThreadExitStateInput.Clear();
+        ThreadExitValueInput.IsChecked = true;
+    }
+
+    private static float ParseInterval(string text)
+    {
+        if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) && value > 0)
+        {
+            return value;
+        }
+
+        return 0.5f;
     }
 
     private static object? ParseDefault(string type, string text)

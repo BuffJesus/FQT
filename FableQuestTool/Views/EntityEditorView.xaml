@@ -406,7 +406,8 @@
                                             <DataTemplate>
                                                 <Button Content="{Binding Label}" Margin="0,0,0,6"
                                                         Command="{Binding DataContext.AddNodeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                        CommandParameter="{Binding}" />
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="{Binding Description}" />
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -418,7 +419,8 @@
                                                 <DataTemplate>
                                                     <Button Content="{Binding Label}" Margin="0,0,0,6"
                                                             Command="{Binding DataContext.AddNodeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                            CommandParameter="{Binding}" />
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="{Binding Description}" />
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -894,7 +896,8 @@
                                                               BorderThickness="0"
                                                               HorizontalContentAlignment="Left"
                                                               Padding="8,4"
-                                                              Cursor="Hand">
+                                                              Cursor="Hand"
+                                                              ToolTip="{Binding Description}">
                                                             <Button.Style>
                                                                 <Style TargetType="Button">
                                                                     <Style.Triggers>
@@ -947,14 +950,15 @@
                                                             <ItemsControl ItemsSource="{Binding Nodes}">
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
-                                                                        <Button Margin="0,1"
-                                                                              Command="{Binding DataContext.SelectNodeFromMenuCommand, ElementName=GroupedNodesControl}"
-                                                                              CommandParameter="{Binding}"
-                                                                              Background="Transparent"
-                                                                              BorderThickness="0"
-                                                                              HorizontalContentAlignment="Left"
-                                                                              Padding="8,4"
-                                                                              Cursor="Hand">
+                                                                    <Button Margin="0,1"
+                                                                      Command="{Binding DataContext.SelectNodeFromMenuCommand, ElementName=GroupedNodesControl}"
+                                                                      CommandParameter="{Binding}"
+                                                                      Background="Transparent"
+                                                                      BorderThickness="0"
+                                                                      HorizontalContentAlignment="Left"
+                                                                      Padding="8,4"
+                                                                      Cursor="Hand"
+                                                                      ToolTip="{Binding Description}">
                                                                             <Button.Style>
                                                                                 <Style TargetType="Button">
                                                                                     <Style.Triggers>

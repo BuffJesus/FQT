@@ -739,7 +739,26 @@ public sealed class CodeGenerator
         {
             sb.AppendLine($"    -- {thread.Description}");
         }
-        sb.AppendLine("    -- TODO: Implement thread logic");
+        sb.AppendLine("    -- Thread entry point. Add quest logic here as needed.");
+        if (!string.IsNullOrWhiteSpace(thread.ExitStateName))
+        {
+            string exitValue = thread.ExitStateValue ? "true" : "false";
+            sb.AppendLine($"    -- Exits when state '{thread.ExitStateName}' is {exitValue}");
+        }
+        sb.AppendLine("    while true do");
+        if (!string.IsNullOrWhiteSpace(thread.ExitStateName))
+        {
+            string exitValue = thread.ExitStateValue ? "true" : "false";
+            sb.AppendLine($"        if Quest:GetStateBool(\"{Escape(thread.ExitStateName)}\") == {exitValue} then break end");
+        }
+        double interval = thread.IntervalSeconds;
+        if (interval <= 0)
+        {
+            interval = 0.5;
+        }
+        sb.AppendLine($"        Quest:Pause({interval.ToString(CultureInfo.InvariantCulture)})");
+        sb.AppendLine("        if not Quest:NewScriptFrame() then break end");
+        sb.AppendLine("    end");
         sb.AppendLine("end");
         sb.AppendLine();
     }

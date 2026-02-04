@@ -23,4 +23,78 @@ public sealed class CodeGeneratorTests
         Assert.Contains("Quest:PersistTransferString(context, \"TestFloat\", TestFloat_value)", script);
         Assert.Contains("Quest:PersistTransferString(context, \"TestString\", TestString_value)", script);
     }
+
+    [Fact]
+    public void GenerateQuestScript_IncludesUserThreadLoop()
+    {
+        QuestProject project = new QuestProject { Name = "ThreadQuest" };
+        project.Threads.Add(new QuestThread
+        {
+            FunctionName = "MonitorStuff",
+            Region = "OAKVALE",
+            Description = "Background monitor thread",
+            IntervalSeconds = 1.25f,
+            ExitStateName = "StopThread",
+            ExitStateValue = true
+        });
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateQuestScript(project);
+
+        Assert.Contains("function MonitorStuff(questObject)", script);
+        Assert.Contains("-- Background monitor thread", script);
+        Assert.Contains("while true do", script);
+        Assert.Contains("Quest:GetStateBool(\"StopThread\") == true", script);
+        Assert.Contains("Quest:Pause(1.25)", script);
+        Assert.Contains("Quest:NewScriptFrame()", script);
+    }
+
+    [Fact]
+    public void GenerateQuestScript_IncludesQuestCardAndRewards()
+    {
+        QuestProject project = new QuestProject
+        {
+            Name = "RewardQuest",
+            DisplayName = "Reward Quest",
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Do the thing",
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true,
+            IsStoryQuest = false,
+            IsGoldQuest = true
+        };
+        project.Regions.Add("OAKVALE");
+        project.Rewards.Gold = 250;
+        project.Rewards.Renown = 500;
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateQuestScript(project);
+
+        Assert.Contains("Quest:AddQuestCard(\"OBJECT_QUEST_CARD_GENERIC\", \"RewardQuest\"", script);
+        Assert.Contains("Quest:SetQuestCardObjective(\"RewardQuest\"", script);
+        Assert.Contains("Quest:SetQuestGoldReward(\"RewardQuest\", 250)", script);
+        Assert.Contains("Quest:SetQuestRenownReward(\"RewardQuest\", 500)", script);
+        Assert.Contains("Quest:KickOffQuestStartScreen(\"RewardQuest\", false, true)", script);
+        Assert.Contains("Quest:SetQuestAsCompleted(\"RewardQuest\", true, false, true)", script);
+    }
+
+    [Fact]
+    public void GenerateQuestScript_BindsEntitiesAndContainer()
+    {
+        QuestProject project = new QuestProject { Name = "BindQuest" };
+        project.Entities.Add(new QuestEntity { ScriptName = "NPC_One" });
+        project.Rewards.Container = new ContainerReward
+        {
+            ContainerScriptName = "RewardChest",
+            AutoGiveOnComplete = false
+        };
+        project.Rewards.Container.Items.Add("OBJECT_APPLE");
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateQuestScript(project);
+
+        Assert.Contains("Quest:AddEntityBinding(\"NPC_One\", \"BindQuest/Entities/NPC_One\")", script);
+        Assert.Contains("Quest:AddEntityBinding(\"RewardChest\", \"BindQuest/Entities/RewardChest\")", script);
+        Assert.Contains("Quest:FinalizeEntityBindings()", script);
+    }
 }

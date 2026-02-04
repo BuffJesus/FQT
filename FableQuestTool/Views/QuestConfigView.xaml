@@ -334,33 +334,48 @@
 
                     <GroupBox x:Name="ThreadsGroup" Header="Background Tasks">
                         <StackPanel Margin="12">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                <StackPanel Width="160">
-                                    <TextBlock Text="Function" />
-                                    <TextBox x:Name="ThreadFunctionInput" />
-                                </StackPanel>
-                                <StackPanel Width="160" Margin="8,0,0,0">
-                                    <TextBlock Text="Region" />
-                                    <TextBox x:Name="ThreadRegionInput" />
-                                </StackPanel>
-                                <StackPanel Width="220" Margin="8,0,0,0">
-                                    <TextBlock Text="Description" />
-                                    <TextBox x:Name="ThreadDescriptionInput" />
-                                </StackPanel>
-                                <Button Content="Add" Width="70" Margin="8,18,0,0" Click="OnAddThread" />
-                                <Button Content="Update" Width="80" Margin="8,18,0,0" Click="OnUpdateThread" />
-                                <Button Content="Remove" Width="80" Margin="8,18,0,0" Click="OnRemoveThread" />
-                            </StackPanel>
+                              <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                  <StackPanel Width="160">
+                                      <TextBlock Text="Function" />
+                                      <TextBox x:Name="ThreadFunctionInput" />
+                                  </StackPanel>
+                                  <StackPanel Width="160" Margin="8,0,0,0">
+                                      <TextBlock Text="Region" />
+                                      <TextBox x:Name="ThreadRegionInput" />
+                                  </StackPanel>
+                                  <StackPanel Width="220" Margin="8,0,0,0">
+                                      <TextBlock Text="Description" />
+                                      <TextBox x:Name="ThreadDescriptionInput" />
+                                  </StackPanel>
+                                  <StackPanel Width="120" Margin="8,0,0,0">
+                                      <TextBlock Text="Interval (s)" />
+                                      <TextBox x:Name="ThreadIntervalInput" />
+                                  </StackPanel>
+                                  <StackPanel Width="180" Margin="8,0,0,0">
+                                      <TextBlock Text="Exit State (bool)" />
+                                      <TextBox x:Name="ThreadExitStateInput" />
+                                  </StackPanel>
+                                  <StackPanel Width="120" Margin="8,0,0,0">
+                                      <TextBlock Text="Exit When True" />
+                                      <CheckBox x:Name="ThreadExitValueInput" IsChecked="True" />
+                                  </StackPanel>
+                                  <Button Content="Add" Width="70" Margin="8,18,0,0" Click="OnAddThread" />
+                                  <Button Content="Update" Width="80" Margin="8,18,0,0" Click="OnUpdateThread" />
+                                  <Button Content="Remove" Width="80" Margin="8,18,0,0" Click="OnRemoveThread" />
+                              </StackPanel>
 
                             <ListBox x:Name="ThreadsList" ItemsSource="{Binding Project.Threads}" Height="120" SelectionChanged="OnThreadSelected">
                                 <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding FunctionName}" Width="160" />
-                                            <TextBlock Text="{Binding Region}" Width="160" />
-                                            <TextBlock Text="{Binding Description}" Width="220" />
-                                        </StackPanel>
-                                    </DataTemplate>
+                                      <DataTemplate>
+                                          <StackPanel Orientation="Horizontal">
+                                              <TextBlock Text="{Binding FunctionName}" Width="160" />
+                                              <TextBlock Text="{Binding Region}" Width="160" />
+                                              <TextBlock Text="{Binding Description}" Width="220" />
+                                              <TextBlock Text="{Binding IntervalSeconds}" Width="120" />
+                                              <TextBlock Text="{Binding ExitStateName}" Width="180" />
+                                              <TextBlock Text="{Binding ExitStateValue}" Width="120" />
+                                          </StackPanel>
+                                      </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
                         </StackPanel>

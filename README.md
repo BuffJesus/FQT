@@ -2,7 +2,7 @@
 
 A visual quest editor for Fable: The Lost Chapters that generates Lua scripts using the Fable Script Extender (FSE).
 
-> ⚠️ **Early Development Warning**
+> ?? **Early Development Warning**
 > This tool is in the very early stages of development. You may encounter bugs, missing features, and breaking changes. Use at your own risk and always back up your work.
 
 ## Overview
@@ -76,24 +76,24 @@ The output will be in `FableQuestTool/bin/Release/net8.0-windows/win-x64/publish
 
 ### Creating a Quest
 
-1. **New Project** - Go to File → New to create a new quest project
+1. **New Project** - Go to File ? New to create a new quest project
 2. **Design Quest Logic** - Use the node graph editor to design your quest flow:
    - Add nodes for events, dialogues, spawning entities, etc.
    - Connect nodes to define quest progression
    - Configure node properties in the inspector
 3. **Create Entities** - Define NPCs, items, and other entities:
-   - Use Tools → Browse Entities to view available entities
+   - Use Tools ? Browse Entities to view available entities
    - Create custom entity behaviors using entity templates
-4. **Export and Deploy** - File → Export and Deploy to generate Lua files and deploy to FSE
+4. **Export and Deploy** - File ? Export and Deploy to generate Lua files and deploy to FSE
 
 ### Managing Quests
 
-- **Tools → Manage Deployed Quests** - View and manage quests in your FSE installation
-- **Tools → Launch FSE** - Launch the game with FSE enabled
+- **Tools ? Manage Deployed Quests** - View and manage quests in your FSE installation
+- **Tools ? Launch FSE** - Launch the game with FSE enabled
 
 ### Sample Quests
 
-The `SampleQuests/` folder contains working examples:
+The `FSE_Source/SampleQuests/` folder contains working examples:
 - **NewQuest** - Complete example demonstrating best practices
 - **MyFirstQuest** - Basic quest with NPCs and dialogue
 - **MySecondQuest** - Bulletin board quest with item tracking
@@ -101,19 +101,20 @@ The `SampleQuests/` folder contains working examples:
 - **WaspBossLUA** - Boss fight mechanics
 - **DemonDoorLUA** - Conditional access quest
 
-See `SampleQuests/README.md` for detailed explanations of each example.
+See `FSE_Source/SampleQuests/README.md` for detailed explanations of each example.
 
 ## Project Structure
 
 ```
 FQT/
-├── FableQuestTool/       # Main WPF application
-│   ├── Data/             # Node definitions and data models
-│   ├── Services/         # Code generation and business logic
-│   ├── Views/            # UI views and controls
-│   ├── ViewModels/       # MVVM view models
-│   └── Resources/        # Styles and themes
-└── SampleQuests/         # Example quests
++-- FableQuestTool/       # Main WPF application
+�   +-- Data/             # Node definitions and data models
+�   +-- Services/         # Code generation and business logic
+�   +-- Views/            # UI views and controls
+�   +-- ViewModels/       # MVVM view models
+�   +-- Resources/        # Styles and themes
++-- FableQuestTool.Tests/ # Test project
++-- FSE_Source/           # Local reference copy of FSE source (optional)
 ```
 
 ## Known Issues

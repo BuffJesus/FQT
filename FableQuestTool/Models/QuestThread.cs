@@ -43,4 +43,21 @@ public sealed class QuestThread
     /// For documentation purposes - not used at runtime.
     /// </summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Pause interval (seconds) between iterations of the thread loop.
+    /// Keeps the thread from running every frame when not needed.
+    /// </summary>
+    public float IntervalSeconds { get; set; } = 0.5f;
+
+    /// <summary>
+    /// Optional quest state name to use as a stop condition.
+    /// When set, the thread exits when the state matches ExitStateValue.
+    /// </summary>
+    public string ExitStateName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The boolean value that triggers thread exit for ExitStateName.
+    /// </summary>
+    public bool ExitStateValue { get; set; } = true;
 }

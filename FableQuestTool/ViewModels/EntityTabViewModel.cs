@@ -421,7 +421,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         foreach (var node in allNodes.Where(n => !n.IsAdvanced))
         {
-            SimpleNodes.Add(new NodeOption(node.Label, node.Category, node.Icon)
+            SimpleNodes.Add(new NodeOption(node.Label, node.Category, node.Icon, node.Description)
             {
                 Type = node.Type,
                 Definition = node
@@ -430,7 +430,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         foreach (var node in allNodes.Where(n => n.IsAdvanced))
         {
-            AdvancedNodes.Add(new NodeOption(node.Label, node.Category, node.Icon)
+            AdvancedNodes.Add(new NodeOption(node.Label, node.Category, node.Icon, node.Description)
             {
                 Type = node.Type,
                 Definition = node
@@ -1958,13 +1958,15 @@ public sealed partial class EntityTabViewModel : ObservableObject
         // Add Get/Set nodes for each variable
         foreach (var variable in Variables)
         {
-            SimpleNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "ðŸ“¥")
+            SimpleNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "ðŸ“¥",
+                $"Gets the value of variable '{variable.Name}'")
             {
                 Type = $"var_get_{variable.Name}",
                 Definition = CreateGetVariableDefinition(variable)
             });
 
-            SimpleNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "ðŸ“¤")
+            SimpleNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "ðŸ“¤",
+                $"Sets the value of variable '{variable.Name}'")
             {
                 Type = $"var_set_{variable.Name}",
                 Definition = CreateSetVariableDefinition(variable)

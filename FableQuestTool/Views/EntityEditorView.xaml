@@ -559,8 +559,10 @@
                                                      Connections="{Binding Connections}"
                                                      PendingConnection="{Binding PendingConnection, Mode=TwoWay}"
                                                      SelectedItem="{Binding SelectedNode}"
+                                                     SelectedItems="{Binding SelectedNodes, Mode=TwoWay}"
                                                      Background="Transparent"
                                                      GridCellSize="20"
+                                                     EnableRealtimeSelection="True"
                                                      DisconnectConnectorCommand="{Binding DisconnectConnectorCommand}"
                                                      ConnectionCompletedCommand="{Binding FinishConnectionCommand}"
                                                      ConnectionStartedCommand="{Binding StartConnectionCommand}"
@@ -583,6 +585,25 @@
                                                              SourceOffset="12,0"
                                                              TargetOffset="12,0"
                                                               ContextMenuOpening="OnConnectionContextMenuOpening">
+                                                <nodify:Connection.Style>
+                                                    <Style TargetType="nodify:Connection">
+                                                        <Setter Property="Effect">
+                                                            <Setter.Value>
+                                                                <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.3" Color="White" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="StrokeThickness" Value="5" />
+                                                                <Setter Property="Effect">
+                                                                    <Setter.Value>
+                                                                        <DropShadowEffect BlurRadius="10" ShadowDepth="0" Opacity="0.65" Color="White" />
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </nodify:Connection.Style>
                                                 <nodify:Connection.ContextMenu>
                                                     <ContextMenu>
                                                         <MenuItem Header="Insert Reroute"
@@ -593,9 +614,6 @@
                                                                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                     </ContextMenu>
                                                 </nodify:Connection.ContextMenu>
-                                                <nodify:Connection.Effect>
-                                                    <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.3" Color="White" />
-                                                </nodify:Connection.Effect>
                                             </nodify:Connection>
                                         </DataTemplate>
                                     </nodify:NodifyEditor.ConnectionTemplate>
@@ -857,6 +875,60 @@
                                                   ToolTip="Add a reroute node to organize wires (Ctrl+Click while dragging)" />
                                         </StackPanel>
 
+                                        <!-- Recent Nodes -->
+                                        <StackPanel Margin="0,0,0,8"
+                                                    Visibility="{Binding HasRecentNodes, Converter={StaticResource BoolToVisibility}}">
+                                            <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3" Margin="0,0,0,4">
+                                                <TextBlock Text="Recent"
+                                                         FontWeight="SemiBold"
+                                                         FontSize="11"
+                                                         Foreground="#AAB8C2" />
+                                            </Border>
+                                            <ItemsControl ItemsSource="{Binding RecentNodes}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Margin="0,1"
+                                                              Command="{Binding DataContext.SelectNodeFromMenuCommand, ElementName=GroupedNodesControl}"
+                                                              CommandParameter="{Binding}"
+                                                              Background="Transparent"
+                                                              BorderThickness="0"
+                                                              HorizontalContentAlignment="Left"
+                                                              Padding="8,4"
+                                                              Cursor="Hand">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Style.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter Property="Background" Value="#2A3040" />
+                                                                        </Trigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                            <Grid Width="270">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="24" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}"
+                                                                         FontSize="12" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding Label}"
+                                                                         VerticalAlignment="Center"
+                                                                         FontSize="11" />
+                                                                <TextBlock Grid.Column="2"
+                                                                         Text="{Binding Type}"
+                                                                         VerticalAlignment="Center"
+                                                                         Opacity="0.4"
+                                                                         FontSize="9"
+                                                                         Margin="8,0,0,0" />
+                                                            </Grid>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+
                                         <!-- Grouped Node List -->
                                         <ScrollViewer MaxHeight="340" VerticalScrollBarVisibility="Auto">
                                             <ItemsControl x:Name="GroupedNodesControl" ItemsSource="{Binding GroupedFilteredNodes}">
@@ -958,6 +1030,49 @@
                             <ScrollViewer>
                                 <StackPanel Margin="12">
                                     <TextBlock Text="Node Properties" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                                    <StackPanel Visibility="{Binding HasGraphWarnings, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="Graph Warnings" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                                        <Border Background="{DynamicResource SurfaceBackground}"
+                                                BorderBrush="#FF8C1A"
+                                                BorderThickness="1"
+                                                Padding="8"
+                                                CornerRadius="4"
+                                                Margin="0,0,0,12">
+                                            <ItemsControl ItemsSource="{Binding GraphWarnings}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}"
+                                                                   FontSize="10"
+                                                                   TextWrapping="Wrap"
+                                                                   Margin="0,0,0,4" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <StackPanel Visibility="{Binding HasMultipleSelection, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="Selection" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                                        <Border Background="{DynamicResource SurfaceBackground}"
+                                                Padding="8"
+                                                CornerRadius="4"
+                                                Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding SelectedNodeCount, StringFormat={}{0} nodes selected}"
+                                                         FontWeight="SemiBold"
+                                                         Margin="0,0,0,6" />
+                                                <WrapPanel>
+                                                    <Button Content="Align Left" Command="{Binding AlignSelectionLeftCommand}" Margin="0,0,6,6" />
+                                                    <Button Content="Align Top" Command="{Binding AlignSelectionTopCommand}" Margin="0,0,6,6" />
+                                                    <Button Content="Distribute H" Command="{Binding DistributeSelectionHorizontalCommand}" Margin="0,0,6,6" />
+                                                    <Button Content="Distribute V" Command="{Binding DistributeSelectionVerticalCommand}" Margin="0,0,6,6" />
+                                                    <Button Content="Duplicate Selected" Command="{Binding DuplicateSelectedNodesCommand}" Margin="0,0,6,6" />
+                                                    <Button Content="Delete Selected" Command="{Binding DeleteSelectedNodesCommand}" Margin="0,0,6,6" />
+                                                </WrapPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
 
                                     <StackPanel Visibility="{Binding SelectedNode, Converter={StaticResource NullToVisibility}}">
                                         <TextBlock Text="Selected Node" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />

@@ -43,6 +43,29 @@ public sealed partial class EntityTabViewModel : ObservableObject
     public ObservableCollection<ConnectionViewModel> Connections { get; } = new();
     public ObservableCollection<NodeOption> SimpleNodes { get; } = new();
     public ObservableCollection<NodeOption> AdvancedNodes { get; } = new();
+    public ObservableCollection<NodeViewModel> SelectedNodes
+    {
+        get => selectedNodes;
+        set
+        {
+            if (ReferenceEquals(selectedNodes, value))
+            {
+                return;
+            }
+
+            if (selectedNodes != null)
+            {
+                selectedNodes.CollectionChanged -= SelectedNodes_CollectionChanged;
+            }
+
+            selectedNodes = value ?? new ObservableCollection<NodeViewModel>();
+            selectedNodes.CollectionChanged += SelectedNodes_CollectionChanged;
+            OnPropertyChanged(nameof(SelectedNodes));
+            UpdateSelectionState();
+        }
+    }
+    private ObservableCollection<NodeViewModel> selectedNodes = new();
+    public ObservableCollection<NodeOption> RecentNodes { get; } = new();
 
     [ObservableProperty]
     private NodeViewModel? selectedNode;
@@ -69,6 +92,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
     public ObservableCollection<NodeCategoryGroup> GroupedFilteredNodes { get; } = new();
+    private const int MaxRecentNodes = 6;
+    public ObservableCollection<string> GraphWarnings { get; } = new();
 
     [ObservableProperty]
     private string newVariableName = string.Empty;
@@ -103,6 +128,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         LoadDropdownDataAsync(config);
         LoadAvailableRewardItems();
         SyncObjectRewardItemsFromEntity();
+        SelectedNodes.CollectionChanged += SelectedNodes_CollectionChanged;
+        RecentNodes.CollectionChanged += (_, __) => OnPropertyChanged(nameof(HasRecentNodes));
+        Connections.CollectionChanged += (_, __) => UpdateGraphWarnings();
 
         // Listen for node collection changes to update available events and variable usage
         Nodes.CollectionChanged += (s, e) =>
@@ -110,6 +138,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             UpdateAvailableEvents();
             HandleNodeCollectionChanged(e);
             UpdateVariableUsageCounts();
+            UpdateGraphWarnings();
         };
     }
 
@@ -744,6 +773,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    private void SelectedNodes_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        UpdateSelectionState();
+    }
+
     [RelayCommand]
     private void AddNode(NodeOption option)
     {
@@ -755,6 +789,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         nodeSeed++;
         double offset = 30 * (nodeSeed % 6);
         Nodes.Add(CreateNode(option.Definition, 140 + offset, 140 + offset));
+        TrackRecentNode(option.Definition);
     }
 
     [RelayCommand]
@@ -848,6 +883,32 @@ public sealed partial class EntityTabViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void DeleteSelectedNodes()
+    {
+        var toRemove = SelectedNodes.Count > 0
+            ? SelectedNodes.ToList()
+            : (SelectedNode != null ? new List<NodeViewModel> { SelectedNode } : new List<NodeViewModel>());
+
+        if (toRemove.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var node in toRemove)
+        {
+            RemoveConnectionsForNode(node);
+        }
+
+        foreach (var node in toRemove)
+        {
+            Nodes.Remove(node);
+        }
+
+        SelectedNodes.Clear();
+        SelectedNode = null;
+    }
+
+    [RelayCommand]
     private void DuplicateNode()
     {
         if (SelectedNode?.Definition == null)
@@ -866,6 +927,50 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         Nodes.Add(duplicate);
         SelectedNode = duplicate;
+        TrackRecentNode(SelectedNode.Definition);
+    }
+
+    [RelayCommand]
+    private void DuplicateSelectedNodes()
+    {
+        var sourceNodes = SelectedNodes.Count > 0
+            ? SelectedNodes.ToList()
+            : (SelectedNode != null ? new List<NodeViewModel> { SelectedNode } : new List<NodeViewModel>());
+
+        if (sourceNodes.Count == 0)
+        {
+            return;
+        }
+
+        var newNodes = new List<NodeViewModel>();
+        foreach (var node in sourceNodes)
+        {
+            if (node.Definition == null)
+            {
+                continue;
+            }
+
+            var duplicate = CreateNode(node.Definition, node.Location.X + 30, node.Location.Y + 30);
+            foreach (var prop in node.Properties)
+            {
+                duplicate.Properties[prop.Key] = prop.Value;
+            }
+
+            Nodes.Add(duplicate);
+            newNodes.Add(duplicate);
+            TrackRecentNode(node.Definition);
+        }
+
+        SelectedNodes.Clear();
+        foreach (var node in newNodes)
+        {
+            SelectedNodes.Add(node);
+        }
+
+        if (newNodes.Count == 1)
+        {
+            SelectedNode = newNodes[0];
+        }
     }
 
     [RelayCommand]
@@ -1260,6 +1365,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         nodeSeed++;
         var newNode = CreateNode(option.Definition, NodeMenuGraphPosition.X, NodeMenuGraphPosition.Y);
         Nodes.Add(newNode);
+        TrackRecentNode(option.Definition);
 
         var source = menuConnectionSource;
         if (source != null)
@@ -1283,6 +1389,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     partial void OnNodeSearchTextChanged(string value)
     {
         UpdateFilteredNodes();
+        OnPropertyChanged(nameof(HasRecentNodes));
     }
 
     private void UpdateFilteredNodes()
@@ -1354,6 +1461,193 @@ public sealed partial class EntityTabViewModel : ObservableObject
             };
 
             GroupedFilteredNodes.Add(new NodeCategoryGroup(categoryName, group.ToList()));
+        }
+    }
+
+    private void TrackRecentNode(NodeDefinition definition)
+    {
+        var option = SimpleNodes.Concat(AdvancedNodes)
+            .FirstOrDefault(n => string.Equals(n.Type, definition.Type, StringComparison.OrdinalIgnoreCase));
+        if (option == null)
+        {
+            return;
+        }
+
+        var existing = RecentNodes.FirstOrDefault(n => n.Type == option.Type);
+        if (existing != null)
+        {
+            RecentNodes.Remove(existing);
+        }
+
+        RecentNodes.Insert(0, option);
+
+        while (RecentNodes.Count > MaxRecentNodes)
+        {
+            RecentNodes.RemoveAt(RecentNodes.Count - 1);
+        }
+    }
+
+    private void UpdateSelectionState()
+    {
+        OnPropertyChanged(nameof(HasSelection));
+        OnPropertyChanged(nameof(HasMultipleSelection));
+        OnPropertyChanged(nameof(SelectedNodeCount));
+
+        if (SelectedNodes.Count == 1)
+        {
+            SelectedNode = SelectedNodes[0];
+        }
+        else if (SelectedNodes.Count == 0)
+        {
+            SelectedNode = null;
+        }
+    }
+
+    public bool HasSelection => SelectedNodes.Count > 0 || SelectedNode != null;
+    public bool HasMultipleSelection => SelectedNodes.Count > 1;
+    public int SelectedNodeCount => SelectedNodes.Count;
+    public bool HasRecentNodes => RecentNodes.Count > 0 && string.IsNullOrWhiteSpace(NodeSearchText);
+    public bool HasGraphWarnings => GraphWarnings.Count > 0;
+
+    private void UpdateGraphWarnings()
+    {
+        GraphWarnings.Clear();
+
+        var incoming = new Dictionary<NodeViewModel, int>();
+        var outgoing = new Dictionary<NodeViewModel, int>();
+        var outgoingByConnector = new Dictionary<ConnectorViewModel, int>();
+
+        foreach (var node in Nodes)
+        {
+            incoming[node] = 0;
+            outgoing[node] = 0;
+        }
+
+        foreach (var conn in Connections)
+        {
+            var sourceNode = GetNodeForConnector(conn.Source, isOutput: true);
+            var targetNode = GetNodeForConnector(conn.Target, isOutput: false);
+
+            if (sourceNode != null)
+            {
+                outgoing[sourceNode]++;
+            }
+            if (targetNode != null)
+            {
+                incoming[targetNode]++;
+            }
+            if (conn.Source != null)
+            {
+                outgoingByConnector[conn.Source] = outgoingByConnector.TryGetValue(conn.Source, out var count)
+                    ? count + 1
+                    : 1;
+            }
+        }
+
+        foreach (var node in Nodes)
+        {
+            if (node.IsRerouteNode)
+            {
+                continue;
+            }
+
+            var title = string.IsNullOrWhiteSpace(node.Title) ? node.Type : node.Title;
+
+            bool isEntry = node.Category == "trigger" || node.Type == "defineEvent";
+            if (isEntry && outgoing[node] == 0)
+            {
+                GraphWarnings.Add($"Entry node '{title}' has no outgoing connections.");
+            }
+            else if (!isEntry && incoming[node] == 0)
+            {
+                GraphWarnings.Add($"Node '{title}' has no incoming connections.");
+            }
+
+            if (node.Category == "flow" && node.Output.Count > 1)
+            {
+                foreach (var output in node.Output)
+                {
+                    if (!outgoingByConnector.ContainsKey(output))
+                    {
+                        var portName = string.IsNullOrWhiteSpace(output.Title) ? "Output" : output.Title;
+                        GraphWarnings.Add($"Flow node '{title}' has unconnected output '{portName}'.");
+                    }
+                }
+            }
+        }
+
+        OnPropertyChanged(nameof(HasGraphWarnings));
+    }
+
+    [RelayCommand]
+    private void AlignSelectionLeft()
+    {
+        var nodes = SelectedNodes.Count > 0 ? SelectedNodes : new ObservableCollection<NodeViewModel>();
+        if (nodes.Count < 2)
+        {
+            return;
+        }
+
+        double minX = nodes.Min(n => n.Location.X);
+        foreach (var node in nodes)
+        {
+            node.Location = new System.Windows.Point(minX, node.Location.Y);
+        }
+    }
+
+    [RelayCommand]
+    private void AlignSelectionTop()
+    {
+        var nodes = SelectedNodes.Count > 0 ? SelectedNodes : new ObservableCollection<NodeViewModel>();
+        if (nodes.Count < 2)
+        {
+            return;
+        }
+
+        double minY = nodes.Min(n => n.Location.Y);
+        foreach (var node in nodes)
+        {
+            node.Location = new System.Windows.Point(node.Location.X, minY);
+        }
+    }
+
+    [RelayCommand]
+    private void DistributeSelectionHorizontal()
+    {
+        var nodes = SelectedNodes.Count > 0 ? SelectedNodes.ToList() : new List<NodeViewModel>();
+        if (nodes.Count < 3)
+        {
+            return;
+        }
+
+        nodes.Sort((a, b) => a.Location.X.CompareTo(b.Location.X));
+        double minX = nodes.First().Location.X;
+        double maxX = nodes.Last().Location.X;
+        double step = (maxX - minX) / (nodes.Count - 1);
+
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            nodes[i].Location = new System.Windows.Point(minX + step * i, nodes[i].Location.Y);
+        }
+    }
+
+    [RelayCommand]
+    private void DistributeSelectionVertical()
+    {
+        var nodes = SelectedNodes.Count > 0 ? SelectedNodes.ToList() : new List<NodeViewModel>();
+        if (nodes.Count < 3)
+        {
+            return;
+        }
+
+        nodes.Sort((a, b) => a.Location.Y.CompareTo(b.Location.Y));
+        double minY = nodes.First().Location.Y;
+        double maxY = nodes.Last().Location.Y;
+        double step = (maxY - minY) / (nodes.Count - 1);
+
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            nodes[i].Location = new System.Windows.Point(nodes[i].Location.X, minY + step * i);
         }
     }
 

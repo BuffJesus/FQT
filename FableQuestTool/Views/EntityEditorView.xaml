@@ -884,6 +884,68 @@
                                                   ToolTip="Add a reroute node to organize wires (Ctrl+Click while dragging)" />
                                         </StackPanel>
 
+                                        <!-- Favorite Nodes -->
+                                        <StackPanel Margin="0,0,0,8"
+                                                    Visibility="{Binding HasFavoriteNodes, Converter={StaticResource BoolToVisibility}}">
+                                            <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3" Margin="0,0,0,4">
+                                                <TextBlock Text="Favorites"
+                                                         FontWeight="SemiBold"
+                                                         FontSize="11"
+                                                         Foreground="#AAB8C2" />
+                                            </Border>
+                                            <ItemsControl ItemsSource="{Binding FavoriteNodes}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Margin="0,1"
+                                                              Command="{Binding DataContext.SelectNodeFromMenuCommand, ElementName=GroupedNodesControl}"
+                                                              CommandParameter="{Binding}"
+                                                              Background="Transparent"
+                                                              BorderThickness="0"
+                                                              HorizontalContentAlignment="Left"
+                                                              Padding="8,4"
+                                                              Cursor="Hand"
+                                                              ToolTip="{Binding Description}">
+                                                            <Button.ContextMenu>
+                                                                <ContextMenu>
+                                                                    <MenuItem Header="Toggle Favorite"
+                                                                              Command="{Binding DataContext.ToggleFavoriteNodeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                              CommandParameter="{Binding}" />
+                                                                </ContextMenu>
+                                                            </Button.ContextMenu>
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Style.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter Property="Background" Value="#2A3040" />
+                                                                        </Trigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                            <Grid Width="270">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="24" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}"
+                                                                         FontSize="12" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding Label}"
+                                                                         VerticalAlignment="Center"
+                                                                         FontSize="11" />
+                                                                <TextBlock Grid.Column="2"
+                                                                         Text="{Binding Type}"
+                                                                         VerticalAlignment="Center"
+                                                                         Opacity="0.4"
+                                                                         FontSize="9"
+                                                                         Margin="8,0,0,0" />
+                                                            </Grid>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+
                                         <!-- Recent Nodes -->
                                         <StackPanel Margin="0,0,0,8"
                                                     Visibility="{Binding HasRecentNodes, Converter={StaticResource BoolToVisibility}}">
@@ -905,6 +967,13 @@
                                                               Padding="8,4"
                                                               Cursor="Hand"
                                                               ToolTip="{Binding Description}">
+                                                            <Button.ContextMenu>
+                                                                <ContextMenu>
+                                                                    <MenuItem Header="Toggle Favorite"
+                                                                              Command="{Binding DataContext.ToggleFavoriteNodeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                              CommandParameter="{Binding}" />
+                                                                </ContextMenu>
+                                                            </Button.ContextMenu>
                                                             <Button.Style>
                                                                 <Style TargetType="Button">
                                                                     <Style.Triggers>
@@ -966,10 +1035,17 @@
                                                                       Padding="8,4"
                                                                       Cursor="Hand"
                                                                       ToolTip="{Binding Description}">
-                                                                            <Button.Style>
-                                                                                <Style TargetType="Button">
-                                                                                    <Style.Triggers>
-                                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Button.ContextMenu>
+                                                                            <ContextMenu>
+                                                                                <MenuItem Header="Toggle Favorite"
+                                                                                          Command="{Binding DataContext.ToggleFavoriteNodeCommand, ElementName=GroupedNodesControl}"
+                                                                                          CommandParameter="{Binding}" />
+                                                                            </ContextMenu>
+                                                                        </Button.ContextMenu>
+                                                                        <Button.Style>
+                                                                            <Style TargetType="Button">
+                                                                                <Style.Triggers>
+                                                                                    <Trigger Property="IsMouseOver" Value="True">
                                                                                             <Setter Property="Background" Value="#2A3040" />
                                                                                         </Trigger>
                                                                                         <DataTrigger Value="True">

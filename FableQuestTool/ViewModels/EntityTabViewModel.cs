@@ -66,6 +66,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     }
     private ObservableCollection<NodeViewModel> selectedNodes = new();
     public ObservableCollection<NodeOption> RecentNodes { get; } = new();
+    public ObservableCollection<NodeOption> FavoriteNodes { get; } = new();
 
     [ObservableProperty]
     private NodeViewModel? selectedNode;
@@ -93,6 +94,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
     public ObservableCollection<NodeCategoryGroup> GroupedFilteredNodes { get; } = new();
     private const int MaxRecentNodes = 6;
+    private const int MaxFavoriteNodes = 8;
     public ObservableCollection<string> GraphWarnings { get; } = new();
 
     [ObservableProperty]
@@ -130,6 +132,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         SyncObjectRewardItemsFromEntity();
         SelectedNodes.CollectionChanged += SelectedNodes_CollectionChanged;
         RecentNodes.CollectionChanged += (_, __) => OnPropertyChanged(nameof(HasRecentNodes));
+        FavoriteNodes.CollectionChanged += (_, __) => OnPropertyChanged(nameof(HasFavoriteNodes));
         Connections.CollectionChanged += (_, __) => UpdateGraphWarnings();
 
         // Listen for node collection changes to update available events and variable usage
@@ -1499,6 +1502,28 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void ToggleFavoriteNode(NodeOption? option)
+    {
+        if (option == null)
+        {
+            return;
+        }
+
+        var existing = FavoriteNodes.FirstOrDefault(n => n.Type == option.Type);
+        if (existing != null)
+        {
+            FavoriteNodes.Remove(existing);
+            return;
+        }
+
+        FavoriteNodes.Insert(0, option);
+        while (FavoriteNodes.Count > MaxFavoriteNodes)
+        {
+            FavoriteNodes.RemoveAt(FavoriteNodes.Count - 1);
+        }
+    }
+
     private void UpdateSelectionState()
     {
         OnPropertyChanged(nameof(HasSelection));
@@ -1519,6 +1544,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     public bool HasMultipleSelection => SelectedNodes.Count > 1;
     public int SelectedNodeCount => SelectedNodes.Count;
     public bool HasRecentNodes => RecentNodes.Count > 0 && string.IsNullOrWhiteSpace(NodeSearchText);
+    public bool HasFavoriteNodes => FavoriteNodes.Count > 0;
     public bool HasGraphWarnings => GraphWarnings.Count > 0;
 
     private void UpdateGraphWarnings()

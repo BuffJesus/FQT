@@ -6,6 +6,7 @@
         xmlns:views="clr-namespace:FableQuestTool.Views"
         mc:Ignorable="d"
         Title="{Binding Title}" Height="900" Width="1400"
+        WindowStartupLocation="CenterScreen"
         MinHeight="700" MinWidth="1100">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />

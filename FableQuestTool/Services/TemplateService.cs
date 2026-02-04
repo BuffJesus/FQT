@@ -81,7 +81,8 @@ public class TemplateService
             CreateVariableIntegerTemplate(),
             CreateVariableFloatTemplate(),
             CreateVariableObjectTemplate(),
-            CreateVariableBranchTemplate()
+            CreateVariableBranchTemplate(),
+            CreateVariableExternalFlowTemplate()
         };
     }
 
@@ -1647,7 +1648,6 @@ public class TemplateService
         });
 
         string talkId = Guid.NewGuid().ToString();
-        string setId = Guid.NewGuid().ToString();
         string branchId = Guid.NewGuid().ToString();
         string yesId = Guid.NewGuid().ToString();
         string noId = Guid.NewGuid().ToString();
@@ -1655,8 +1655,6 @@ public class TemplateService
         npc.Nodes = new List<BehaviorNode>
         {
             new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 260 },
-            new BehaviorNode { Id = setId, Type = "var_set_HasKey", Category = "variable", Label = "Set HasKey", Icon = "??", X = 260, Y = 260,
-                Config = new Dictionary<string, object> { { "value", "true" } } },
             new BehaviorNode { Id = branchId, Type = "branch", Category = "flow", Label = "Branch", Icon = "??", X = 440, Y = 260,
                 Config = new Dictionary<string, object> { { "condition", "$HasKey" } } },
             new BehaviorNode { Id = yesId, Type = "showDialogue", Category = "action", Label = "Has Key", Icon = "??", X = 620, Y = 220,
@@ -1667,11 +1665,9 @@ public class TemplateService
 
         npc.Connections = new List<NodeConnection>
         {
-            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = setId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = setId, FromPort = "Output", ToNodeId = branchId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = branchId, ToPort = "Input" },
             new NodeConnection { FromNodeId = branchId, FromPort = "True", ToNodeId = yesId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = branchId, FromPort = "False", ToNodeId = noId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = setId, FromPort = "Value", ToNodeId = branchId, ToPort = "Condition" }
+            new NodeConnection { FromNodeId = branchId, FromPort = "False", ToNodeId = noId, ToPort = "Input" }
         };
 
         project.Entities.Add(npc);
@@ -1680,6 +1676,104 @@ public class TemplateService
         {
             Name = "Variables: Branch",
             Description = "Branching flow based on a variable value.",
+            Category = "Variables",
+            Difficulty = "Beginner",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateVariableExternalFlowTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "VarExternalFlowQuest",
+            Id = 50017,
+            DisplayName = "Variables: External Item Flow",
+            Description = "Give an item to set an exposed variable, then read it from another entity.",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Give the item, then talk to the listener",
+            ObjectiveRegion1 = "Oakvale"
+        };
+
+        var source = new QuestEntity
+        {
+            Id = "var_external_source",
+            ScriptName = "VarSource",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        source.Variables.Add(new EntityVariable
+        {
+            Name = "HasToken",
+            Type = "Boolean",
+            DefaultValue = "false",
+            IsExposed = true
+        });
+
+        string giveItemId = Guid.NewGuid().ToString();
+        string setTrueId = Guid.NewGuid().ToString();
+        string confirmId = Guid.NewGuid().ToString();
+
+        source.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = giveItemId, Type = "onItemPresented", Category = "trigger", Label = "Item Given", Icon = "??", X = 80, Y = 140,
+                Config = new Dictionary<string, object> { { "item", "OBJECT_APPLE" } } },
+            new BehaviorNode { Id = setTrueId, Type = "var_set_HasToken", Category = "variable", Label = "Set HasToken", Icon = "??", X = 260, Y = 140,
+                Config = new Dictionary<string, object> { { "value", "true" } } },
+            new BehaviorNode { Id = confirmId, Type = "showDialogue", Category = "action", Label = "Confirm", Icon = "??", X = 440, Y = 140,
+                Config = new Dictionary<string, object> { { "text", "Thanks! Tell the listener you're ready." } } }
+        };
+
+        source.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = giveItemId, FromPort = "Output", ToNodeId = setTrueId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setTrueId, FromPort = "Output", ToNodeId = confirmId, ToPort = "Input" }
+        };
+
+        var listener = new QuestEntity
+        {
+            Id = "var_external_listener",
+            ScriptName = "VarListener",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        string talkId = Guid.NewGuid().ToString();
+        string branchId = Guid.NewGuid().ToString();
+        string yesId = Guid.NewGuid().ToString();
+        string noId = Guid.NewGuid().ToString();
+
+        listener.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 320 },
+            new BehaviorNode { Id = branchId, Type = "branch", Category = "flow", Label = "Branch", Icon = "??", X = 260, Y = 320,
+                Config = new Dictionary<string, object> { { "condition", "$@VarSource.HasToken" } } },
+            new BehaviorNode { Id = yesId, Type = "showDialogue", Category = "action", Label = "Has Token", Icon = "??", X = 440, Y = 280,
+                Config = new Dictionary<string, object> { { "text", "Great, you brought the token!" } } },
+            new BehaviorNode { Id = noId, Type = "showDialogue", Category = "action", Label = "No Token", Icon = "??", X = 440, Y = 360,
+                Config = new Dictionary<string, object> { { "text", "Come back after you give the item to VarSource." } } }
+        };
+
+        listener.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = branchId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = branchId, FromPort = "True", ToNodeId = yesId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = branchId, FromPort = "False", ToNodeId = noId, ToPort = "Input" }
+        };
+
+        project.Entities.Add(source);
+        project.Entities.Add(listener);
+
+        return new QuestTemplate
+        {
+            Name = "Variables: External Item Flow",
+            Description = "Set an exposed variable by giving an item, then read it from another entity.",
             Category = "Variables",
             Difficulty = "Beginner",
             Template = project

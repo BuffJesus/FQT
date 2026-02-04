@@ -3,8 +3,10 @@ using CommunityToolkit.Mvvm.Input;
 using FableQuestTool.Config;
 using FableQuestTool.Models;
 using FableQuestTool.Services;
+using FableQuestTool.Data;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows;
 
 namespace FableQuestTool.ViewModels;
 
@@ -36,6 +38,18 @@ public sealed partial class EntityBrowserViewModel : ObservableObject
     [ObservableProperty]
     private string statusText = "Ready";
 
+    [ObservableProperty]
+    private ObservableCollection<string> items = new();
+
+    [ObservableProperty]
+    private ObservableCollection<string> filteredItems = new();
+
+    [ObservableProperty]
+    private string? selectedItem;
+
+    [ObservableProperty]
+    private string itemSearchText = string.Empty;
+
     public ObservableCollection<string> Regions { get; } = new();
     public ObservableCollection<EntityCategory> Categories { get; } = new();
 
@@ -60,6 +74,8 @@ public sealed partial class EntityBrowserViewModel : ObservableObject
         Categories.Add(EntityCategory.Chest);
         Categories.Add(EntityCategory.Door);
         Categories.Add(EntityCategory.QuestItem);
+
+        LoadItems();
     }
 
     [RelayCommand]
@@ -130,6 +146,18 @@ public sealed partial class EntityBrowserViewModel : ObservableObject
         LoadEntities();
     }
 
+    [RelayCommand]
+    private void CopySelectedItem()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedItem))
+        {
+            return;
+        }
+
+        System.Windows.Clipboard.SetText(SelectedItem);
+        StatusText = $"Copied {SelectedItem}";
+    }
+
     partial void OnSearchTextChanged(string value)
     {
         ApplyFilters();
@@ -148,5 +176,38 @@ public sealed partial class EntityBrowserViewModel : ObservableObject
     partial void OnSelectedRegionChanged(string value)
     {
         LoadEntities();
+    }
+
+    partial void OnItemSearchTextChanged(string value)
+    {
+        ApplyItemFilters();
+    }
+
+    private void LoadItems()
+    {
+        Items.Clear();
+        foreach (var item in GameData.Objects.Distinct())
+        {
+            Items.Add(item);
+        }
+
+        ApplyItemFilters();
+    }
+
+    private void ApplyItemFilters()
+    {
+        var filtered = Items.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(ItemSearchText))
+        {
+            string search = ItemSearchText.ToLowerInvariant();
+            filtered = filtered.Where(i => i.ToLowerInvariant().Contains(search));
+        }
+
+        FilteredItems.Clear();
+        foreach (var item in filtered)
+        {
+            FilteredItems.Add(item);
+        }
     }
 }

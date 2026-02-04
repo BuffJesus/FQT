@@ -1689,8 +1689,20 @@ public sealed class CodeGenerator
     {
         if (nodeDef.Category == "variable")
         {
-            return nodeDef.Type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase) ||
-                   nodeDef.Type.StartsWith("var_set_ext", StringComparison.OrdinalIgnoreCase);
+            if (!(nodeDef.Type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase) ||
+                  nodeDef.Type.StartsWith("var_set_ext", StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(port))
+            {
+                return true;
+            }
+
+            return string.Equals(port, "▶", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(port, "Exec", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(port, "Output", StringComparison.OrdinalIgnoreCase);
         }
 
         if (string.IsNullOrWhiteSpace(port))
@@ -1707,6 +1719,13 @@ public sealed class CodeGenerator
 
         if (nodeDef.BranchLabels != null &&
             nodeDef.BranchLabels.Any(label => label.Equals(port, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        if (nodeDef.HasBranching &&
+            (string.Equals(port, "True", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(port, "False", StringComparison.OrdinalIgnoreCase)))
         {
             return true;
         }

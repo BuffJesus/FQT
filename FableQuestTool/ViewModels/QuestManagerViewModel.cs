@@ -160,7 +160,7 @@ public sealed partial class QuestManagerViewModel : ObservableObject
     private static ObservableCollection<DeployedQuestInfo> ParseQuestsLua(string content, string fseFolder)
     {
         var quests = new ObservableCollection<DeployedQuestInfo>();
-        var lines = content.Split('\n');
+        var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
         DeployedQuestInfo? currentQuest = null;
         bool isCurrentQuestCommented = false;
@@ -187,9 +187,9 @@ public sealed partial class QuestManagerViewModel : ObservableObject
                 {
                     string questName = workingLine.Substring(0, equalsIndex).Trim();
 
-                    // Ignore properties and root table
-                    bool isProperty = questName.Contains("_");
-                    if (questName != "Quests" && !isProperty && !string.IsNullOrWhiteSpace(questName))
+                    // Ignore root table only
+                    if (!string.Equals(questName, "Quests", StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrWhiteSpace(questName))
                     {
                         currentQuest = new DeployedQuestInfo
                         {

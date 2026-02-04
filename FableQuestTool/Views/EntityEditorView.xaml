@@ -566,7 +566,8 @@
                                     </Canvas.Background>
                                 </Canvas>
 
-                                <nodify:NodifyEditor ItemsSource="{Binding Nodes}"
+                                <nodify:NodifyEditor x:Name="EditorControl"
+                                                     ItemsSource="{Binding Nodes}"
                                                      Connections="{Binding Connections}"
                                                      PendingConnection="{Binding PendingConnection, Mode=TwoWay}"
                                                      SelectedItem="{Binding SelectedNode}"
@@ -846,6 +847,56 @@
                                         </DataTemplate>
                                     </nodify:NodifyEditor.ItemTemplate>
                                 </nodify:NodifyEditor>
+
+                                <!-- Zoom Controls -->
+                                <Border Background="#1A1F2ECC"
+                                        BorderBrush="#2A3242"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="6"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Margin="0,8,8,0"
+                                        Panel.ZIndex="900">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding ElementName=EditorControl, Path=ViewportZoom, StringFormat={}{0:P0}}"
+                                                   Foreground="#AAB8C2"
+                                                   FontSize="10"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,8,0" />
+                                        <Button Content="-"
+                                                Width="22"
+                                                Height="22"
+                                                FontSize="12"
+                                                Padding="0"
+                                                Margin="0,0,4,0"
+                                                ToolTip="Zoom out (Ctrl + -)"
+                                                Click="OnZoomOutClick" />
+                                        <Button Content="+"
+                                                Width="22"
+                                                Height="22"
+                                                FontSize="12"
+                                                Padding="0"
+                                                Margin="0,0,4,0"
+                                                ToolTip="Zoom in (Ctrl + +)"
+                                                Click="OnZoomInClick" />
+                                        <Button Content="100%"
+                                                Width="44"
+                                                Height="22"
+                                                FontSize="10"
+                                                Padding="0"
+                                                Margin="0,0,4,0"
+                                                ToolTip="Reset zoom (Ctrl + 0)"
+                                                Click="OnZoomResetClick" />
+                                        <Button Content="Fit"
+                                                Width="32"
+                                                Height="22"
+                                                FontSize="10"
+                                                Padding="0"
+                                                ToolTip="Fit to screen (Ctrl + Shift + F)"
+                                                Click="OnZoomFitClick" />
+                                    </StackPanel>
+                                </Border>
 
                                 <!-- Node Creation Menu (UE5 Blueprint-style) -->
                                 <Border x:Name="NodeMenuBorder"

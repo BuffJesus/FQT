@@ -105,7 +105,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                 return;
             }
 
-            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && e.Key == Key.F)
+            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.F)
             {
                 if (sender is Nodify.NodifyEditor editor)
                 {
@@ -119,6 +119,44 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
                         e.Handled = true;
                         return;
                     }
+                }
+            }
+
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                if (sender is Nodify.NodifyEditor editor)
+                {
+                    if (e.Key == Key.OemPlus || e.Key == Key.Add)
+                    {
+                        editor.ZoomIn();
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (e.Key == Key.OemMinus || e.Key == Key.Subtract)
+                    {
+                        editor.ZoomOut();
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (e.Key == Key.D0 || e.Key == Key.NumPad0)
+                    {
+                        ResetEditorZoom(editor);
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+
+            if ((Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) == (ModifierKeys.Control | ModifierKeys.Shift)
+                && e.Key == Key.F)
+            {
+                if (sender is Nodify.NodifyEditor editor)
+                {
+                    editor.FitToScreen(null);
+                    e.Handled = true;
+                    return;
                 }
             }
 
@@ -386,6 +424,39 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         {
             // Silently handle any errors
         }
+    }
+
+    private void OnZoomInClick(object sender, RoutedEventArgs e)
+    {
+        var editor = _editor ?? sender as Nodify.NodifyEditor;
+        editor?.ZoomIn();
+    }
+
+    private void OnZoomOutClick(object sender, RoutedEventArgs e)
+    {
+        var editor = _editor ?? sender as Nodify.NodifyEditor;
+        editor?.ZoomOut();
+    }
+
+    private void OnZoomResetClick(object sender, RoutedEventArgs e)
+    {
+        var editor = _editor ?? sender as Nodify.NodifyEditor;
+        if (editor != null)
+        {
+            ResetEditorZoom(editor);
+        }
+    }
+
+    private void OnZoomFitClick(object sender, RoutedEventArgs e)
+    {
+        var editor = _editor ?? sender as Nodify.NodifyEditor;
+        editor?.FitToScreen(null);
+    }
+
+    private static void ResetEditorZoom(Nodify.NodifyEditor editor)
+    {
+        editor.ViewportZoom = 1.0;
+        editor.ViewportLocation = new System.Windows.Point(0, 0);
     }
 
     private void CancelEditorDrag(Nodify.NodifyEditor editor, EntityTabViewModel currentTab)

@@ -1284,6 +1284,14 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 return;
             }
 
+            // Disallow connecting into entry nodes (triggers/defineEvent).
+            var targetNode = GetNodeForConnector(targetConnector, isOutput: false);
+            if (targetNode != null && (targetNode.Category == "trigger" || targetNode.Type == "defineEvent"))
+            {
+                PendingConnection = null;
+                return;
+            }
+
             // Ensure only one connection per input connector.
             var existingToTarget = Connections.Where(c => c.Target == targetConnector).ToList();
             foreach (var conn in existingToTarget)
@@ -1956,13 +1964,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
     private bool ShouldHideTriggerNodes()
     {
-        if (menuConnectionSource == null)
-        {
-            return false;
-        }
-
-        var sourceNode = Nodes.FirstOrDefault(n => n.Output.Contains(menuConnectionSource));
-        return sourceNode?.Category == "trigger";
+        return menuConnectionSource != null;
     }
 
     /// <summary>

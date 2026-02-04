@@ -88,6 +88,28 @@ public sealed class FableConfig
         ini?.Set("Settings", "FablePath", path);
     }
 
+    public string[] GetFavoriteNodeTypes()
+    {
+        string? raw = ini?.Get("UI", "FavoriteNodes");
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return Array.Empty<string>();
+        }
+
+        return raw.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    public void SetFavoriteNodeTypes(IEnumerable<string> types)
+    {
+        if (ini == null)
+        {
+            return;
+        }
+
+        string value = string.Join('|', types);
+        ini.Set("UI", "FavoriteNodes", value);
+    }
+
     public string? GetFseFolder()
     {
         if (string.IsNullOrWhiteSpace(FablePath))

@@ -16,6 +16,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
 {
     private readonly QuestEntity entity;
     private readonly EntityBrowserService entityBrowserService;
+    private readonly Action<IReadOnlyList<string>>? saveFavorites;
     private List<TngEntity> allEntities = new();
 
     public ObservableCollection<string> AvailableDefinitions { get; } = new();
@@ -106,11 +107,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
     private int nodeSeed = 0;
     private readonly Dictionary<string, int> variableUsageIndices = new(StringComparer.OrdinalIgnoreCase);
 
-    public EntityTabViewModel(QuestEntity entity)
+    public EntityTabViewModel(QuestEntity entity, IEnumerable<string>? favoriteTypes = null, Action<IReadOnlyList<string>>? saveFavorites = null)
     {
         this.entity = entity;
         var config = FableConfig.Load();
         this.entityBrowserService = new EntityBrowserService(config);
+        this.saveFavorites = saveFavorites;
 
         System.Diagnostics.Debug.WriteLine($"EntityTabViewModel Constructor: FablePath = {config.FablePath ?? "NULL"}");
 
@@ -121,6 +123,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         entity.PropertyChanged += Entity_PropertyChanged;
 
         LoadNodePalette();
+        InitializeFavorites(favoriteTypes);
         LoadVariablesFromEntity();
         UpdateVariableNodes();
         LoadExistingNodes();
@@ -1479,8 +1482,13 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
-    private void TrackRecentNode(NodeDefinition definition)
+    private void TrackRecentNode(NodeDefinition? definition)
     {
+        if (definition == null)
+        {
+            return;
+        }
+
         var option = SimpleNodes.Concat(AdvancedNodes)
             .FirstOrDefault(n => string.Equals(n.Type, definition.Type, StringComparison.OrdinalIgnoreCase));
         if (option == null)
@@ -1514,6 +1522,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         if (existing != null)
         {
             FavoriteNodes.Remove(existing);
+            SaveFavorites();
             return;
         }
 
@@ -1522,6 +1531,38 @@ public sealed partial class EntityTabViewModel : ObservableObject
         {
             FavoriteNodes.RemoveAt(FavoriteNodes.Count - 1);
         }
+
+        SaveFavorites();
+    }
+
+    private void InitializeFavorites(IEnumerable<string>? favoriteTypes)
+    {
+        FavoriteNodes.Clear();
+        if (favoriteTypes == null)
+        {
+            return;
+        }
+
+        foreach (string type in favoriteTypes)
+        {
+            var option = SimpleNodes.Concat(AdvancedNodes)
+                .FirstOrDefault(n => string.Equals(n.Type, type, StringComparison.OrdinalIgnoreCase));
+            if (option != null)
+            {
+                FavoriteNodes.Add(option);
+            }
+        }
+    }
+
+    private void SaveFavorites()
+    {
+        if (saveFavorites == null)
+        {
+            return;
+        }
+
+        var types = FavoriteNodes.Select(n => n.Type).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+        saveFavorites(types);
     }
 
     private void UpdateSelectionState()

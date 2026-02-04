@@ -93,6 +93,17 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateSetupStatus();
     }
 
+    public IReadOnlyList<string> GetFavoriteNodeTypes()
+    {
+        return fableConfig.GetFavoriteNodeTypes();
+    }
+
+    public void SaveFavoriteNodeTypes(IEnumerable<string> types)
+    {
+        fableConfig.SetFavoriteNodeTypes(types);
+        fableConfig.Save();
+    }
+
     [RelayCommand]
     private void NewProject()
     {
@@ -575,7 +586,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = sampleQuestsPathDisplay,
+                FileName = SampleQuestsPathDisplay,
                 UseShellExecute = true
             });
         }

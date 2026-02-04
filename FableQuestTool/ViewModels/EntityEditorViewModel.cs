@@ -36,7 +36,7 @@ public sealed partial class EntityEditorViewModel : ObservableObject
 
         foreach (var entity in mainViewModel.Project.Entities)
         {
-            var tab = new EntityTabViewModel(entity);
+            var tab = new EntityTabViewModel(entity, mainViewModel.GetFavoriteNodeTypes(), mainViewModel.SaveFavoriteNodeTypes);
             AttachDirtyTracking(tab);
             EntityTabs.Add(tab);
         }
@@ -63,7 +63,7 @@ public sealed partial class EntityEditorViewModel : ObservableObject
 
         mainViewModel.Project.Entities.Add(newEntity);
 
-        var newTab = new EntityTabViewModel(newEntity);
+        var newTab = new EntityTabViewModel(newEntity, mainViewModel.GetFavoriteNodeTypes(), mainViewModel.SaveFavoriteNodeTypes);
         AttachDirtyTracking(newTab);
         EntityTabs.Add(newTab);
 
@@ -167,7 +167,7 @@ public sealed partial class EntityEditorViewModel : ObservableObject
 
         mainViewModel.Project.Entities.Add(duplicate);
 
-        var newTab = new EntityTabViewModel(duplicate);
+        var newTab = new EntityTabViewModel(duplicate, mainViewModel.GetFavoriteNodeTypes(), mainViewModel.SaveFavoriteNodeTypes);
         AttachDirtyTracking(newTab);
         EntityTabs.Add(newTab);
 

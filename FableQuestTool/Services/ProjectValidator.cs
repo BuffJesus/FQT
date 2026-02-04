@@ -97,6 +97,8 @@ public sealed class ProjectValidator
     private static bool IsVariableNode(string type)
     {
         return type.StartsWith("var_get_", StringComparison.OrdinalIgnoreCase) ||
-               type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase);
+               type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase) ||
+               type.StartsWith("var_get_ext", StringComparison.OrdinalIgnoreCase) ||
+               type.StartsWith("var_set_ext", StringComparison.OrdinalIgnoreCase);
     }
 }

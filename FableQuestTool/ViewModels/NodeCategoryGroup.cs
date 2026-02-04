@@ -25,6 +25,7 @@ public class NodeCategoryGroup
         "flow" => "#9B59B6",       // Purple for flow control
         "custom" => "#E91E63",     // Pink for custom events
         "variable" => "#00AA66",   // Teal for variables
+        "variable-external" => "#00AA66",
         _ => "#808080"
     };
 

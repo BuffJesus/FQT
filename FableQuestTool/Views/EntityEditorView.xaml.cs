@@ -1051,7 +1051,9 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
     private void OnVariableDragStart(object sender, MouseButtonEventArgs e)
     {
-        if (e.OriginalSource is System.Windows.Controls.Button || e.OriginalSource is System.Windows.Controls.TextBox)
+        if (e.OriginalSource is System.Windows.Controls.Button ||
+            e.OriginalSource is System.Windows.Controls.TextBox ||
+            e.OriginalSource is System.Windows.Controls.Primitives.ToggleButton)
         {
             return;
         }
@@ -1442,6 +1444,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             "bool" => "bool",
             "int" => "int",
             "float" => "float",
+            "object" => "object",
             _ => null
         };
     }
@@ -1459,6 +1462,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             "Boolean" => "bool",
             "Integer" => "int",
             "Float" => "float",
+            "Object" => "object",
             _ => null
         };
     }

@@ -670,6 +670,13 @@ public static class NodeDefinitions
     {
         return new List<NodeDefinition>
         {
+            new() { Type = "branch", Label = "Branch", Category = "flow", Icon = "❓", IsAdvanced = false, HasBranching = true,
+                Description = "Executes True or False path based on a boolean value",
+                Properties = new() {
+                    new NodeProperty { Name = "condition", Type = "bool", Label = "Condition", DefaultValue = "true" }
+                },
+                CodeTemplate = "if {condition} then\n{TRUE}\nelse\n{FALSE}\nend" },
+
             new() { Type = "sequence", Label = "Sequence", Category = "flow", Icon = "→", IsAdvanced = false,
                 Description = "Execute children in sequential order",
                 Properties = new(),

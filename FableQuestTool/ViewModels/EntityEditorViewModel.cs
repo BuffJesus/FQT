@@ -36,7 +36,11 @@ public sealed partial class EntityEditorViewModel : ObservableObject
 
         foreach (var entity in mainViewModel.Project.Entities)
         {
-            var tab = new EntityTabViewModel(entity, mainViewModel.GetFavoriteNodeTypes(), mainViewModel.SaveFavoriteNodeTypes);
+            var tab = new EntityTabViewModel(
+                entity,
+                mainViewModel.GetFavoriteNodeTypes(),
+                mainViewModel.SaveFavoriteNodeTypes,
+                () => GetExternalVariables(entity));
             AttachDirtyTracking(tab);
             EntityTabs.Add(tab);
         }
@@ -63,7 +67,11 @@ public sealed partial class EntityEditorViewModel : ObservableObject
 
         mainViewModel.Project.Entities.Add(newEntity);
 
-        var newTab = new EntityTabViewModel(newEntity, mainViewModel.GetFavoriteNodeTypes(), mainViewModel.SaveFavoriteNodeTypes);
+        var newTab = new EntityTabViewModel(
+            newEntity,
+            mainViewModel.GetFavoriteNodeTypes(),
+            mainViewModel.SaveFavoriteNodeTypes,
+            () => GetExternalVariables(newEntity));
         AttachDirtyTracking(newTab);
         EntityTabs.Add(newTab);
 
@@ -167,7 +175,11 @@ public sealed partial class EntityEditorViewModel : ObservableObject
 
         mainViewModel.Project.Entities.Add(duplicate);
 
-        var newTab = new EntityTabViewModel(duplicate, mainViewModel.GetFavoriteNodeTypes(), mainViewModel.SaveFavoriteNodeTypes);
+        var newTab = new EntityTabViewModel(
+            duplicate,
+            mainViewModel.GetFavoriteNodeTypes(),
+            mainViewModel.SaveFavoriteNodeTypes,
+            () => GetExternalVariables(duplicate));
         AttachDirtyTracking(newTab);
         EntityTabs.Add(newTab);
 
@@ -254,5 +266,29 @@ public sealed partial class EntityEditorViewModel : ObservableObject
     private void MarkModified()
     {
         mainViewModel.IsModified = true;
+    }
+
+    private IReadOnlyList<ExternalVariableInfo> GetExternalVariables(QuestEntity current)
+    {
+        var result = new List<ExternalVariableInfo>();
+        foreach (var entity in mainViewModel.Project.Entities)
+        {
+            if (ReferenceEquals(entity, current))
+            {
+                continue;
+            }
+
+            foreach (var variable in entity.Variables.Where(v => v.IsExposed))
+            {
+                if (string.IsNullOrWhiteSpace(entity.ScriptName) || string.IsNullOrWhiteSpace(variable.Name))
+                {
+                    continue;
+                }
+
+                result.Add(new ExternalVariableInfo(entity.ScriptName, variable.Name, variable.Type));
+            }
+        }
+
+        return result;
     }
 }

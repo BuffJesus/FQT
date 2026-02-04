@@ -54,6 +54,8 @@ public sealed class CodeGenerator
         "playMovie", "startMovieSequence", "endMovieSequence"
     };
 
+    private Dictionary<string, string> exposedVariableTypes = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Generates the main quest Lua script containing all quest-level logic.
     ///
@@ -75,6 +77,9 @@ public sealed class CodeGenerator
         sb.AppendLine();
         sb.AppendLine("Quest = nil");
         sb.AppendLine();
+
+        exposedVariableTypes = BuildExposedVariableTypeMap(quest);
+        GenerateExposedVariableHelpers(sb, quest);
 
         // Generate Init function
         GenerateInitFunction(sb, quest);
@@ -126,6 +131,7 @@ public sealed class CodeGenerator
     /// <returns>Complete entity Lua script as a string</returns>
     public string GenerateEntityScript(QuestProject quest, QuestEntity entity)
     {
+        exposedVariableTypes = BuildExposedVariableTypeMap(quest);
         StringBuilder sb = new StringBuilder();
         sb.AppendLine($"-- {entity.ScriptName}.lua");
         sb.AppendLine($"-- Entity script for {quest.Name}");
@@ -321,6 +327,8 @@ public sealed class CodeGenerator
         sb.AppendLine("    Quest = questObject");
         sb.AppendLine($"    Quest:Log(\"{quest.Name}: Init phase started.\")");
 
+        GenerateExposedVariableInit(sb, quest);
+
         // Add quest regions
         foreach (string region in quest.Regions)
         {
@@ -472,6 +480,8 @@ public sealed class CodeGenerator
                 sb.Append(RenderStatePersist(state));
             }
         }
+
+        sb.Append(RenderExposedVariablePersist(quest));
 
         sb.AppendLine("end");
         sb.AppendLine();
@@ -1249,6 +1259,11 @@ public sealed class CodeGenerator
 
         foreach (var variable in entity.Variables)
         {
+            if (variable.IsExposed)
+            {
+                continue;
+            }
+
             string luaName = BuildLuaVariableName(variable.Name);
             string defaultValue = FormatLuaLiteral(variable.Type, variable.DefaultValue);
             sb.AppendLine($"{GenerateIndent(indent)}local {luaName} = {defaultValue}");
@@ -1261,11 +1276,71 @@ public sealed class CodeGenerator
     {
         const string getPrefix = "var_get_";
         const string setPrefix = "var_set_";
+        const string getExternalPrefix = "var_get_ext";
+        const string setExternalPrefix = "var_set_ext";
 
-        if (!node.Type.StartsWith(getPrefix, StringComparison.OrdinalIgnoreCase) &&
+        bool isExternal = node.Type.StartsWith(getExternalPrefix, StringComparison.OrdinalIgnoreCase) ||
+                          node.Type.StartsWith(setExternalPrefix, StringComparison.OrdinalIgnoreCase) ||
+                          node.Config.ContainsKey("extEntity");
+
+        if (!isExternal &&
+            !node.Type.StartsWith(getPrefix, StringComparison.OrdinalIgnoreCase) &&
             !node.Type.StartsWith(setPrefix, StringComparison.OrdinalIgnoreCase))
         {
             return null;
+        }
+
+        if (isExternal)
+        {
+            string extEntity = node.Config.TryGetValue("extEntity", out var entValue)
+                ? entValue?.ToString() ?? string.Empty
+                : string.Empty;
+            string extVariable = node.Config.TryGetValue("extVariable", out var varValue)
+                ? varValue?.ToString() ?? string.Empty
+                : string.Empty;
+            string extType = node.Config.TryGetValue("extType", out var typeValue)
+                ? typeValue?.ToString() ?? "String"
+                : "String";
+
+            string key = BuildExposedVariableKey(extEntity, extVariable);
+            string nodeType = MapVariableTypeToNodeType(extType);
+            bool isSetNode = node.Type.StartsWith(setExternalPrefix, StringComparison.OrdinalIgnoreCase);
+
+            if (!isSetNode)
+            {
+                return new NodeDefinition
+                {
+                    Type = node.Type,
+                    Label = $"Get {key}",
+                    Category = "variable",
+                    Icon = "📥",
+                    IsAdvanced = false,
+                    Description = $"Gets exposed variable '{key}'",
+                    ValueType = extType,
+                    Properties = new List<NodeProperty>(),
+                    CodeTemplate = $"local var_value = {BuildExposedVariableGetExpression(key, extType)}\n{{CHILDREN}}"
+                };
+            }
+
+            bool isString = nodeType == "string";
+            string valueTemplate = isString ? "\"{value}\"" : "{value}";
+            string setExpression = BuildExposedVariableSetExpression(key, extType, valueTemplate);
+
+            return new NodeDefinition
+            {
+                Type = node.Type,
+                Label = $"Set {key}",
+                Category = "variable",
+                Icon = "📤",
+                IsAdvanced = false,
+                Description = $"Sets exposed variable '{key}'",
+                ValueType = extType,
+                Properties = new List<NodeProperty>
+                {
+                    new() { Name = "value", Type = nodeType, Label = "Value", DefaultValue = string.Empty }
+                },
+                CodeTemplate = $"{setExpression}\n{{CHILDREN}}"
+            };
         }
 
         string variableName = node.Type.StartsWith(getPrefix, StringComparison.OrdinalIgnoreCase)
@@ -1281,6 +1356,9 @@ public sealed class CodeGenerator
 
         if (node.Type.StartsWith(getPrefix, StringComparison.OrdinalIgnoreCase))
         {
+            string getExpression = variable?.IsExposed == true
+                ? BuildExposedVariableGetExpression(BuildExposedVariableKey(entity.ScriptName, variableName), variableType)
+                : luaName;
             return new NodeDefinition
             {
                 Type = node.Type,
@@ -1291,12 +1369,15 @@ public sealed class CodeGenerator
                 Description = $"Gets the value of variable '{variableName}'",
                 ValueType = variableType,
                 Properties = new List<NodeProperty>(),
-                CodeTemplate = $"local {luaName}_value = {luaName}\n{{CHILDREN}}"
+                CodeTemplate = $"local {luaName}_value = {getExpression}\n{{CHILDREN}}"
             };
         }
 
         bool isString = nodeType == "string";
         string valueTemplate = isString ? "\"{value}\"" : "{value}";
+        string setTemplate = variable?.IsExposed == true
+            ? BuildExposedVariableSetExpression(BuildExposedVariableKey(entity.ScriptName, variableName), variableType, valueTemplate)
+            : $"{luaName} = {valueTemplate}";
 
         return new NodeDefinition
         {
@@ -1311,7 +1392,7 @@ public sealed class CodeGenerator
             {
                 new() { Name = "value", Type = nodeType, Label = "Value", DefaultValue = variable?.DefaultValue ?? string.Empty }
             },
-            CodeTemplate = $"{luaName} = {valueTemplate}\n{{CHILDREN}}"
+            CodeTemplate = $"{setTemplate}\n{{CHILDREN}}"
         };
     }
 
@@ -1323,6 +1404,7 @@ public sealed class CodeGenerator
             "Integer" => "int",
             "Float" => "float",
             "String" => "string",
+            "Object" => "object",
             _ => "string"
         };
     }
@@ -1364,6 +1446,7 @@ public sealed class CodeGenerator
             "Integer" => int.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int i) ? i.ToString(CultureInfo.InvariantCulture) : "0",
             "Float" => double.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d.ToString(CultureInfo.InvariantCulture) : "0.0",
             "String" => $"\"{Escape(rawValue)}\"",
+            "Object" => $"\"{Escape(rawValue)}\"",
             _ => $"\"{Escape(rawValue)}\""
         };
     }
@@ -1393,10 +1476,17 @@ public sealed class CodeGenerator
             return false;
         }
 
-        string variableName = value.Substring(1).Trim();
+        bool isExternal = value.StartsWith("$@", StringComparison.Ordinal);
+        string variableName = value.Substring(isExternal ? 2 : 1).Trim();
         if (string.IsNullOrWhiteSpace(variableName))
         {
             return false;
+        }
+
+        if (isExternal)
+        {
+            luaName = BuildExposedVariableGetExpression(variableName, TryGetExposedVariableType(variableName));
+            return true;
         }
 
         if (entity.Variables == null)
@@ -1404,16 +1494,180 @@ public sealed class CodeGenerator
             return false;
         }
 
-        bool exists = entity.Variables.Any(v =>
+        var variable = entity.Variables.FirstOrDefault(v =>
             v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase));
 
-        if (!exists)
+        if (variable == null)
         {
             return false;
         }
 
+        if (variable.IsExposed)
+        {
+            string key = BuildExposedVariableKey(entity.ScriptName, variableName);
+            luaName = BuildExposedVariableGetExpression(key, variable.Type);
+            return true;
+        }
+
         luaName = BuildLuaVariableName(variableName);
         return true;
+    }
+
+    private Dictionary<string, string> BuildExposedVariableTypeMap(QuestProject quest)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entity in quest.Entities)
+        {
+            foreach (var variable in entity.Variables.Where(v => v.IsExposed))
+            {
+                if (string.IsNullOrWhiteSpace(entity.ScriptName) || string.IsNullOrWhiteSpace(variable.Name))
+                {
+                    continue;
+                }
+
+                string key = BuildExposedVariableKey(entity.ScriptName, variable.Name);
+                map[key] = variable.Type;
+            }
+        }
+
+        return map;
+    }
+
+    private string? TryGetExposedVariableType(string key)
+    {
+        if (exposedVariableTypes.TryGetValue(key, out string? type))
+        {
+            return type;
+        }
+
+        return null;
+    }
+
+    private static string BuildExposedVariableKey(string entityScriptName, string variableName)
+    {
+        return $"{entityScriptName}.{variableName}";
+    }
+
+    private static string BuildExposedVariableGetExpression(string key, string? type)
+    {
+        return (type ?? "String") switch
+        {
+            "Boolean" => $"Quest:GetStateBool(\"{Escape(key)}\")",
+            "Integer" => $"Quest:GetStateInt(\"{Escape(key)}\")",
+            "Float" => $"tonumber(Quest:GetStateString(\"{Escape(key)}\"))",
+            "Object" => $"Quest:GetStateString(\"{Escape(key)}\")",
+            _ => $"Quest:GetStateString(\"{Escape(key)}\")"
+        };
+    }
+
+    private static string BuildExposedVariableSetExpression(string key, string? type, string valueExpression)
+    {
+        return (type ?? "String") switch
+        {
+            "Boolean" => $"Quest:SetStateBool(\"{Escape(key)}\", {valueExpression})",
+            "Integer" => $"Quest:SetStateInt(\"{Escape(key)}\", {valueExpression})",
+            "Float" => $"Quest:SetStateString(\"{Escape(key)}\", tostring({valueExpression}))",
+            "Object" => $"Quest:SetStateString(\"{Escape(key)}\", tostring({valueExpression}))",
+            _ => $"Quest:SetStateString(\"{Escape(key)}\", tostring({valueExpression}))"
+        };
+    }
+
+    private void GenerateExposedVariableHelpers(StringBuilder sb, QuestProject quest)
+    {
+        if (exposedVariableTypes.Count == 0)
+        {
+            return;
+        }
+
+        sb.AppendLine("-- Exposed variable helpers");
+        sb.AppendLine("local ExposedVarTypes = {");
+        foreach (var entry in exposedVariableTypes)
+        {
+            sb.AppendLine($"    [\"{Escape(entry.Key)}\"] = \"{entry.Value}\",");
+        }
+        sb.AppendLine("}");
+        sb.AppendLine();
+        sb.AppendLine("function GetExposedVar(name)");
+        sb.AppendLine("    local t = ExposedVarTypes[name] or \"String\"");
+        sb.AppendLine("    if t == \"Boolean\" then return Quest:GetStateBool(name) end");
+        sb.AppendLine("    if t == \"Integer\" then return Quest:GetStateInt(name) end");
+        sb.AppendLine("    if t == \"Float\" then return tonumber(Quest:GetStateString(name)) end");
+        sb.AppendLine("    return Quest:GetStateString(name)");
+        sb.AppendLine("end");
+        sb.AppendLine();
+        sb.AppendLine("function SetExposedVar(name, value)");
+        sb.AppendLine("    local t = ExposedVarTypes[name] or \"String\"");
+        sb.AppendLine("    if t == \"Boolean\" then Quest:SetStateBool(name, value) return end");
+        sb.AppendLine("    if t == \"Integer\" then Quest:SetStateInt(name, value) return end");
+        sb.AppendLine("    Quest:SetStateString(name, tostring(value))");
+        sb.AppendLine("end");
+        sb.AppendLine();
+    }
+
+    private void GenerateExposedVariableInit(StringBuilder sb, QuestProject quest)
+    {
+        if (exposedVariableTypes.Count == 0)
+        {
+            return;
+        }
+
+        sb.AppendLine("    -- Initialize exposed variables");
+        foreach (var entity in quest.Entities)
+        {
+            foreach (var variable in entity.Variables.Where(v => v.IsExposed))
+            {
+                string key = BuildExposedVariableKey(entity.ScriptName, variable.Name);
+                string defaultValue = FormatLuaLiteral(variable.Type, variable.DefaultValue);
+                string setExpression = BuildExposedVariableSetExpression(key, variable.Type, defaultValue);
+                sb.AppendLine($"    {setExpression}");
+            }
+        }
+        sb.AppendLine();
+    }
+
+    private string RenderExposedVariablePersist(QuestProject quest)
+    {
+        if (exposedVariableTypes.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("    -- Persist exposed variables");
+        foreach (var entity in quest.Entities)
+        {
+            foreach (var variable in entity.Variables.Where(v => v.IsExposed))
+            {
+                string key = BuildExposedVariableKey(entity.ScriptName, variable.Name);
+                string escapedKey = Escape(key);
+                string localName = BuildLuaVariableName($"{entity.ScriptName}_{variable.Name}") + "_value";
+                switch (variable.Type)
+                {
+                    case "Boolean":
+                        sb.AppendLine($"    local {localName} = Quest:GetStateBool(\"{escapedKey}\")");
+                        sb.AppendLine($"    {localName} = Quest:PersistTransferBool(context, \"{escapedKey}\", {localName})");
+                        sb.AppendLine($"    Quest:SetStateBool(\"{escapedKey}\", {localName})");
+                        break;
+                    case "Integer":
+                        sb.AppendLine($"    local {localName} = Quest:GetStateInt(\"{escapedKey}\")");
+                        sb.AppendLine($"    {localName} = Quest:PersistTransferInt(context, \"{escapedKey}\", {localName})");
+                        sb.AppendLine($"    Quest:SetStateInt(\"{escapedKey}\", {localName})");
+                        break;
+                    case "Float":
+                        sb.AppendLine($"    local {localName} = Quest:GetStateString(\"{escapedKey}\")");
+                        sb.AppendLine($"    {localName} = Quest:PersistTransferString(context, \"{escapedKey}\", {localName})");
+                        sb.AppendLine($"    Quest:SetStateString(\"{escapedKey}\", {localName})");
+                        break;
+                    default:
+                        sb.AppendLine($"    local {localName} = Quest:GetStateString(\"{escapedKey}\")");
+                        sb.AppendLine($"    {localName} = Quest:PersistTransferString(context, \"{escapedKey}\", {localName})");
+                        sb.AppendLine($"    Quest:SetStateString(\"{escapedKey}\", {localName})");
+                        break;
+                }
+            }
+        }
+
+        return sb.ToString();
     }
 
     private List<NodeConnection> GetExecConnections(BehaviorNode node, QuestEntity entity)

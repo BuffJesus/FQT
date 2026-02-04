@@ -15,4 +15,7 @@ public sealed class EntityVariable
 
     [JsonPropertyName("DefaultValue")]
     public string DefaultValue { get; set; } = string.Empty;
+
+    [JsonPropertyName("IsExposed")]
+    public bool IsExposed { get; set; }
 }

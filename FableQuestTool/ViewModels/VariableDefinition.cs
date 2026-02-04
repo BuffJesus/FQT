@@ -17,6 +17,9 @@ public sealed partial class VariableDefinition : ObservableObject
     private string defaultValue = string.Empty;
 
     [ObservableProperty]
+    private bool isExposed;
+
+    [ObservableProperty]
     private int usageCount;
 
     /// <summary>
@@ -28,6 +31,7 @@ public sealed partial class VariableDefinition : ObservableObject
         "Integer" => "#1CC4AF",   // Cyan/teal
         "Float" => "#9EEF5A",     // Light green
         "String" => "#F0A1D4",    // Pink
+        "Object" => "#0099DB",    // Blue
         _ => "#808080"            // Gray
     };
 
@@ -40,6 +44,7 @@ public sealed partial class VariableDefinition : ObservableObject
         "Integer" => "#",
         "Float" => ".",
         "String" => "T",
+        "Object" => "O",
         _ => "?"
     };
 }

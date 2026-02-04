@@ -19,4 +19,7 @@ public sealed class NodeOption
     public string Type { get; init; } = string.Empty;
     public NodeDefinition? Definition { get; init; }
     public int MenuIndex { get; set; } = -1;
+    public string? ExternalEntityName { get; init; }
+    public string? ExternalVariableName { get; init; }
+    public string? ExternalVariableType { get; init; }
 }

@@ -126,8 +126,10 @@ public sealed partial class NodeViewModel : ObservableObject
         Input.Clear();
         Output.Clear();
 
-        bool isVariableGet = Type.StartsWith("var_get_", StringComparison.OrdinalIgnoreCase);
-        bool isVariableSet = Type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase);
+        bool isVariableGet = Type.StartsWith("var_get_", StringComparison.OrdinalIgnoreCase) ||
+                             Type.StartsWith("var_get_ext", StringComparison.OrdinalIgnoreCase);
+        bool isVariableSet = Type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase) ||
+                             Type.StartsWith("var_set_ext", StringComparison.OrdinalIgnoreCase);
 
         ConnectorType? variableConnectorType = null;
         if (Definition?.ValueType != null)
@@ -214,7 +216,9 @@ public sealed partial class NodeViewModel : ObservableObject
         // Variable data pins
         if (isVariableGet && variableConnectorType.HasValue)
         {
-            string variableName = Type.Substring("var_get_".Length);
+            string variableName = Type.StartsWith("var_get_ext", StringComparison.OrdinalIgnoreCase)
+                ? Type.Substring("var_get_ext".Length).TrimStart('_')
+                : Type.Substring("var_get_".Length);
             Output.Add(new ConnectorViewModel
             {
                 Title = "Value",
@@ -225,7 +229,9 @@ public sealed partial class NodeViewModel : ObservableObject
         }
         else if (isVariableSet && variableConnectorType.HasValue)
         {
-            string variableName = Type.Substring("var_set_".Length);
+            string variableName = Type.StartsWith("var_set_ext", StringComparison.OrdinalIgnoreCase)
+                ? Type.Substring("var_set_ext".Length).TrimStart('_')
+                : Type.Substring("var_set_".Length);
             Output.Add(new ConnectorViewModel
             {
                 Title = "Value",
@@ -288,6 +294,7 @@ public sealed partial class NodeViewModel : ObservableObject
             "Integer" => ConnectorType.Integer,
             "Float" => ConnectorType.Float,
             "String" => ConnectorType.String,
+            "Object" => ConnectorType.Object,
             _ => ConnectorType.Wildcard
         };
     }

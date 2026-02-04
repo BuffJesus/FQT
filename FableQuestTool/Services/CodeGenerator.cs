@@ -1303,7 +1303,7 @@ public sealed class CodeGenerator
                 : "String";
 
             string key = BuildExposedVariableKey(extEntity, extVariable);
-            string nodeType = MapVariableTypeToNodeType(extType);
+            string externalNodeType = MapVariableTypeToNodeType(extType);
             bool isSetNode = node.Type.StartsWith(setExternalPrefix, StringComparison.OrdinalIgnoreCase);
 
             if (!isSetNode)
@@ -1322,9 +1322,9 @@ public sealed class CodeGenerator
                 };
             }
 
-            bool isString = nodeType == "string";
-            string valueTemplate = isString ? "\"{value}\"" : "{value}";
-            string setExpression = BuildExposedVariableSetExpression(key, extType, valueTemplate);
+            bool externalIsString = externalNodeType == "string";
+            string externalValueTemplate = externalIsString ? "\"{value}\"" : "{value}";
+            string setExpression = BuildExposedVariableSetExpression(key, extType, externalValueTemplate);
 
             return new NodeDefinition
             {
@@ -1337,7 +1337,7 @@ public sealed class CodeGenerator
                 ValueType = extType,
                 Properties = new List<NodeProperty>
                 {
-                    new() { Name = "value", Type = nodeType, Label = "Value", DefaultValue = string.Empty }
+                    new() { Name = "value", Type = externalNodeType, Label = "Value", DefaultValue = string.Empty }
                 },
                 CodeTemplate = $"{setExpression}\n{{CHILDREN}}"
             };
@@ -1468,7 +1468,7 @@ public sealed class CodeGenerator
         return code.Replace(placeholder, luaName);
     }
 
-    private static bool TryResolveVariableReference(QuestEntity entity, string value, out string luaName)
+    private bool TryResolveVariableReference(QuestEntity entity, string value, out string luaName)
     {
         luaName = string.Empty;
         if (string.IsNullOrWhiteSpace(value) || value[0] != '$')
@@ -1689,7 +1689,8 @@ public sealed class CodeGenerator
     {
         if (nodeDef.Category == "variable")
         {
-            return false;
+            return nodeDef.Type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase) ||
+                   nodeDef.Type.StartsWith("var_set_ext", StringComparison.OrdinalIgnoreCase);
         }
 
         if (string.IsNullOrWhiteSpace(port))

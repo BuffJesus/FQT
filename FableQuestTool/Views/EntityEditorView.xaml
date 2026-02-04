@@ -125,6 +125,7 @@
         <DataTemplate x:Key="VariableItemTemplate">
             <Border Background="{DynamicResource SurfaceBackground}"
                   CornerRadius="3" Margin="0,0,0,4" Padding="6,4"
+                  HorizontalAlignment="Stretch"
                   PreviewMouseLeftButtonDown="OnVariableDragStart"
                   MouseMove="OnVariableMouseMove">
                 <Border.ContextMenu>
@@ -133,18 +134,22 @@
                                   Click="OnVariableRenameClick" />
                     </ContextMenu>
                 </Border.ContextMenu>
-                <Grid>
+                <Grid HorizontalAlignment="Stretch">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="90" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <!-- Type indicator -->
-                    <Border Grid.Column="0" Width="18" Height="18"
+                    <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
+                          Width="18" Height="18"
                           CornerRadius="9" Margin="0,0,6,0"
                           Background="{Binding TypeColor, Converter={StaticResource StringToColorBrush}}">
                         <TextBlock Text="{Binding TypeIcon}"
@@ -156,32 +161,34 @@
 
                     <!-- Variable name -->
                     <TextBox x:Name="VariableNameTextBox"
-                             Grid.Column="1"
+                             Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4"
                              Text="{Binding Name}"
                              VerticalAlignment="Center"
                              FontSize="11"
                              Background="Transparent"
                              BorderThickness="0"
                              Padding="0"
+                             Foreground="{DynamicResource TextPrimary}"
                              IsReadOnly="True"
                              PreviewKeyDown="OnVariableNameKeyDown"
                              LostKeyboardFocus="OnVariableNameLostFocus"
                              MouseDoubleClick="OnVariableNameDoubleClick" />
 
                     <!-- Default value -->
-                    <TextBox Grid.Column="2"
+                    <TextBox Grid.Row="1" Grid.Column="1"
                              Text="{Binding DefaultValue, UpdateSourceTrigger=PropertyChanged}"
                              VerticalAlignment="Center"
                              FontSize="10"
-                             Margin="6,0,0,0"
+                             Margin="0,4,0,0"
                              Padding="4,2"
+                             Width="90"
                              ToolTip="Default value (copied into each instance on spawn)" />
 
                     <!-- Exposure toggle -->
-                    <ToggleButton Grid.Column="3"
+                    <ToggleButton Grid.Row="1" Grid.Column="2"
                                   Width="22"
                                   Height="20"
-                                  Margin="6,0,0,0"
+                                  Margin="6,4,0,0"
                                   IsChecked="{Binding IsExposed}"
                                   ToolTip="Toggle external visibility"
                                   Cursor="Hand">
@@ -212,11 +219,11 @@
                     </ToggleButton>
 
                     <!-- Usage count -->
-                    <Button Grid.Column="4"
+                    <Button Grid.Row="1" Grid.Column="3"
                           Background="#2A3040"
                           BorderThickness="0"
                           Padding="4,1"
-                          Margin="6,0,0,0"
+                          Margin="6,4,0,0"
                           VerticalAlignment="Center"
                           Command="{Binding DataContext.FindVariableUsageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                           CommandParameter="{Binding}"
@@ -234,7 +241,7 @@
                     </Button>
 
                     <!-- Delete button -->
-                    <Button Grid.Column="5" Content="x"
+                    <Button Grid.Row="1" Grid.Column="4" Content="x"
                           Command="{Binding DataContext.RemoveVariableCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                           CommandParameter="{Binding}"
                           Width="18" Height="18" FontSize="10"
@@ -516,22 +523,6 @@
                                                Margin="0,8,0,0"
                                                Visibility="{Binding ShowObjectRewardUnsupportedMessage, Converter={StaticResource BoolToVisibility}}" />
 
-                                    <TextBlock Text="Quick Start" FontWeight="SemiBold" Margin="0,0,0,8" />
-                                    <UniformGrid Columns="2" Rows="2" Margin="0,0,0,12">
-                                        <Button Content="Talk" Margin="0,0,4,4"
-                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Talk"
-                                                ToolTip="NPC that talks to the hero and completes quest" />
-                                        <Button Content="Kill" Margin="0,0,0,4"
-                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Kill"
-                                                ToolTip="Enemy that gives rewards when killed" />
-                                        <Button Content="Fetch" Margin="0,0,4,0"
-                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Fetch"
-                                                ToolTip="NPC that accepts an item from the hero" />
-                                        <Button Content="Reward" Margin="0,0,0,0"
-                                                Command="{Binding ApplyTemplateCommand}" CommandParameter="Reward"
-                                                ToolTip="Object that gives rewards when interacted with (chest, barrel, etc.)" />
-                                    </UniformGrid>
-
                                     <!-- Variables Section (UE5 Blueprint-style) -->
                                     <Expander Header="Variables" IsExpanded="True" Margin="0,12,0,0">
                                         <StackPanel Margin="8,8,0,0">
@@ -573,6 +564,7 @@
                                                         <ItemsControl.ItemContainerStyle>
                                                             <Style TargetType="ContentPresenter">
                                                                 <Setter Property="Visibility" Value="Visible" />
+                                                                <Setter Property="HorizontalAlignment" Value="Stretch" />
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsExposed}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -591,6 +583,7 @@
                                                         <ItemsControl.ItemContainerStyle>
                                                             <Style TargetType="ContentPresenter">
                                                                 <Setter Property="Visibility" Value="Visible" />
+                                                                <Setter Property="HorizontalAlignment" Value="Stretch" />
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsExposed}" Value="False">
                                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -1058,6 +1051,11 @@
                                                Tag="Search nodes..."
                                                KeyDown="OnNodeSearchKeyDown" />
 
+                                        <CheckBox Content="Show external variables"
+                                                  IsChecked="{Binding ShowExternalVariablesInMenu}"
+                                                  FontSize="10"
+                                                  Margin="0,0,0,8" />
+
                                         <!-- Quick Actions -->
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                             <Button Content="Add Reroute"
@@ -1523,6 +1521,9 @@
                                                              FontSize="10"
                                                              Opacity="0.7" />
                                                     <TextBlock Text="{Binding SelectedVariableDefault, StringFormat=Default: {0}}"
+                                                             FontSize="10"
+                                                             Opacity="0.7" />
+                                                    <TextBlock Text="{Binding SelectedVariableRuntime, StringFormat=Runtime (default): {0}}"
                                                              FontSize="10"
                                                              Opacity="0.7" />
                                                     <TextBlock Text="{Binding SelectedVariableExposureText}"

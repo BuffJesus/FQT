@@ -285,7 +285,7 @@ public sealed partial class EntityEditorViewModel : ObservableObject
                     continue;
                 }
 
-                result.Add(new ExternalVariableInfo(entity.ScriptName, variable.Name, variable.Type));
+                result.Add(new ExternalVariableInfo(entity.ScriptName, variable.Name, variable.Type, variable.DefaultValue));
             }
         }
 

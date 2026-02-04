@@ -22,4 +22,5 @@ public sealed class NodeOption
     public string? ExternalEntityName { get; init; }
     public string? ExternalVariableName { get; init; }
     public string? ExternalVariableType { get; init; }
+    public string? ExternalVariableDefault { get; init; }
 }

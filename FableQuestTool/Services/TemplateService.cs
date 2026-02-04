@@ -74,7 +74,14 @@ public class TemplateService
             CreateDeliveryTemplate(),
             CreateInvestigationTemplate(),
             CreateQuestBoardTemplate(),
-            CreateDemonDoorTemplate()
+            CreateDemonDoorTemplate(),
+            CreateVariableShowcaseTemplate(),
+            CreateVariableStringTemplate(),
+            CreateVariableBooleanTemplate(),
+            CreateVariableIntegerTemplate(),
+            CreateVariableFloatTemplate(),
+            CreateVariableObjectTemplate(),
+            CreateVariableBranchTemplate()
         };
     }
 
@@ -1157,6 +1164,523 @@ public class TemplateService
             Name = "Demon Door",
             Description = "Offer an item to open the door and complete the quest.",
             Category = "Puzzle",
+            Difficulty = "Beginner",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateVariableShowcaseTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "VariablesShowcase",
+            Id = 50010,
+            DisplayName = "Variables: Internal & External",
+            Description = "Demonstrates internal variables, exposed variables, and external variable access.",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Talk to the variable demo NPCs",
+            ObjectiveRegion1 = "Oakvale",
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = false
+        };
+
+        var source = new QuestEntity
+        {
+            Id = "var_source",
+            ScriptName = "VarSource",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        source.Variables.Add(new EntityVariable
+        {
+            Name = "Greeting",
+            Type = "String",
+            DefaultValue = "Hello there!",
+            IsExposed = false
+        });
+
+        source.Variables.Add(new EntityVariable
+        {
+            Name = "IsReady",
+            Type = "Boolean",
+            DefaultValue = "false",
+            IsExposed = true
+        });
+
+        string sourceTalkId = Guid.NewGuid().ToString();
+        string setGreetingId = Guid.NewGuid().ToString();
+        string setReadyId = Guid.NewGuid().ToString();
+        string speakGreetingId = Guid.NewGuid().ToString();
+
+        source.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = sourceTalkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 120 },
+            new BehaviorNode { Id = setGreetingId, Type = "var_set_Greeting", Category = "variable", Label = "Set Greeting", Icon = "??", X = 260, Y = 120,
+                Config = new Dictionary<string, object> { { "value", "Greetings, hero!" } } },
+            new BehaviorNode { Id = setReadyId, Type = "var_set_IsReady", Category = "variable", Label = "Set IsReady", Icon = "??", X = 440, Y = 120,
+                Config = new Dictionary<string, object> { { "value", "true" } } },
+            new BehaviorNode { Id = speakGreetingId, Type = "showDialogue", Category = "action", Label = "Speak Greeting", Icon = "??", X = 620, Y = 120,
+                Config = new Dictionary<string, object> { { "text", "$Greeting" } } }
+        };
+
+        source.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = sourceTalkId, FromPort = "Output", ToNodeId = setGreetingId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setGreetingId, FromPort = "Output", ToNodeId = setReadyId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setReadyId, FromPort = "Output", ToNodeId = speakGreetingId, ToPort = "Input" }
+        };
+
+        var listener = new QuestEntity
+        {
+            Id = "var_listener",
+            ScriptName = "VarListener",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        string listenerTalkId = Guid.NewGuid().ToString();
+        string getReadyId = Guid.NewGuid().ToString();
+        string branchId = Guid.NewGuid().ToString();
+        string readyLineId = Guid.NewGuid().ToString();
+        string notReadyLineId = Guid.NewGuid().ToString();
+
+        listener.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = listenerTalkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 320 },
+            new BehaviorNode { Id = getReadyId, Type = "var_get_ext_VarSource.IsReady", Category = "variable", Label = "Get VarSource.IsReady", Icon = "??", X = 260, Y = 260,
+                Config = new Dictionary<string, object>
+                {
+                    { "extEntity", "VarSource" },
+                    { "extVariable", "IsReady" },
+                    { "extType", "Boolean" }
+                }
+            },
+            new BehaviorNode { Id = branchId, Type = "branch", Category = "flow", Label = "Branch", Icon = "??", X = 440, Y = 320,
+                Config = new Dictionary<string, object> { { "condition", "$@VarSource.IsReady" } } },
+            new BehaviorNode { Id = readyLineId, Type = "showDialogue", Category = "action", Label = "Ready", Icon = "??", X = 620, Y = 260,
+                Config = new Dictionary<string, object> { { "text", "I see you're ready. Let's begin." } } },
+            new BehaviorNode { Id = notReadyLineId, Type = "showDialogue", Category = "action", Label = "Not Ready", Icon = "??", X = 620, Y = 380,
+                Config = new Dictionary<string, object> { { "text", "Come back after speaking with VarSource." } } }
+        };
+
+        listener.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = listenerTalkId, FromPort = "Output", ToNodeId = branchId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = branchId, FromPort = "True", ToNodeId = readyLineId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = branchId, FromPort = "False", ToNodeId = notReadyLineId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = getReadyId, FromPort = "Value", ToNodeId = branchId, ToPort = "Condition" }
+        };
+
+        project.Entities.Add(source);
+        project.Entities.Add(listener);
+
+        return new QuestTemplate
+        {
+            Name = "Variables: Internal & External",
+            Description = "Showcases internal variables, exposed variables, and external variable reads.",
+            Category = "Variables",
+            Difficulty = "Beginner",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateVariableStringTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "VarStringQuest",
+            Id = 50011,
+            DisplayName = "Variable: String",
+            Description = "Demonstrates an internal string variable.",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Talk to the string demo NPC",
+            ObjectiveRegion1 = "Oakvale"
+        };
+
+        var npc = new QuestEntity
+        {
+            Id = "var_string_npc",
+            ScriptName = "VarStringNPC",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        npc.Variables.Add(new EntityVariable
+        {
+            Name = "Greeting",
+            Type = "String",
+            DefaultValue = "Hello, hero!",
+            IsExposed = false
+        });
+
+        string talkId = Guid.NewGuid().ToString();
+        string setId = Guid.NewGuid().ToString();
+        string speakId = Guid.NewGuid().ToString();
+
+        npc.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 120 },
+            new BehaviorNode { Id = setId, Type = "var_set_Greeting", Category = "variable", Label = "Set Greeting", Icon = "??", X = 260, Y = 120,
+                Config = new Dictionary<string, object> { { "value", "Nice to meet you." } } },
+            new BehaviorNode { Id = speakId, Type = "showDialogue", Category = "action", Label = "Speak", Icon = "??", X = 440, Y = 120,
+                Config = new Dictionary<string, object> { { "text", "$Greeting" } } }
+        };
+
+        npc.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = setId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setId, FromPort = "Output", ToNodeId = speakId, ToPort = "Input" }
+        };
+
+        project.Entities.Add(npc);
+
+        return new QuestTemplate
+        {
+            Name = "Variable: String",
+            Description = "Internal string variable usage.",
+            Category = "Variables",
+            Difficulty = "Beginner",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateVariableBooleanTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "VarBoolQuest",
+            Id = 50012,
+            DisplayName = "Variable: Boolean",
+            Description = "Demonstrates an internal boolean variable.",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Talk to the boolean demo NPC",
+            ObjectiveRegion1 = "Oakvale"
+        };
+
+        var npc = new QuestEntity
+        {
+            Id = "var_bool_npc",
+            ScriptName = "VarBoolNPC",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        npc.Variables.Add(new EntityVariable
+        {
+            Name = "IsReady",
+            Type = "Boolean",
+            DefaultValue = "false",
+            IsExposed = false
+        });
+
+        string talkId = Guid.NewGuid().ToString();
+        string setId = Guid.NewGuid().ToString();
+        string branchId = Guid.NewGuid().ToString();
+        string readyId = Guid.NewGuid().ToString();
+        string notReadyId = Guid.NewGuid().ToString();
+
+        npc.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 260 },
+            new BehaviorNode { Id = setId, Type = "var_set_IsReady", Category = "variable", Label = "Set IsReady", Icon = "??", X = 260, Y = 260,
+                Config = new Dictionary<string, object> { { "value", "true" } } },
+            new BehaviorNode { Id = branchId, Type = "branch", Category = "flow", Label = "Branch", Icon = "??", X = 440, Y = 260,
+                Config = new Dictionary<string, object> { { "condition", "$IsReady" } } },
+            new BehaviorNode { Id = readyId, Type = "showDialogue", Category = "action", Label = "Ready", Icon = "??", X = 620, Y = 220,
+                Config = new Dictionary<string, object> { { "text", "Ready to go." } } },
+            new BehaviorNode { Id = notReadyId, Type = "showDialogue", Category = "action", Label = "Not Ready", Icon = "??", X = 620, Y = 320,
+                Config = new Dictionary<string, object> { { "text", "Not ready yet." } } }
+        };
+
+        npc.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = setId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setId, FromPort = "Output", ToNodeId = branchId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = branchId, FromPort = "True", ToNodeId = readyId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = branchId, FromPort = "False", ToNodeId = notReadyId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setId, FromPort = "Value", ToNodeId = branchId, ToPort = "Condition" }
+        };
+
+        project.Entities.Add(npc);
+
+        return new QuestTemplate
+        {
+            Name = "Variable: Boolean",
+            Description = "Internal boolean variable usage.",
+            Category = "Variables",
+            Difficulty = "Beginner",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateVariableIntegerTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "VarIntQuest",
+            Id = 50013,
+            DisplayName = "Variable: Integer",
+            Description = "Demonstrates an internal integer variable.",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Talk to the integer demo NPC",
+            ObjectiveRegion1 = "Oakvale"
+        };
+
+        var npc = new QuestEntity
+        {
+            Id = "var_int_npc",
+            ScriptName = "VarIntNPC",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        npc.Variables.Add(new EntityVariable
+        {
+            Name = "Count",
+            Type = "Integer",
+            DefaultValue = "0",
+            IsExposed = false
+        });
+
+        string talkId = Guid.NewGuid().ToString();
+        string setId = Guid.NewGuid().ToString();
+        string speakId = Guid.NewGuid().ToString();
+
+        npc.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 120 },
+            new BehaviorNode { Id = setId, Type = "var_set_Count", Category = "variable", Label = "Set Count", Icon = "??", X = 260, Y = 120,
+                Config = new Dictionary<string, object> { { "value", "3" } } },
+            new BehaviorNode { Id = speakId, Type = "showDialogue", Category = "action", Label = "Speak", Icon = "??", X = 440, Y = 120,
+                Config = new Dictionary<string, object> { { "text", "Count set to $Count." } } }
+        };
+
+        npc.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = setId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setId, FromPort = "Output", ToNodeId = speakId, ToPort = "Input" }
+        };
+
+        project.Entities.Add(npc);
+
+        return new QuestTemplate
+        {
+            Name = "Variable: Integer",
+            Description = "Internal integer variable usage.",
+            Category = "Variables",
+            Difficulty = "Beginner",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateVariableFloatTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "VarFloatQuest",
+            Id = 50014,
+            DisplayName = "Variable: Float",
+            Description = "Demonstrates an internal float variable.",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Talk to the float demo NPC",
+            ObjectiveRegion1 = "Oakvale"
+        };
+
+        var npc = new QuestEntity
+        {
+            Id = "var_float_npc",
+            ScriptName = "VarFloatNPC",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        npc.Variables.Add(new EntityVariable
+        {
+            Name = "Progress",
+            Type = "Float",
+            DefaultValue = "0.0",
+            IsExposed = false
+        });
+
+        string talkId = Guid.NewGuid().ToString();
+        string setId = Guid.NewGuid().ToString();
+        string speakId = Guid.NewGuid().ToString();
+
+        npc.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 120 },
+            new BehaviorNode { Id = setId, Type = "var_set_Progress", Category = "variable", Label = "Set Progress", Icon = "??", X = 260, Y = 120,
+                Config = new Dictionary<string, object> { { "value", "0.75" } } },
+            new BehaviorNode { Id = speakId, Type = "showDialogue", Category = "action", Label = "Speak", Icon = "??", X = 440, Y = 120,
+                Config = new Dictionary<string, object> { { "text", "Progress is now $Progress." } } }
+        };
+
+        npc.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = setId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setId, FromPort = "Output", ToNodeId = speakId, ToPort = "Input" }
+        };
+
+        project.Entities.Add(npc);
+
+        return new QuestTemplate
+        {
+            Name = "Variable: Float",
+            Description = "Internal float variable usage.",
+            Category = "Variables",
+            Difficulty = "Beginner",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateVariableObjectTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "VarObjectQuest",
+            Id = 50015,
+            DisplayName = "Variable: Object",
+            Description = "Demonstrates an internal object variable.",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Talk to the object demo NPC",
+            ObjectiveRegion1 = "Oakvale"
+        };
+
+        var npc = new QuestEntity
+        {
+            Id = "var_object_npc",
+            ScriptName = "VarObjectNPC",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        npc.Variables.Add(new EntityVariable
+        {
+            Name = "RewardItem",
+            Type = "Object",
+            DefaultValue = "OBJECT_APPLE",
+            IsExposed = false
+        });
+
+        string talkId = Guid.NewGuid().ToString();
+        string setId = Guid.NewGuid().ToString();
+        string giveId = Guid.NewGuid().ToString();
+
+        npc.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 120 },
+            new BehaviorNode { Id = setId, Type = "var_set_RewardItem", Category = "variable", Label = "Set RewardItem", Icon = "??", X = 260, Y = 120,
+                Config = new Dictionary<string, object> { { "value", "OBJECT_APPLE" } } },
+            new BehaviorNode { Id = giveId, Type = "giveItem", Category = "action", Label = "Give Item", Icon = "??", X = 440, Y = 120,
+                Config = new Dictionary<string, object> { { "item", "$RewardItem" }, { "amount", "1" } } }
+        };
+
+        npc.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = setId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setId, FromPort = "Output", ToNodeId = giveId, ToPort = "Input" }
+        };
+
+        project.Entities.Add(npc);
+
+        return new QuestTemplate
+        {
+            Name = "Variable: Object",
+            Description = "Internal object variable usage.",
+            Category = "Variables",
+            Difficulty = "Beginner",
+            Template = project
+        };
+    }
+
+    private QuestTemplate CreateVariableBranchTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "VarBranchQuest",
+            Id = 50016,
+            DisplayName = "Variables: Branch",
+            Description = "Shows a branch using a variable value.",
+            Regions = new ObservableCollection<string> { "Oakvale" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Talk to the branch demo NPC",
+            ObjectiveRegion1 = "Oakvale"
+        };
+
+        var npc = new QuestEntity
+        {
+            Id = "var_branch_npc",
+            ScriptName = "VarBranchNPC",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true
+        };
+
+        npc.Variables.Add(new EntityVariable
+        {
+            Name = "HasKey",
+            Type = "Boolean",
+            DefaultValue = "false",
+            IsExposed = false
+        });
+
+        string talkId = Guid.NewGuid().ToString();
+        string setId = Guid.NewGuid().ToString();
+        string branchId = Guid.NewGuid().ToString();
+        string yesId = Guid.NewGuid().ToString();
+        string noId = Guid.NewGuid().ToString();
+
+        npc.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 260 },
+            new BehaviorNode { Id = setId, Type = "var_set_HasKey", Category = "variable", Label = "Set HasKey", Icon = "??", X = 260, Y = 260,
+                Config = new Dictionary<string, object> { { "value", "true" } } },
+            new BehaviorNode { Id = branchId, Type = "branch", Category = "flow", Label = "Branch", Icon = "??", X = 440, Y = 260,
+                Config = new Dictionary<string, object> { { "condition", "$HasKey" } } },
+            new BehaviorNode { Id = yesId, Type = "showDialogue", Category = "action", Label = "Has Key", Icon = "??", X = 620, Y = 220,
+                Config = new Dictionary<string, object> { { "text", "You have the key." } } },
+            new BehaviorNode { Id = noId, Type = "showDialogue", Category = "action", Label = "No Key", Icon = "??", X = 620, Y = 320,
+                Config = new Dictionary<string, object> { { "text", "You do not have the key." } } }
+        };
+
+        npc.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = setId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setId, FromPort = "Output", ToNodeId = branchId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = branchId, FromPort = "True", ToNodeId = yesId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = branchId, FromPort = "False", ToNodeId = noId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = setId, FromPort = "Value", ToNodeId = branchId, ToPort = "Condition" }
+        };
+
+        project.Entities.Add(npc);
+
+        return new QuestTemplate
+        {
+            Name = "Variables: Branch",
+            Description = "Branching flow based on a variable value.",
+            Category = "Variables",
             Difficulty = "Beginner",
             Template = project
         };

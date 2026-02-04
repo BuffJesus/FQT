@@ -101,11 +101,19 @@ public sealed partial class EntityTabViewModel : ObservableObject
     [ObservableProperty]
     private bool hasFilteredExternalVariables;
 
+    [ObservableProperty]
+    private bool showExternalVariablesInMenu = true;
+
     private ConnectorViewModel? menuConnectionSource;
 
     partial void OnSelectedNodeChanged(NodeViewModel? value)
     {
         NotifySelectedVariableChanged();
+    }
+
+    partial void OnShowExternalVariablesInMenuChanged(bool value)
+    {
+        UpdateFilteredNodes();
     }
 
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
@@ -117,6 +125,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     private const string ExternalEntityKey = "extEntity";
     private const string ExternalVariableKey = "extVariable";
     private const string ExternalTypeKey = "extType";
+    private const string ExternalDefaultKey = "extDefault";
 
     [ObservableProperty]
     private string newVariableName = string.Empty;
@@ -1501,7 +1510,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         var allNodes = SimpleNodes
             .Concat(AdvancedNodes)
             .Concat(InternalVariableNodes)
-            .Concat(ExternalVariableNodes)
+            .Concat(ShowExternalVariablesInMenu ? ExternalVariableNodes : Enumerable.Empty<NodeOption>())
             .ToList();
         bool hideTriggers = ShouldHideTriggerNodes();
 
@@ -1544,7 +1553,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
 
         var internalVariables = filteredNodes.Where(n => n.Category == "variable").ToList();
-        var externalVariables = filteredNodes.Where(n => n.Category == "variable-external").ToList();
+        var externalVariables = ShowExternalVariablesInMenu
+            ? filteredNodes.Where(n => n.Category == "variable-external").ToList()
+            : new List<NodeOption>();
         var nonVariableNodes = filteredNodes.Where(n =>
             n.Category != "variable" && n.Category != "variable-external").ToList();
 
@@ -1559,7 +1570,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
 
         HasFilteredInternalVariables = FilteredInternalVariableNodes.Count > 0;
-        HasFilteredExternalVariables = FilteredExternalVariableNodes.Count > 0;
+        HasFilteredExternalVariables = ShowExternalVariablesInMenu && FilteredExternalVariableNodes.Count > 0;
 
         // Group nodes by category for better organization
         var categoryOrder = new[] { "trigger", "action", "condition", "flow", "custom" };
@@ -1691,6 +1702,10 @@ public sealed partial class EntityTabViewModel : ObservableObject
         node.Properties[ExternalEntityKey] = entityName;
         node.Properties[ExternalVariableKey] = variableName;
         node.Properties[ExternalTypeKey] = variableType;
+        if (!string.IsNullOrWhiteSpace(option.ExternalVariableDefault))
+        {
+            node.Properties[ExternalDefaultKey] = option.ExternalVariableDefault;
+        }
 
         string fullName = $"{entityName}.{variableName}";
         foreach (var connector in node.Input.Concat(node.Output))
@@ -1731,6 +1746,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
     public string SelectedVariableType => GetSelectedVariableInfo().Type;
     public string SelectedVariableDefault => GetSelectedVariableInfo().DefaultValue;
     public string SelectedVariableExposureText => GetSelectedVariableInfo().Exposure;
+    public string SelectedVariableRuntime => GetSelectedVariableInfo().RuntimeValue;
 
     private void NotifySelectedVariableChanged()
     {
@@ -1739,6 +1755,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedVariableType));
         OnPropertyChanged(nameof(SelectedVariableDefault));
         OnPropertyChanged(nameof(SelectedVariableExposureText));
+        OnPropertyChanged(nameof(SelectedVariableRuntime));
     }
 
     private static bool IsVariableNodeType(string type)
@@ -1749,23 +1766,35 @@ public sealed partial class EntityTabViewModel : ObservableObject
                type.StartsWith("var_set_ext_", StringComparison.OrdinalIgnoreCase);
     }
 
-    private (string Name, string Type, string DefaultValue, string Exposure) GetSelectedVariableInfo()
+    private (string Name, string Type, string DefaultValue, string Exposure, string RuntimeValue) GetSelectedVariableInfo()
     {
         if (SelectedNode == null)
         {
-            return (string.Empty, string.Empty, string.Empty, string.Empty);
+            return (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         }
 
-        if (TryGetExternalVariableInfo(SelectedNode, out string entityName, out string variableName, out string variableType))
+        if (TryGetExternalVariableInfo(SelectedNode, out string entityName, out string variableName, out string variableType, out string externalDefault))
         {
+            if (string.IsNullOrWhiteSpace(externalDefault) && getExternalVariables != null)
+            {
+                var match = getExternalVariables()
+                    .FirstOrDefault(v =>
+                        v.EntityScriptName.Equals(entityName, StringComparison.OrdinalIgnoreCase) &&
+                        v.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    externalDefault = match.DefaultValue;
+                }
+            }
+
             string name = $"{entityName}.{variableName}";
-            return (name, variableType, string.Empty, "External");
+            return (name, variableType, string.Empty, "External", externalDefault);
         }
 
         string? variableNameLocal = ExtractVariableName(SelectedNode.Type);
         if (string.IsNullOrWhiteSpace(variableNameLocal))
         {
-            return (string.Empty, string.Empty, string.Empty, string.Empty);
+            return (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
         }
 
         var variable = Variables.FirstOrDefault(v =>
@@ -1773,11 +1802,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         if (variable == null)
         {
-            return (variableNameLocal, string.Empty, string.Empty, string.Empty);
+            return (variableNameLocal, string.Empty, string.Empty, string.Empty, string.Empty);
         }
 
         string exposure = variable.IsExposed ? "External" : "Internal";
-        return (variable.Name, variable.Type, variable.DefaultValue, exposure);
+        return (variable.Name, variable.Type, variable.DefaultValue, exposure, variable.DefaultValue);
     }
 
     private void UpdateGraphWarnings()
@@ -2331,7 +2360,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 Definition = getDefinition,
                 ExternalEntityName = external.EntityScriptName,
                 ExternalVariableName = external.VariableName,
-                ExternalVariableType = external.VariableType
+                ExternalVariableType = external.VariableType,
+                ExternalVariableDefault = external.DefaultValue
             });
 
             ExternalVariableNodes.Add(new NodeOption($"Set {displayName}", "variable-external", "📤",
@@ -2341,7 +2371,8 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 Definition = setDefinition,
                 ExternalEntityName = external.EntityScriptName,
                 ExternalVariableName = external.VariableName,
-                ExternalVariableType = external.VariableType
+                ExternalVariableType = external.VariableType,
+                ExternalVariableDefault = external.DefaultValue
             });
         }
     }
@@ -2476,7 +2507,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
     private static void ApplyExternalConnectorNames(NodeViewModel node)
     {
-        if (!TryGetExternalVariableInfo(node, out string entityName, out string variableName, out _))
+        if (!TryGetExternalVariableInfo(node, out string entityName, out string variableName, out _, out _))
         {
             return;
         }
@@ -2491,11 +2522,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
-    private static bool TryGetExternalVariableInfo(NodeViewModel node, out string entityName, out string variableName, out string variableType)
+    private static bool TryGetExternalVariableInfo(NodeViewModel node, out string entityName, out string variableName, out string variableType, out string defaultValue)
     {
         entityName = string.Empty;
         variableName = string.Empty;
         variableType = string.Empty;
+        defaultValue = string.Empty;
 
         if (node.Properties.TryGetValue(ExternalEntityKey, out var entityValue))
         {
@@ -2510,6 +2542,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
         if (node.Properties.TryGetValue(ExternalTypeKey, out var typeValue))
         {
             variableType = typeValue?.ToString() ?? string.Empty;
+        }
+
+        if (node.Properties.TryGetValue(ExternalDefaultKey, out var defaultValueObj))
+        {
+            defaultValue = defaultValueObj?.ToString() ?? string.Empty;
         }
 
         return !string.IsNullOrWhiteSpace(entityName) && !string.IsNullOrWhiteSpace(variableName);

@@ -65,7 +65,7 @@ Goal: Close the most critical gaps first (broken/missing features, correctness, 
 
 ### 6) Document project file format and compatibility policy
 - **Why**: Early development implies breaking changes; users need migration guidance.
-- **Target files**: new `DOCS/PROJECT_FORMAT.md` (or README section)
+- **Target files**: `DOCS/PROJECT_FORMAT.md` (or README section)
 - **Deliverables**:
   - Describe project schema, versioning, and migration expectations.
 - **Acceptance**:
@@ -117,11 +117,29 @@ Goal: Close the most critical gaps first (broken/missing features, correctness, 
 
 ### 11) Improve distribution packaging guidance
 - **Why**: README references release workflow but lacks versioning/release steps.
-- **Target files**: `README.md`, new `DOCS/RELEASE.md`
+- **Target files**: `README.md`, `DOCS/RELEASE.md`
 - **Deliverables**:
   - Release checklist, versioning, and artifact naming.
 - **Acceptance**:
   - New contributors can create consistent releases.
+
+### 12) UX/UI enhancements (quality of life)
+- **Why**: Improve usability for first-time users and speed for power users.
+- **Target areas**: `FableQuestTool/Views/*`, `FableQuestTool/ViewModels/*`, `FableQuestTool/Resources/*`
+- **Deliverables**:
+  - **Onboarding**: First-run checklist (set Fable path, verify FSE, open sample).
+  - **Graph usability**: Mini-map, snap-to-grid toggle, zoom to selection, frame graph.
+  - **Node search**: Type-ahead palette search with recent/favorite nodes.
+  - **Inline validation**: Field-level errors for names, IDs, regions; show actionable messages.
+  - **Preview improvements**: Split view with Lua preview + live updates; copy-to-clipboard.
+  - **Undo/redo**: Graph edits, entity edits, and project metadata changes.
+  - **Keyboard shortcuts**: Common actions (save, deploy, add node, search).
+  - **Accessibility**: High-contrast theme, scalable UI, focus states, tooltips on all controls.
+  - **Status feedback**: Non-blocking toast notifications for deploy/validate success/fail.
+- **Acceptance**:
+  - Users can complete a quest creation flow with minimal friction.
+  - Core actions are discoverable without reading docs.
+  - Power users can operate primarily via keyboard.
 
 ---
 
@@ -137,6 +155,7 @@ Goal: Close the most critical gaps first (broken/missing features, correctness, 
 9) P2.9 Logging plan
 10) P3.10 UI affordances
 11) P3.11 Release guidance
+12) P3.12 UX/UI enhancements
 
 ---
 

@@ -36,6 +36,31 @@
         <Border Grid.Column="1" Background="{DynamicResource SurfaceBackground}" Margin="8">
             <ScrollViewer>
                 <StackPanel Margin="16" Orientation="Vertical">
+                    <GroupBox x:Name="GettingStartedGroup" Header="Getting Started" Margin="0,0,0,12">
+                        <StackPanel Margin="12">
+                            <TextBlock Text="Complete these checks before deploying:" FontWeight="SemiBold" Margin="0,0,0,6" />
+                            <CheckBox Content="Fable install detected"
+                                      IsChecked="{Binding IsFablePathConfigured}"
+                                      IsEnabled="False" />
+                            <CheckBox Content="FSE installed"
+                                      IsChecked="{Binding IsFseInstalled}"
+                                      IsEnabled="False" />
+                            <TextBlock Text="{Binding FablePathDisplay}"
+                                       FontSize="10"
+                                       Opacity="0.7"
+                                       Margin="0,4,0,8" />
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Configure Fable Path"
+                                        Width="170"
+                                        Command="{Binding ConfigureFablePathCommand}" />
+                                <Button Content="Launch FSE"
+                                        Width="100"
+                                        Margin="8,0,0,0"
+                                        Command="{Binding LaunchFseCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+
                     <GroupBox x:Name="BasicInfoGroup" Header="Basic Info" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <TextBlock Text="Quest Name" />

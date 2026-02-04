@@ -60,6 +60,15 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool isAdvancedMode;
 
+    [ObservableProperty]
+    private bool isFablePathConfigured;
+
+    [ObservableProperty]
+    private bool isFseInstalled;
+
+    [ObservableProperty]
+    private string fablePathDisplay = "(not configured)";
+
     public EntityEditorViewModel? EntityEditorViewModel { get; set; }
 
     public string Title => "FSE Quest Creator Pro";
@@ -69,6 +78,7 @@ public sealed partial class MainViewModel : ObservableObject
         fableConfig = FableConfig.Load();
         exportService = new ExportService(codeGenerator);
         deploymentService = new DeploymentService(fableConfig, codeGenerator);
+        UpdateSetupStatus();
     }
 
     [RelayCommand]
@@ -246,6 +256,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
+            UpdateSetupStatus();
             // Save node graph data from all entity tabs back to entity models
             EntityEditorViewModel?.SaveAllTabs();
 
@@ -277,6 +288,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
+            UpdateSetupStatus();
             if (deploymentService.LaunchFse(out string message))
             {
                 StatusText = "FSE launched";
@@ -299,6 +311,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             StatusText = $"Fable path configured: {fableConfig.FablePath}";
             System.Windows.MessageBox.Show($"Fable path set to:\n{fableConfig.FablePath}", "Configuration", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            UpdateSetupStatus();
         }
     }
 
@@ -504,5 +517,26 @@ public sealed partial class MainViewModel : ObservableObject
         };
 
         view.ShowDialog();
+    }
+
+    private void UpdateSetupStatus()
+    {
+        string? fablePath = fableConfig.FablePath;
+        bool hasData = !string.IsNullOrWhiteSpace(fablePath) &&
+                       Directory.Exists(fablePath) &&
+                       Directory.Exists(Path.Combine(fablePath, "data"));
+
+        IsFablePathConfigured = hasData;
+        FablePathDisplay = hasData ? fablePath! : "(not configured)";
+
+        if (!hasData)
+        {
+            IsFseInstalled = false;
+            return;
+        }
+
+        string launcher = Path.Combine(fablePath!, "FSE_Launcher.exe");
+        string dll = Path.Combine(fablePath!, "FableScriptExtender.dll");
+        IsFseInstalled = File.Exists(launcher) && File.Exists(dll);
     }
 }

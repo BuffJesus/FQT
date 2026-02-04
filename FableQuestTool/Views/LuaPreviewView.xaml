@@ -3,7 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Lua Preview" Height="700" Width="1000" MinHeight="500" MinWidth="700">
     <Grid>
-        <TabControl ItemsSource="{Binding Items}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="8,8,8,4">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="Copy Current" Padding="8,4" Margin="0,0,8,0"
+                        Click="OnCopyCurrent"
+                        ToolTip="Copy the currently selected Lua tab to clipboard" />
+                <Button Content="Copy All" Padding="8,4"
+                        Click="OnCopyAll"
+                        ToolTip="Copy all Lua tabs to clipboard" />
+            </StackPanel>
+        </DockPanel>
+
+        <TabControl x:Name="PreviewTabs" Grid.Row="1" ItemsSource="{Binding Items}">
             <TabControl.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Title}" />

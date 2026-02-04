@@ -143,6 +143,13 @@ Always save your work frequently and keep backups of your quest files.
 
 This project is in active development. If you encounter bugs or have suggestions, please open an issue on the repository.
 
+## Docs
+
+- `DOCS/PROJECT_FORMAT.md` — `.fqtproj` file format and compatibility notes
+- `DOCS/GAME_DATA.md` — source/maintenance notes for `GameData.cs` lists
+- `DOCS/LOGGING.md` — logging and error reporting plan
+- `DOCS/RELEASE.md` — release checklist and guidance
+
 ## License
 
 See LICENSE file for details. Note that FSE has its own license - refer to the [FSE repository](https://github.com/eeeeeAeoN/FableScriptExtender) for more information.

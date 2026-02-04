@@ -7,25 +7,35 @@
         mc:Ignorable="d"
         Title="{Binding Title}" Height="900" Width="1400"
         MinHeight="700" MinWidth="1100">
+    <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewProjectCommand}" />
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenProjectCommand}" />
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveProjectCommand}" />
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveProjectAsCommand}" />
+        <KeyBinding Key="E" Modifiers="Control" Command="{Binding ExportProjectCommand}" />
+        <KeyBinding Key="V" Modifiers="Control+Shift" Command="{Binding ValidateProjectCommand}" />
+        <KeyBinding Key="P" Modifiers="Control" Command="{Binding PreviewLuaCommand}" />
+        <KeyBinding Key="Q" Modifiers="Control" Command="{Binding ExitCommand}" />
+    </Window.InputBindings>
     <DockPanel>
         <Menu DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondary}">
             <MenuItem Header="_File">
-                <MenuItem Header="_New" Command="{Binding NewProjectCommand}" />
-                <MenuItem Header="_Open" Command="{Binding OpenProjectCommand}" />
-                <MenuItem Header="_Save" Command="{Binding SaveProjectCommand}" />
-                <MenuItem Header="Save _As" Command="{Binding SaveProjectAsCommand}" />
+                <MenuItem Header="_New" Command="{Binding NewProjectCommand}" InputGestureText="Ctrl+N" />
+                <MenuItem Header="_Open" Command="{Binding OpenProjectCommand}" InputGestureText="Ctrl+O" />
+                <MenuItem Header="_Save" Command="{Binding SaveProjectCommand}" InputGestureText="Ctrl+S" />
+                <MenuItem Header="Save _As" Command="{Binding SaveProjectAsCommand}" InputGestureText="Ctrl+Shift+S" />
                 <Separator />
                 <MenuItem Header="_Delete Quest" Command="{Binding DeleteQuestCommand}" />
                 <Separator />
-                <MenuItem Header="_Export and Deploy" Command="{Binding ExportProjectCommand}" />
+                <MenuItem Header="_Export and Deploy" Command="{Binding ExportProjectCommand}" InputGestureText="Ctrl+E" />
                 <Separator />
-                <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
+                <MenuItem Header="E_xit" Command="{Binding ExitCommand}" InputGestureText="Ctrl+Q" />
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem Header="_Manage Deployed Quests" Command="{Binding ManageQuestsCommand}" />
                 <Separator />
-                <MenuItem Header="_Validate Project" Command="{Binding ValidateProjectCommand}" />
-                <MenuItem Header="_Preview Generated Lua" Command="{Binding PreviewLuaCommand}" />
+                <MenuItem Header="_Validate Project" Command="{Binding ValidateProjectCommand}" InputGestureText="Ctrl+Shift+V" />
+                <MenuItem Header="_Preview Generated Lua" Command="{Binding PreviewLuaCommand}" InputGestureText="Ctrl+P" />
                 <Separator />
                 <MenuItem Header="_Browse Entities" Command="{Binding BrowseEntitiesCommand}" />
                 <MenuItem Header="_Export Entity Catalog" Command="{Binding ExportCatalogCommand}" />

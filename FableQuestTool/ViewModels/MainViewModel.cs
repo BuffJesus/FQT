@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Diagnostics;
 using System.Linq;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FableQuestTool.Config;
@@ -44,6 +46,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly FableConfig fableConfig;
     private readonly ProjectValidator projectValidator = new();
     private QuestProject? trackedProject;
+    private DispatcherTimer? statusToastTimer;
 
     [ObservableProperty]
     private QuestProject project = new();
@@ -53,6 +56,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string statusText = "Ready";
+
+    [ObservableProperty]
+    private bool isStatusToastVisible;
 
     [ObservableProperty]
     private string? projectPath;
@@ -68,6 +74,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string fablePathDisplay = "(not configured)";
+
+    [ObservableProperty]
+    private bool isSampleQuestsAvailable;
+
+    [ObservableProperty]
+    private string sampleQuestsPathDisplay = "(not found)";
 
     public EntityEditorViewModel? EntityEditorViewModel { get; set; }
 
@@ -444,6 +456,38 @@ public sealed partial class MainViewModel : ObservableObject
         IsModified = true;
     }
 
+    partial void OnStatusTextChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        EnsureStatusToastTimer();
+        IsStatusToastVisible = true;
+        statusToastTimer!.Stop();
+        statusToastTimer.Start();
+    }
+
+    private void EnsureStatusToastTimer()
+    {
+        if (statusToastTimer != null)
+        {
+            return;
+        }
+
+        statusToastTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(3)
+        };
+
+        statusToastTimer.Tick += (_, _) =>
+        {
+            IsStatusToastVisible = false;
+            statusToastTimer!.Stop();
+        };
+    }
+
     private bool ValidateProjectForDeployment()
     {
         var issues = projectValidator.Validate(Project);
@@ -519,6 +563,32 @@ public sealed partial class MainViewModel : ObservableObject
         view.ShowDialog();
     }
 
+    [RelayCommand]
+    private void OpenSampleQuests()
+    {
+        if (!IsSampleQuestsAvailable)
+        {
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = sampleQuestsPathDisplay,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                $"Failed to open sample quests folder: {ex.Message}",
+                "Open Samples",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+        }
+    }
+
     private void UpdateSetupStatus()
     {
         string? fablePath = fableConfig.FablePath;
@@ -538,5 +608,9 @@ public sealed partial class MainViewModel : ObservableObject
         string launcher = Path.Combine(fablePath!, "FSE_Launcher.exe");
         string dll = Path.Combine(fablePath!, "FableScriptExtender.dll");
         IsFseInstalled = File.Exists(launcher) && File.Exists(dll);
+
+        string samples = Path.Combine(AppContext.BaseDirectory ?? string.Empty, "FSE_Source", "SampleQuests");
+        IsSampleQuestsAvailable = Directory.Exists(samples);
+        sampleQuestsPathDisplay = IsSampleQuestsAvailable ? samples : "(not found)";
     }
 }

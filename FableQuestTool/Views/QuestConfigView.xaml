@@ -45,10 +45,17 @@
                             <CheckBox Content="FSE installed"
                                       IsChecked="{Binding IsFseInstalled}"
                                       IsEnabled="False" />
+                            <CheckBox Content="Sample quests available"
+                                      IsChecked="{Binding IsSampleQuestsAvailable}"
+                                      IsEnabled="False" />
                             <TextBlock Text="{Binding FablePathDisplay}"
                                        FontSize="10"
                                        Opacity="0.7"
                                        Margin="0,4,0,8" />
+                            <TextBlock Text="{Binding SampleQuestsPathDisplay}"
+                                       FontSize="10"
+                                       Opacity="0.7"
+                                       Margin="0,0,0,8" />
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Configure Fable Path"
                                         Width="170"
@@ -57,6 +64,11 @@
                                         Width="100"
                                         Margin="8,0,0,0"
                                         Command="{Binding LaunchFseCommand}" />
+                                <Button Content="Open Samples"
+                                        Width="110"
+                                        Margin="8,0,0,0"
+                                        Command="{Binding OpenSampleQuestsCommand}"
+                                        IsEnabled="{Binding IsSampleQuestsAvailable}" />
                             </StackPanel>
                         </StackPanel>
                     </GroupBox>
@@ -64,16 +76,30 @@
                     <GroupBox x:Name="BasicInfoGroup" Header="Basic Info" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <TextBlock Text="Quest Name" />
-                            <TextBox ToolTip="Internal script name used in Lua code (e.g., 'MyFirstQuest'). Must be unique and contain no spaces."
-                                     Text="{Binding Project.Name, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox ToolTip="Internal script name used in Lua code (e.g., 'MyFirstQuest'). Must be unique and contain no spaces.">
+                                <TextBox.Text>
+                                    <Binding Path="Project.Name" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:QuestNameRule />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
 
                             <TextBlock Text="Display Name" Margin="0,12,0,0" />
                             <TextBox ToolTip="Friendly name shown to players in quest log and UI."
                                      Text="{Binding Project.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
 
                             <TextBlock Text="Quest ID" Margin="0,12,0,0" />
-                            <TextBox ToolTip="Unique numeric ID for this quest. Must not conflict with existing quest IDs. Recommend using 50000+ for custom quests."
-                                     Text="{Binding Project.Id, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox ToolTip="Unique numeric ID for this quest. Must not conflict with existing quest IDs. Recommend using 50000+ for custom quests.">
+                                <TextBox.Text>
+                                    <Binding Path="Project.Id" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:QuestIdRule />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
 
                             <TextBlock Text="Description" Margin="0,12,0,0" />
                             <TextBox ToolTip="Quest description shown in quest log. Can be multiple lines. Not shown to players."

@@ -7,6 +7,9 @@
         mc:Ignorable="d"
         Title="{Binding Title}" Height="900" Width="1400"
         MinHeight="700" MinWidth="1100">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewProjectCommand}" />
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenProjectCommand}" />
@@ -17,8 +20,9 @@
         <KeyBinding Key="P" Modifiers="Control" Command="{Binding PreviewLuaCommand}" />
         <KeyBinding Key="Q" Modifiers="Control" Command="{Binding ExitCommand}" />
     </Window.InputBindings>
-    <DockPanel>
-        <Menu DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondary}">
+    <Grid>
+        <DockPanel>
+            <Menu DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondary}">
             <MenuItem Header="_File">
                 <MenuItem Header="_New" Command="{Binding NewProjectCommand}" InputGestureText="Ctrl+N" />
                 <MenuItem Header="_Open" Command="{Binding OpenProjectCommand}" InputGestureText="Ctrl+O" />
@@ -45,7 +49,7 @@
             </MenuItem>
         </Menu>
 
-        <ToolBarTray DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondary}">
+            <ToolBarTray DockPanel.Dock="Top" Background="{StaticResource BackgroundSecondary}">
             <ToolBar>
                 <Button Content="New" Width="70" Margin="0,0,6,0" Command="{Binding NewProjectCommand}" />
                 <Button Content="Open" Width="70" Margin="0,0,6,0" Command="{Binding OpenProjectCommand}" />
@@ -58,7 +62,7 @@
             </ToolBar>
         </ToolBarTray>
 
-        <StatusBar DockPanel.Dock="Bottom" Background="{StaticResource BackgroundSecondary}">
+            <StatusBar DockPanel.Dock="Bottom" Background="{StaticResource BackgroundSecondary}">
             <StatusBarItem>
                 <TextBlock Text="{Binding StatusText}" />
             </StatusBarItem>
@@ -76,7 +80,7 @@
             </StatusBarItem>
         </StatusBar>
 
-        <TabControl Background="{StaticResource BackgroundPrimary}">
+            <TabControl Background="{StaticResource BackgroundPrimary}">
             <TabItem Header="Quest Setup">
                 <views:QuestConfigView Background="{StaticResource BackgroundPrimary}" />
             </TabItem>
@@ -89,6 +93,20 @@
             <TabItem Header="Templates">
                 <views:TemplatesView x:Name="TemplatesViewControl" Background="{StaticResource BackgroundPrimary}" />
             </TabItem>
-        </TabControl>
-    </DockPanel>
+            </TabControl>
+        </DockPanel>
+
+        <Border HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,16,46"
+                Padding="10,6"
+                Background="#2A3040"
+                BorderBrush="#1A1F2E"
+                BorderThickness="1"
+                CornerRadius="4"
+                Opacity="0.95"
+                Visibility="{Binding IsStatusToastVisible, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding StatusText}" Foreground="White" FontSize="12" />
+        </Border>
+    </Grid>
 </Window>

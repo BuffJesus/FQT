@@ -476,6 +476,12 @@
                                                               CornerRadius="3" Margin="0,0,0,4" Padding="6,4"
                                                               PreviewMouseLeftButtonDown="OnVariableDragStart"
                                                               MouseMove="OnVariableMouseMove">
+                                                            <Border.ContextMenu>
+                                                                <ContextMenu>
+                                                                    <MenuItem Header="Rename"
+                                                                              Click="OnVariableRenameClick" />
+                                                                </ContextMenu>
+                                                            </Border.ContextMenu>
                                                             <Grid>
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto" />
@@ -496,8 +502,18 @@
                                                                 </Border>
 
                                                                 <!-- Variable name -->
-                                                                <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                                         VerticalAlignment="Center" FontSize="11" />
+                                                                <TextBox x:Name="VariableNameTextBox"
+                                                                         Grid.Column="1"
+                                                                         Text="{Binding Name}"
+                                                                         VerticalAlignment="Center"
+                                                                         FontSize="11"
+                                                                         Background="Transparent"
+                                                                         BorderThickness="0"
+                                                                         Padding="0"
+                                                                         IsReadOnly="True"
+                                                                         PreviewKeyDown="OnVariableNameKeyDown"
+                                                                         LostKeyboardFocus="OnVariableNameLostFocus"
+                                                                         MouseDoubleClick="OnVariableNameDoubleClick" />
 
                                                                 <!-- Usage count -->
                                                                 <Button Grid.Column="2"

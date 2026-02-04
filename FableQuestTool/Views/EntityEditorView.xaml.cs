@@ -1051,7 +1051,7 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
     private void OnVariableDragStart(object sender, MouseButtonEventArgs e)
     {
-        if (e.OriginalSource is System.Windows.Controls.Button)
+        if (e.OriginalSource is System.Windows.Controls.Button || e.OriginalSource is System.Windows.Controls.TextBox)
         {
             return;
         }
@@ -1087,6 +1087,162 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
         DragDrop.DoDragDrop(element, variable.Name, System.Windows.DragDropEffects.Copy);
         _variableDragStart = null;
+    }
+
+    private void OnVariableNameDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is System.Windows.Controls.TextBox textBox)
+        {
+            BeginVariableRename(textBox);
+        }
+    }
+
+    private void OnVariableRenameClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.MenuItem menuItem)
+        {
+            return;
+        }
+
+        if (menuItem.Parent is not System.Windows.Controls.ContextMenu menu)
+        {
+            return;
+        }
+
+        if (menu.PlacementTarget is not DependencyObject target)
+        {
+            return;
+        }
+
+        var textBox = FindDescendant<System.Windows.Controls.TextBox>(target, "VariableNameTextBox");
+        if (textBox != null)
+        {
+            BeginVariableRename(textBox);
+        }
+    }
+
+    private void OnVariableNameKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        if (e.Key == Key.F2 && textBox.IsReadOnly)
+        {
+            BeginVariableRename(textBox);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Enter && !textBox.IsReadOnly)
+        {
+            CommitVariableRename(textBox);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && !textBox.IsReadOnly)
+        {
+            CancelVariableRename(textBox);
+            e.Handled = true;
+        }
+    }
+
+    private void OnVariableNameLostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox)
+        {
+            return;
+        }
+
+        if (!textBox.IsReadOnly)
+        {
+            CommitVariableRename(textBox);
+        }
+    }
+
+    private void BeginVariableRename(System.Windows.Controls.TextBox textBox)
+    {
+        if (textBox.DataContext is not VariableDefinition variable)
+        {
+            return;
+        }
+
+        textBox.Tag = variable.Name;
+        textBox.IsReadOnly = false;
+        textBox.Focus();
+        textBox.SelectAll();
+    }
+
+    private void CommitVariableRename(System.Windows.Controls.TextBox textBox)
+    {
+        if (DataContext is not EntityEditorViewModel editorViewModel)
+        {
+            return;
+        }
+
+        var currentTab = editorViewModel.SelectedTab;
+        if (currentTab == null)
+        {
+            return;
+        }
+
+        if (textBox.DataContext is not VariableDefinition variable)
+        {
+            return;
+        }
+
+        string? oldName = textBox.Tag as string ?? variable.Name;
+        string newName = textBox.Text?.Trim() ?? string.Empty;
+
+        if (!currentTab.RenameVariable(oldName, newName))
+        {
+            textBox.Text = oldName;
+        }
+
+        textBox.IsReadOnly = true;
+        textBox.Tag = null;
+    }
+
+    private void CancelVariableRename(System.Windows.Controls.TextBox textBox)
+    {
+        if (textBox.Tag is string oldName)
+        {
+            textBox.Text = oldName;
+        }
+
+        textBox.IsReadOnly = true;
+        textBox.Tag = null;
+    }
+
+    private static T? FindDescendant<T>(DependencyObject root, string? name = null) where T : DependencyObject
+    {
+        int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T typed)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return typed;
+                }
+
+                if (typed is System.Windows.FrameworkElement fe && fe.Name == name)
+                {
+                    return typed;
+                }
+            }
+
+            var descendant = FindDescendant<T>(child, name);
+            if (descendant != null)
+            {
+                return descendant;
+            }
+        }
+
+        return null;
     }
 
     private void OnPropertyTextBoxDragOver(object sender, System.Windows.DragEventArgs e)

@@ -2156,6 +2156,113 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    public bool RenameVariable(string oldName, string newName)
+    {
+        if (string.IsNullOrWhiteSpace(oldName))
+        {
+            return false;
+        }
+
+        newName = newName.Trim();
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            return false;
+        }
+
+        var variable = Variables.FirstOrDefault(v =>
+            v.Name.Equals(oldName, StringComparison.OrdinalIgnoreCase));
+        if (variable == null)
+        {
+            return false;
+        }
+
+        bool sameName = variable.Name.Equals(newName, StringComparison.Ordinal);
+        bool duplicate = Variables.Any(v =>
+            !ReferenceEquals(v, variable) &&
+            v.Name.Equals(newName, StringComparison.OrdinalIgnoreCase));
+
+        if (duplicate)
+        {
+            return false;
+        }
+
+        if (!sameName)
+        {
+            variable.Name = newName;
+        }
+
+        string oldGetType = $"var_get_{oldName}";
+        string oldSetType = $"var_set_{oldName}";
+        string newGetType = $"var_get_{newName}";
+        string newSetType = $"var_set_{newName}";
+
+        foreach (var node in Nodes)
+        {
+            if (node.Type.Equals(oldGetType, StringComparison.OrdinalIgnoreCase))
+            {
+                node.Type = newGetType;
+                node.Title = $"Get {newName}";
+                node.Definition = CreateGetVariableDefinition(variable);
+                UpdateVariableConnectorNames(node, newName);
+            }
+            else if (node.Type.Equals(oldSetType, StringComparison.OrdinalIgnoreCase))
+            {
+                node.Type = newSetType;
+                node.Title = $"Set {newName}";
+                node.Definition = CreateSetVariableDefinition(variable);
+                UpdateVariableConnectorNames(node, newName);
+            }
+
+            var keys = node.Properties.Keys.ToList();
+            foreach (var key in keys)
+            {
+                if (node.Properties[key] is not string strValue || !strValue.StartsWith("$", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                string referenced = strValue.Substring(1).Trim();
+                if (referenced.Equals(oldName, StringComparison.OrdinalIgnoreCase))
+                {
+                    node.Properties[key] = $"${newName}";
+                }
+            }
+        }
+
+        foreach (var option in RecentNodes.ToList())
+        {
+            if (string.Equals(option.Type, oldGetType, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(option.Type, oldSetType, StringComparison.OrdinalIgnoreCase))
+            {
+                RecentNodes.Remove(option);
+            }
+        }
+
+        foreach (var option in FavoriteNodes.ToList())
+        {
+            if (string.Equals(option.Type, oldGetType, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(option.Type, oldSetType, StringComparison.OrdinalIgnoreCase))
+            {
+                FavoriteNodes.Remove(option);
+            }
+        }
+
+        UpdateVariableNodes();
+        UpdateVariableUsageCounts();
+        return true;
+    }
+
+    private static void UpdateVariableConnectorNames(NodeViewModel node, string newName)
+    {
+        foreach (var connector in node.Input.Concat(node.Output))
+        {
+            if (!string.IsNullOrWhiteSpace(connector.VariableName))
+            {
+                connector.VariableName = newName;
+            }
+        }
+    }
+
     private void UpdateVariableUsageCounts()
     {
         variableUsageIndices.Clear();

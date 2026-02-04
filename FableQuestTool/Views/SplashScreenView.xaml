@@ -13,7 +13,11 @@
         <Grid>
             <Image Source="/Resources/Images/FQT_Splash.png"
                    Stretch="None"
-                   SnapsToDevicePixels="True" />
+                   SnapsToDevicePixels="True">
+                <Image.LayoutTransform>
+                    <ScaleTransform ScaleX="0.5" ScaleY="0.5" />
+                </Image.LayoutTransform>
+            </Image>
         </Grid>
     </Border>
 </Window>

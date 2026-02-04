@@ -110,6 +110,22 @@ public sealed class FableConfig
         ini.Set("UI", "FavoriteNodes", value);
     }
 
+    public bool GetShowStartupImage()
+    {
+        string? raw = ini?.Get("UI", "ShowStartupImage");
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return true;
+        }
+
+        return bool.TryParse(raw, out bool value) ? value : true;
+    }
+
+    public void SetShowStartupImage(bool value)
+    {
+        ini?.Set("UI", "ShowStartupImage", value.ToString());
+    }
+
     public string? GetFseFolder()
     {
         if (string.IsNullOrWhiteSpace(FablePath))

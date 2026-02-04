@@ -79,6 +79,9 @@ public sealed partial class MainViewModel : ObservableObject
     private bool isSampleQuestsAvailable;
 
     [ObservableProperty]
+    private bool isStartupImageEnabled;
+
+    [ObservableProperty]
     private string sampleQuestsPathDisplay = "(not found)";
 
     public EntityEditorViewModel? EntityEditorViewModel { get; set; }
@@ -91,6 +94,7 @@ public sealed partial class MainViewModel : ObservableObject
         exportService = new ExportService(codeGenerator);
         deploymentService = new DeploymentService(fableConfig, codeGenerator);
         UpdateSetupStatus();
+        IsStartupImageEnabled = fableConfig.GetShowStartupImage();
     }
 
     public IReadOnlyList<string> GetFavoriteNodeTypes()
@@ -101,6 +105,12 @@ public sealed partial class MainViewModel : ObservableObject
     public void SaveFavoriteNodeTypes(IEnumerable<string> types)
     {
         fableConfig.SetFavoriteNodeTypes(types);
+        fableConfig.Save();
+    }
+
+    partial void OnIsStartupImageEnabledChanged(bool value)
+    {
+        fableConfig.SetShowStartupImage(value);
         fableConfig.Save();
     }
 

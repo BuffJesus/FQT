@@ -47,6 +47,9 @@
                 <Separator />
                 <MenuItem Header="Launch _FSE" Command="{Binding LaunchFseCommand}" />
                 <MenuItem Header="_Configure Fable Path" Command="{Binding ConfigureFablePathCommand}" />
+                <MenuItem Header="Show Startup Image"
+                          IsCheckable="True"
+                          IsChecked="{Binding IsStartupImageEnabled}" />
             </MenuItem>
         </Menu>
 

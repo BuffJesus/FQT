@@ -6,23 +6,32 @@ public partial class App : System.Windows.Application
     {
         base.OnStartup(e);
 
-        var splash = new Views.SplashScreenView();
-        var splashStart = System.DateTime.UtcNow;
-        splash.Show();
+        Views.SplashScreenView? splash = null;
+        System.DateTime? splashStart = null;
+        var config = Config.FableConfig.Load();
+        if (config.GetShowStartupImage())
+        {
+            splash = new Views.SplashScreenView();
+            splashStart = System.DateTime.UtcNow;
+            splash.Show();
+        }
 
         var mainWindow = new MainWindow();
         MainWindow = mainWindow;
 
         mainWindow.ContentRendered += async (_, _) =>
         {
-            var elapsed = System.DateTime.UtcNow - splashStart;
-            var remaining = System.TimeSpan.FromSeconds(3) - elapsed;
-            if (remaining > System.TimeSpan.Zero)
+            if (splash != null && splashStart.HasValue)
             {
-                await System.Threading.Tasks.Task.Delay(remaining);
-            }
+                var elapsed = System.DateTime.UtcNow - splashStart.Value;
+                var remaining = System.TimeSpan.FromSeconds(3) - elapsed;
+                if (remaining > System.TimeSpan.Zero)
+                {
+                    await System.Threading.Tasks.Task.Delay(remaining);
+                }
 
-            splash.Close();
+                splash.Close();
+            }
         };
 
         mainWindow.Show();

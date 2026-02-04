@@ -1289,6 +1289,7 @@ public sealed class CodeGenerator
                 Icon = "📥",
                 IsAdvanced = false,
                 Description = $"Gets the value of variable '{variableName}'",
+                ValueType = variableType,
                 Properties = new List<NodeProperty>(),
                 CodeTemplate = $"local {luaName}_value = {luaName}\n{{CHILDREN}}"
             };
@@ -1305,6 +1306,7 @@ public sealed class CodeGenerator
             Icon = "📤",
             IsAdvanced = false,
             Description = $"Sets the value of variable '{variableName}'",
+            ValueType = variableType,
             Properties = new List<NodeProperty>
             {
                 new() { Name = "value", Type = nodeType, Label = "Value", DefaultValue = variable?.DefaultValue ?? string.Empty }

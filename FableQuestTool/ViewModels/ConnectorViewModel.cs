@@ -51,6 +51,12 @@ public sealed partial class ConnectorViewModel : ObservableObject
     [ObservableProperty]
     private bool isConnected;
 
+    [ObservableProperty]
+    private string? propertyName;
+
+    [ObservableProperty]
+    private string? variableName;
+
     /// <summary>
     /// Gets the color for this connector type (UE5 Blueprint colors)
     /// </summary>

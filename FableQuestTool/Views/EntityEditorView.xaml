@@ -703,7 +703,39 @@
                                                                   Stroke="{Binding ConnectorColor, Converter={StaticResource StringToColorBrush}}"
                                                                   StrokeThickness="1"
                                                                   VerticalAlignment="Center"
-                                                                  Margin="0,0,2,0" />
+                                                                  Margin="0,0,2,0">
+                                                                <Path.Style>
+                                                                    <Style TargetType="Path">
+                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Exec">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Boolean">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Integer">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Float">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="String">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Object">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Struct">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Wildcard">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Path.Style>
+                                                            </Path>
                                                             <!-- Connector hit area -->
                                                         <nodify:Connector Anchor="{Binding Anchor, Mode=OneWayToSource}"
                                                                           IsConnected="True"
@@ -744,7 +776,39 @@
                                                                   Stroke="{Binding ConnectorColor, Converter={StaticResource StringToColorBrush}}"
                                                                   StrokeThickness="1"
                                                                   VerticalAlignment="Center"
-                                                                  Margin="2,0,0,0" />
+                                                                  Margin="2,0,0,0">
+                                                                <Path.Style>
+                                                                    <Style TargetType="Path">
+                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Exec">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Boolean">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Integer">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Float">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="String">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Object">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Struct">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ConnectorType}" Value="Wildcard">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Path.Style>
+                                                            </Path>
                                                         </StackPanel>
                                                     </DataTemplate>
                                                     </nodify:Node.OutputConnectorTemplate>

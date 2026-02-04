@@ -1153,6 +1153,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
         var connectedReroutes = new HashSet<NodeViewModel>();
         foreach (var conn in Connections)
         {
+            if (conn.Source?.ConnectorType != ConnectorType.Exec || conn.Target?.ConnectorType != ConnectorType.Exec)
+            {
+                continue;
+            }
+
             var sourceNode = GetNodeForConnector(conn.Source, isOutput: true);
             var targetNode = GetNodeForConnector(conn.Target, isOutput: false);
 
@@ -1292,6 +1297,21 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 return;
             }
 
+            // Enforce connector type compatibility (exec must connect to exec, data to matching data).
+            if (sourceConnector.ConnectorType != targetConnector.ConnectorType)
+            {
+                bool isExecMismatch = sourceConnector.ConnectorType == ConnectorType.Exec ||
+                                      targetConnector.ConnectorType == ConnectorType.Exec;
+                bool isWildcard = sourceConnector.ConnectorType == ConnectorType.Wildcard ||
+                                  targetConnector.ConnectorType == ConnectorType.Wildcard;
+
+                if (isExecMismatch || !isWildcard)
+                {
+                    PendingConnection = null;
+                    return;
+                }
+            }
+
             // Ensure only one connection per input connector.
             var existingToTarget = Connections.Where(c => c.Target == targetConnector).ToList();
             foreach (var conn in existingToTarget)
@@ -1316,6 +1336,27 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
             Connections.Add(connection);
             UpdateReroutePositionsForConnection(connection);
+
+            // If connecting a variable output to a property input, bind the property.
+            if (!string.IsNullOrWhiteSpace(targetConnector.PropertyName))
+            {
+                string? variableName = sourceConnector.VariableName;
+                if (string.IsNullOrWhiteSpace(variableName))
+                {
+                    var sourceNode = GetNodeForConnector(sourceConnector, isOutput: true);
+                    if (sourceNode != null)
+                    {
+                        variableName = ExtractVariableName(sourceNode.Type);
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(variableName))
+                {
+                    var boundTargetNode = GetNodeForConnector(targetConnector, isOutput: false);
+                    boundTargetNode?.SetProperty(targetConnector.PropertyName, $"${variableName}");
+                }
+            }
+
             PendingConnection = null;
         }
         catch
@@ -1967,6 +2008,29 @@ public sealed partial class EntityTabViewModel : ObservableObject
         return menuConnectionSource != null;
     }
 
+    private static string? ExtractVariableName(string nodeType)
+    {
+        if (string.IsNullOrWhiteSpace(nodeType))
+        {
+            return null;
+        }
+
+        const string getPrefix = "var_get_";
+        const string setPrefix = "var_set_";
+
+        if (nodeType.StartsWith(getPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return nodeType.Substring(getPrefix.Length);
+        }
+
+        if (nodeType.StartsWith(setPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return nodeType.Substring(setPrefix.Length);
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// Add a new variable to the entity
     /// </summary>
@@ -2204,6 +2268,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Icon = "ðŸ“¥",
             IsAdvanced = false,
             Description = $"Gets the value of variable '{variable.Name}'",
+            ValueType = variable.Type,
             Properties = new List<NodeProperty>(),
             CodeTemplate = $"local {luaName}_value = {luaName}\n{{CHILDREN}}"
         };
@@ -2224,6 +2289,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Icon = "ðŸ“¤",
             IsAdvanced = false,
             Description = $"Sets the value of variable '{variable.Name}'",
+            ValueType = variable.Type,
             Properties = new List<NodeProperty>
             {
                 new() { Name = "value", Type = nodeType, Label = "Value", DefaultValue = variable.DefaultValue }

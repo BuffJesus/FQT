@@ -744,6 +744,7 @@ public class NodeDefinition
     public string CodeTemplate { get; set; } = string.Empty;
     public bool HasBranching { get; set; } = false;
     public List<string>? BranchLabels { get; set; } = null;
+    public string? ValueType { get; set; }
 }
 
 public class NodeProperty

@@ -126,9 +126,18 @@ public sealed partial class NodeViewModel : ObservableObject
         Input.Clear();
         Output.Clear();
 
+        bool isVariableGet = Type.StartsWith("var_get_", StringComparison.OrdinalIgnoreCase);
+        bool isVariableSet = Type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase);
+
+        ConnectorType? variableConnectorType = null;
+        if (Definition?.ValueType != null)
+        {
+            variableConnectorType = MapVariableTypeToConnectorType(Definition.ValueType);
+        }
+
         // Add input exec pin (all nodes have at least one input, except triggers and defineEvent)
         // defineEvent nodes are entry points like triggers - they define a callable function
-        if (Category != "trigger" && Type != "defineEvent")
+        if (!isVariableGet && Category != "trigger" && Type != "defineEvent")
         {
             Input.Add(new ConnectorViewModel
             {
@@ -139,47 +148,90 @@ public sealed partial class NodeViewModel : ObservableObject
         }
 
         // Initialize output connectors based on node type
-        if (Definition?.HasBranching == true)
+        if (!isVariableGet)
         {
-            // Check if node has custom branch labels (e.g., Yes/No/Unsure)
-            if (Definition.BranchLabels != null && Definition.BranchLabels.Count > 0)
+            if (Definition?.HasBranching == true)
             {
-                // Use custom labels
-                foreach (var label in Definition.BranchLabels)
+                // Check if node has custom branch labels (e.g., Yes/No/Unsure)
+                if (Definition.BranchLabels != null && Definition.BranchLabels.Count > 0)
                 {
+                    // Use custom labels
+                    foreach (var label in Definition.BranchLabels)
+                    {
+                        Output.Add(new ConnectorViewModel
+                        {
+                            Title = label,
+                            ConnectorType = ConnectorType.Exec,
+                            IsInput = false
+                        });
+                    }
+                }
+                else
+                {
+                    // Default to True/False for branching nodes (condition style)
                     Output.Add(new ConnectorViewModel
                     {
-                        Title = label,
+                        Title = "True",
+                        ConnectorType = ConnectorType.Exec,
+                        IsInput = false
+                    });
+                    Output.Add(new ConnectorViewModel
+                    {
+                        Title = "False",
                         ConnectorType = ConnectorType.Exec,
                         IsInput = false
                     });
                 }
             }
-            else
+            else if (!isVariableGet)
             {
-                // Default to True/False for branching nodes (condition style)
+                // Single output exec pin
                 Output.Add(new ConnectorViewModel
                 {
-                    Title = "True",
-                    ConnectorType = ConnectorType.Exec,
-                    IsInput = false
-                });
-                Output.Add(new ConnectorViewModel
-                {
-                    Title = "False",
+                    Title = "▶",
                     ConnectorType = ConnectorType.Exec,
                     IsInput = false
                 });
             }
         }
-        else
+
+        // Data input pins for node properties
+        if (Definition?.Properties != null)
         {
-            // Single output exec pin
+            foreach (var prop in Definition.Properties)
+            {
+                var connectorType = MapPropertyTypeToConnectorType(prop.Type);
+                Input.Add(new ConnectorViewModel
+                {
+                    Title = string.IsNullOrWhiteSpace(prop.Label) ? prop.Name : prop.Label,
+                    ConnectorType = connectorType,
+                    IsInput = true,
+                    PropertyName = prop.Name
+                });
+            }
+        }
+
+        // Variable data pins
+        if (isVariableGet && variableConnectorType.HasValue)
+        {
+            string variableName = Type.Substring("var_get_".Length);
             Output.Add(new ConnectorViewModel
             {
-                Title = "▶",
-                ConnectorType = ConnectorType.Exec,
-                IsInput = false
+                Title = "Value",
+                ConnectorType = variableConnectorType.Value,
+                IsInput = false,
+                VariableName = variableName
+            });
+        }
+        else if (isVariableSet && variableConnectorType.HasValue)
+        {
+            string variableName = Type.Substring("var_set_".Length);
+            Output.Add(new ConnectorViewModel
+            {
+                Title = "Value",
+                ConnectorType = variableConnectorType.Value,
+                IsInput = false,
+                VariableName = variableName
             });
         }
 
@@ -213,5 +265,30 @@ public sealed partial class NodeViewModel : ObservableObject
         Properties[propertyName] = value;
         OnPropertyChanged(nameof(Properties));
         UpdateTitleForEventNodes();
+    }
+
+    private static ConnectorType MapPropertyTypeToConnectorType(string? type)
+    {
+        return type switch
+        {
+            "text" => ConnectorType.String,
+            "string" => ConnectorType.String,
+            "bool" => ConnectorType.Boolean,
+            "int" => ConnectorType.Integer,
+            "float" => ConnectorType.Float,
+            _ => ConnectorType.Wildcard
+        };
+    }
+
+    private static ConnectorType MapVariableTypeToConnectorType(string type)
+    {
+        return type switch
+        {
+            "Boolean" => ConnectorType.Boolean,
+            "Integer" => ConnectorType.Integer,
+            "Float" => ConnectorType.Float,
+            "String" => ConnectorType.String,
+            _ => ConnectorType.Wildcard
+        };
     }
 }

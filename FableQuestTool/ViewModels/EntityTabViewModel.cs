@@ -45,7 +45,10 @@ public sealed partial class EntityTabViewModel : ObservableObject
     public ObservableCollection<ConnectionViewModel> Connections { get; } = new();
     public ObservableCollection<NodeOption> SimpleNodes { get; } = new();
     public ObservableCollection<NodeOption> AdvancedNodes { get; } = new();
+    public ObservableCollection<NodeOption> InternalVariableNodes { get; } = new();
     public ObservableCollection<NodeOption> ExternalVariableNodes { get; } = new();
+    public ObservableCollection<NodeOption> FilteredInternalVariableNodes { get; } = new();
+    public ObservableCollection<NodeOption> FilteredExternalVariableNodes { get; } = new();
     public ObservableCollection<NodeViewModel> SelectedNodes
     {
         get => selectedNodes;
@@ -91,6 +94,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
     [ObservableProperty]
     private int nodeMenuSelectedIndex = -1;
+
+    [ObservableProperty]
+    private bool hasFilteredInternalVariables;
+
+    [ObservableProperty]
+    private bool hasFilteredExternalVariables;
 
     private ConnectorViewModel? menuConnectionSource;
 
@@ -1485,9 +1494,15 @@ public sealed partial class EntityTabViewModel : ObservableObject
     {
         FilteredNodes.Clear();
         GroupedFilteredNodes.Clear();
+        FilteredInternalVariableNodes.Clear();
+        FilteredExternalVariableNodes.Clear();
 
         UpdateExternalVariableNodes();
-        var allNodes = SimpleNodes.Concat(AdvancedNodes).Concat(ExternalVariableNodes).ToList();
+        var allNodes = SimpleNodes
+            .Concat(AdvancedNodes)
+            .Concat(InternalVariableNodes)
+            .Concat(ExternalVariableNodes)
+            .ToList();
         bool hideTriggers = ShouldHideTriggerNodes();
 
         IEnumerable<NodeOption> filteredNodes;
@@ -1528,9 +1543,27 @@ public sealed partial class EntityTabViewModel : ObservableObject
             NodeMenuSelectedIndex = -1;
         }
 
+        var internalVariables = filteredNodes.Where(n => n.Category == "variable").ToList();
+        var externalVariables = filteredNodes.Where(n => n.Category == "variable-external").ToList();
+        var nonVariableNodes = filteredNodes.Where(n =>
+            n.Category != "variable" && n.Category != "variable-external").ToList();
+
+        foreach (var option in internalVariables)
+        {
+            FilteredInternalVariableNodes.Add(option);
+        }
+
+        foreach (var option in externalVariables)
+        {
+            FilteredExternalVariableNodes.Add(option);
+        }
+
+        HasFilteredInternalVariables = FilteredInternalVariableNodes.Count > 0;
+        HasFilteredExternalVariables = FilteredExternalVariableNodes.Count > 0;
+
         // Group nodes by category for better organization
-        var categoryOrder = new[] { "trigger", "action", "condition", "flow", "custom", "variable", "variable-external" };
-        var grouped = filteredNodes
+        var categoryOrder = new[] { "trigger", "action", "condition", "flow", "custom" };
+        var grouped = nonVariableNodes
             .GroupBy(n => n.Category)
             .OrderBy(g => Array.IndexOf(categoryOrder, g.Key) >= 0
                 ? Array.IndexOf(categoryOrder, g.Key)
@@ -1546,8 +1579,6 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 "condition" => "Conditions",
                 "flow" => "Flow Control",
                 "custom" => "Custom Events",
-                "variable" => "Variables",
-                "variable-external" => "Variables (Exposed)",
                 _ => group.Key
             };
 
@@ -1562,7 +1593,10 @@ public sealed partial class EntityTabViewModel : ObservableObject
             return;
         }
 
-        var option = SimpleNodes.Concat(AdvancedNodes)
+        var option = SimpleNodes
+            .Concat(AdvancedNodes)
+            .Concat(InternalVariableNodes)
+            .Concat(ExternalVariableNodes)
             .FirstOrDefault(n => string.Equals(n.Type, definition.Type, StringComparison.OrdinalIgnoreCase));
         if (option == null)
         {
@@ -1618,7 +1652,10 @@ public sealed partial class EntityTabViewModel : ObservableObject
 
         foreach (string type in favoriteTypes)
         {
-            var option = SimpleNodes.Concat(AdvancedNodes)
+            var option = SimpleNodes
+                .Concat(AdvancedNodes)
+                .Concat(InternalVariableNodes)
+                .Concat(ExternalVariableNodes)
                 .FirstOrDefault(n => string.Equals(n.Type, type, StringComparison.OrdinalIgnoreCase));
             if (option != null)
             {
@@ -1722,7 +1759,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
         if (TryGetExternalVariableInfo(SelectedNode, out string entityName, out string variableName, out string variableType))
         {
             string name = $"{entityName}.{variableName}";
-            return (name, variableType, string.Empty, "Exposed");
+            return (name, variableType, string.Empty, "External");
         }
 
         string? variableNameLocal = ExtractVariableName(SelectedNode.Type);
@@ -1739,7 +1776,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             return (variableNameLocal, string.Empty, string.Empty, string.Empty);
         }
 
-        string exposure = variable.IsExposed ? "Exposed" : "Internal";
+        string exposure = variable.IsExposed ? "External" : "Internal";
         return (variable.Name, variable.Type, variable.DefaultValue, exposure);
     }
 
@@ -2245,17 +2282,19 @@ public sealed partial class EntityTabViewModel : ObservableObject
             SimpleNodes.Remove(node);
         }
 
+        InternalVariableNodes.Clear();
+
         // Add Get/Set nodes for each variable
         foreach (var variable in Variables)
         {
-            SimpleNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "ðŸ“¥",
+            InternalVariableNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "ðŸ“¥",
                 $"Gets the value of variable '{variable.Name}'")
             {
                 Type = $"var_get_{variable.Name}",
                 Definition = CreateGetVariableDefinition(variable)
             });
 
-            SimpleNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "ðŸ“¤",
+            InternalVariableNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "ðŸ“¤",
                 $"Sets the value of variable '{variable.Name}'")
             {
                 Type = $"var_set_{variable.Name}",
@@ -2621,6 +2660,12 @@ public sealed partial class EntityTabViewModel : ObservableObject
         {
             SaveVariablesToEntity();
             UpdateExternalVariableNodes();
+        }
+
+        if (e.PropertyName == nameof(VariableDefinition.DefaultValue) ||
+            e.PropertyName == nameof(VariableDefinition.Type))
+        {
+            UpdateVariableNodes();
         }
 
         if (e.PropertyName == nameof(VariableDefinition.Name) ||

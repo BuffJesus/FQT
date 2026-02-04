@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Threading;
 using FableQuestTool.ViewModels;
 
 namespace FableQuestTool.Views;
@@ -27,48 +28,66 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         // Clean up event handlers
-        if (_editor != null)
-        {
-            _editor.PreviewKeyDown -= OnEditorKeyDown;
-            _editor.PreviewMouseLeftButtonUp -= OnEditorMouseUp;
-            _editor.PreviewMouseLeftButtonDown -= OnEditorMouseLeftButtonDown;
-            _editor.PreviewMouseRightButtonDown -= OnEditorRightClickDown;
-            _editor.PreviewMouseRightButtonUp -= OnEditorRightClick;
-            _editor = null;
-        }
+        DetachEditorEvents();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Handle Ctrl key during drag to create redirection nodes
+        RefreshEditorBindings();
+    }
+
+    private void OnEntityTabSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        Dispatcher.BeginInvoke(new Action(RefreshEditorBindings), DispatcherPriority.Loaded);
+    }
+
+    private void RefreshEditorBindings()
+    {
         try
         {
+            DetachEditorEvents();
             _editor = FindNodifyEditor(this);
             if (_editor != null)
             {
-                _editor.PreviewKeyDown -= OnEditorKeyDown;
-                _editor.PreviewKeyDown += OnEditorKeyDown;
-
-                // Add mouse down handler for double-click on connections
-                _editor.PreviewMouseLeftButtonDown -= OnEditorMouseLeftButtonDown;
-                _editor.PreviewMouseLeftButtonDown += OnEditorMouseLeftButtonDown;
-
-                // Add mouse up handler to properly clean up after Ctrl+drag
-                _editor.PreviewMouseLeftButtonUp -= OnEditorMouseUp;
-                _editor.PreviewMouseLeftButtonUp += OnEditorMouseUp;
-
-                // Add right-click handler for node menu
-                _editor.PreviewMouseRightButtonDown -= OnEditorRightClickDown;
-                _editor.PreviewMouseRightButtonDown += OnEditorRightClickDown;
-                _editor.PreviewMouseRightButtonUp -= OnEditorRightClick;
-                _editor.PreviewMouseRightButtonUp += OnEditorRightClick;
-
+                AttachEditorEvents(_editor);
             }
         }
         catch
         {
             // Silently handle any initialization errors
         }
+    }
+
+    private void AttachEditorEvents(Nodify.NodifyEditor editor)
+    {
+        editor.PreviewKeyDown -= OnEditorKeyDown;
+        editor.PreviewKeyDown += OnEditorKeyDown;
+
+        editor.PreviewMouseLeftButtonDown -= OnEditorMouseLeftButtonDown;
+        editor.PreviewMouseLeftButtonDown += OnEditorMouseLeftButtonDown;
+
+        editor.PreviewMouseLeftButtonUp -= OnEditorMouseUp;
+        editor.PreviewMouseLeftButtonUp += OnEditorMouseUp;
+
+        editor.PreviewMouseRightButtonDown -= OnEditorRightClickDown;
+        editor.PreviewMouseRightButtonDown += OnEditorRightClickDown;
+        editor.PreviewMouseRightButtonUp -= OnEditorRightClick;
+        editor.PreviewMouseRightButtonUp += OnEditorRightClick;
+    }
+
+    private void DetachEditorEvents()
+    {
+        if (_editor == null)
+        {
+            return;
+        }
+
+        _editor.PreviewKeyDown -= OnEditorKeyDown;
+        _editor.PreviewMouseLeftButtonUp -= OnEditorMouseUp;
+        _editor.PreviewMouseLeftButtonDown -= OnEditorMouseLeftButtonDown;
+        _editor.PreviewMouseRightButtonDown -= OnEditorRightClickDown;
+        _editor.PreviewMouseRightButtonUp -= OnEditorRightClick;
+        _editor = null;
     }
 
     private void OnEditorKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -84,6 +103,23 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             if (currentTab == null)
             {
                 return;
+            }
+
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && e.Key == Key.F)
+            {
+                if (sender is Nodify.NodifyEditor editor)
+                {
+                    var center = new System.Windows.Point(editor.ActualWidth / 2, editor.ActualHeight / 2);
+                    var graphPosition = GetGraphPosition(editor, center);
+                    if (currentTab.OpenNodeMenuCommand.CanExecute((center, graphPosition)))
+                    {
+                        currentTab.OpenNodeMenuCommand.Execute((center, graphPosition));
+                        CancelEditorDrag(editor, currentTab);
+                        FocusNodeSearchBox();
+                        e.Handled = true;
+                        return;
+                    }
+                }
             }
 
             // Close node menu with Escape

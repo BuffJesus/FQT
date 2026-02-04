@@ -125,9 +125,11 @@
     </UserControl.Resources>
     <Grid Background="{DynamicResource BackgroundPrimary}"
           PreviewMouseLeftButtonDown="OnRootPreviewMouseLeftButtonDown">
-        <TabControl SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
+        <TabControl x:Name="EntityTabsControl"
+                    SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}"
                     Background="{DynamicResource BackgroundPrimary}"
-                    BorderThickness="0">
+                    BorderThickness="0"
+                    SelectionChanged="OnEntityTabSelectionChanged">
             <TabControl.Resources>
                 <Style TargetType="TabItem">
                     <Setter Property="Template">

@@ -1,4 +1,4 @@
-# Fable Quest Tool (FQT)
+ï»¿# Fable Quest Tool (FQT)
 
 A visual quest editor for Fable: The Lost Chapters that generates Lua scripts using the Fable Script Extender (FSE).
 
@@ -18,6 +18,7 @@ FQT is a WPF-based visual editor that allows you to create quests for Fable: The
 - **Quest Manager** - Deploy and manage quests in your game installation
 - **API Reference** - Built-in documentation for FSE functions
 - **Sample Quests** - Includes working examples demonstrating various quest patterns
+- **Item Browser** - Search inventory item IDs and copy with one click (e.g., OBJECT_TEDDY_BEAR)
 
 ## Requirements
 
@@ -108,11 +109,11 @@ See `FSE_Source/SampleQuests/README.md` for detailed explanations of each exampl
 ```
 FQT/
 +-- FableQuestTool/       # Main WPF application
-¦   +-- Data/             # Node definitions and data models
-¦   +-- Services/         # Code generation and business logic
-¦   +-- Views/            # UI views and controls
-¦   +-- ViewModels/       # MVVM view models
-¦   +-- Resources/        # Styles and themes
+ï¿½   +-- Data/             # Node definitions and data models
+ï¿½   +-- Services/         # Code generation and business logic
+ï¿½   +-- Views/            # UI views and controls
+ï¿½   +-- ViewModels/       # MVVM view models
+ï¿½   +-- Resources/        # Styles and themes
 +-- FableQuestTool.Tests/ # Test project
 +-- FSE_Source/           # Local reference copy of FSE source (optional)
 ```
@@ -145,11 +146,12 @@ This project is in active development. If you encounter bugs or have suggestions
 
 ## Docs
 
-- `DOCS/PROJECT_FORMAT.md` — `.fqtproj` file format and compatibility notes
-- `DOCS/GAME_DATA.md` — source/maintenance notes for `GameData.cs` lists
-- `DOCS/LOGGING.md` — logging and error reporting plan
-- `DOCS/RELEASE.md` — release checklist and guidance
+- `DOCS/PROJECT_FORMAT.md` ï¿½ `.fqtproj` file format and compatibility notes
+- `DOCS/GAME_DATA.md` ï¿½ source/maintenance notes for `GameData.cs` lists
+- `DOCS/LOGGING.md` ï¿½ logging and error reporting plan
+- `DOCS/RELEASE.md` ï¿½ release checklist and guidance
 
 ## License
 
 See LICENSE file for details. Note that FSE has its own license - refer to the [FSE repository](https://github.com/eeeeeAeoN/FableScriptExtender) for more information.
+

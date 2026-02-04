@@ -611,6 +611,6 @@ public sealed partial class MainViewModel : ObservableObject
 
         string samples = Path.Combine(AppContext.BaseDirectory ?? string.Empty, "FSE_Source", "SampleQuests");
         IsSampleQuestsAvailable = Directory.Exists(samples);
-        sampleQuestsPathDisplay = IsSampleQuestsAvailable ? samples : "(not found)";
+        SampleQuestsPathDisplay = IsSampleQuestsAvailable ? samples : "(not found)";
     }
 }

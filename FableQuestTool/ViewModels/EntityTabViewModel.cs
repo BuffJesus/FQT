@@ -385,6 +385,18 @@ public sealed partial class EntityTabViewModel : ObservableObject
         {
             UpdateTabTitle();
         }
+
+        if (e.PropertyName == nameof(QuestEntity.DefName) || e.PropertyName == nameof(QuestEntity.EntityType))
+        {
+            OnPropertyChanged(nameof(IsObjectRewardSupported));
+            OnPropertyChanged(nameof(ShowObjectRewardUnsupportedMessage));
+            if (!IsObjectRewardSupported && entity.ObjectReward != null)
+            {
+                entity.ObjectReward = null;
+                ObjectRewardItems.Clear();
+                OnPropertyChanged(nameof(HasObjectReward));
+            }
+        }
     }
 
     private void UpdateAvailableEvents()
@@ -2270,6 +2282,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
         get => entity.ObjectReward != null;
         set
         {
+            if (value && !IsObjectRewardSupported)
+            {
+                return;
+            }
+
             if (value && entity.ObjectReward == null)
             {
                 entity.ObjectReward = new ObjectReward();
@@ -2283,6 +2300,14 @@ public sealed partial class EntityTabViewModel : ObservableObject
             OnPropertyChanged();
         }
     }
+
+    public bool IsObjectRewardSupported =>
+        entity.EntityType == EntityType.Object &&
+        !string.IsNullOrWhiteSpace(entity.DefName) &&
+        GameData.ContainerObjects.Contains(entity.DefName);
+
+    public bool ShowObjectRewardUnsupportedMessage =>
+        entity.EntityType == EntityType.Object && !IsObjectRewardSupported;
 
     public int ObjectRewardGold
     {

@@ -705,10 +705,14 @@ public sealed class CodeGenerator
             sb.AppendLine($"            Quest:GiveHeroMorality({quest.Rewards.Morality})");
         }
 
-        // Single direct reward item (limited by game engine)
-        if (!string.IsNullOrWhiteSpace(quest.Rewards.DirectRewardItem))
+        // Direct item rewards (instant give)
+        if (quest.Rewards.Items.Count > 0)
         {
-            sb.AppendLine($"            Quest:GiveHeroObject(\"{quest.Rewards.DirectRewardItem}\", 1)");
+            foreach (string item in quest.Rewards.Items)
+            {
+                sb.AppendLine($"            Quest:GiveHeroObject(\"{item}\", 1)");
+                sb.AppendLine("            Quest:Pause(0)");
+            }
         }
 
         // Container-based rewards (for multiple items)
@@ -1058,16 +1062,9 @@ public sealed class CodeGenerator
         {
             rewardParts.Add($"{quest.Rewards.Renown} Renown");
         }
-        if (!string.IsNullOrWhiteSpace(quest.Rewards.DirectRewardItem))
+        if (quest.Rewards.Items.Count > 0)
         {
-            // Format item name nicely (remove OBJECT_ prefix)
-            string itemName = quest.Rewards.DirectRewardItem;
-            if (itemName.StartsWith("OBJECT_"))
-            {
-                itemName = itemName.Substring(7).Replace("_", " ");
-                itemName = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(itemName.ToLower());
-            }
-            rewardParts.Add(itemName);
+            rewardParts.Add($"{quest.Rewards.Items.Count} item(s)");
         }
 
         // Add rewards line if there are any

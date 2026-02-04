@@ -216,11 +216,18 @@
                                 </StackPanel>
                             </UniformGrid>
 
-                            <TextBlock Text="Direct Reward Item (One Only)" Margin="0,12,0,0" />
-                            <ComboBox x:Name="DirectRewardItemInput" IsEditable="True" IsTextSearchEnabled="True"
-                                      ItemsSource="{x:Static data:GameData.Objects}"
-                                      Text="{Binding Project.Rewards.DirectRewardItem, UpdateSourceTrigger=PropertyChanged}"
-                                      ToolTip="Single item reward given directly to player. Game engine limitation: only ONE item can be given directly." />
+                            <TextBlock Text="Direct Reward Items" Margin="0,12,0,0" />
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <ComboBox x:Name="RewardItemInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
+                                              ItemsSource="{x:Static data:GameData.Objects}" />
+                                    <Button Content="Add" Width="80" Click="OnAddRewardItem" />
+                                    <Button Content="Update" Width="80" Margin="8,0,0,0" Click="OnUpdateRewardItem" />
+                                    <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRewardItem" />
+                                </StackPanel>
+                                <ListBox x:Name="RewardItemsList" ItemsSource="{Binding Project.Rewards.Items}" Height="80" Margin="0,8,0,0"
+                                         SelectionChanged="OnRewardItemSelected" />
+                            </StackPanel>
 
                             <Expander Header="Container Rewards (Multiple Items)" Margin="0,16,0,0" IsExpanded="False">
                                 <StackPanel Margin="8">

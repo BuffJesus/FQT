@@ -11,6 +11,7 @@
              mc:Ignorable="d">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibility" />
         <converters:InvertedNullToVisibilityConverter x:Key="InvertedNullToVisibility" />
         <converters:StringToColorBrushConverter x:Key="StringToColorBrush" />
@@ -287,13 +288,13 @@
                                         </StackPanel>
                                     </Expander>
 
-                                    <!-- Object Rewards Section (only visible for Object entities) -->
+                                    <!-- Object Rewards Section (only visible for container objects) -->
                                     <Expander Header="Object Rewards" IsExpanded="True" Margin="0,12,0,0">
                                         <Expander.Style>
                                             <Style TargetType="Expander">
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Entity.EntityType}" Value="Object">
+                                                    <DataTrigger Binding="{Binding IsObjectRewardSupported}" Value="True">
                                                         <Setter Property="Visibility" Value="Visible" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
@@ -383,6 +384,12 @@
                                             </StackPanel>
                                         </StackPanel>
                                     </Expander>
+
+                                    <TextBlock Text="Object rewards only work with container objects (chests, barrels, crates)."
+                                               FontSize="10"
+                                               Opacity="0.6"
+                                               Margin="0,8,0,0"
+                                               Visibility="{Binding ShowObjectRewardUnsupportedMessage, Converter={StaticResource BoolToVisibility}}" />
 
                                     <TextBlock Text="Quick Start" FontWeight="SemiBold" Margin="0,0,0,8" />
                                     <UniformGrid Columns="2" Rows="2" Margin="0,0,0,12">

@@ -367,6 +367,74 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
     }
 
+    private void OnRewardItemSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (RewardItemsList.SelectedItem is string item)
+        {
+            RewardItemInput.Text = item;
+        }
+    }
+
+    private void OnAddRewardItem(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null)
+        {
+            return;
+        }
+
+        string item = RewardItemInput.Text.Trim();
+        if (string.IsNullOrWhiteSpace(item))
+        {
+            return;
+        }
+
+        ViewModel.Project.Rewards.Items.Add(item);
+        RewardItemInput.Text = string.Empty;
+        ViewModel.IsModified = true;
+        ViewModel.StatusText = "Reward item added.";
+        UpdatePreview();
+    }
+
+    private void OnUpdateRewardItem(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null || RewardItemsList.SelectedItem is not string current)
+        {
+            return;
+        }
+
+        string updated = RewardItemInput.Text.Trim();
+        if (string.IsNullOrWhiteSpace(updated))
+        {
+            return;
+        }
+
+        int index = ViewModel.Project.Rewards.Items.IndexOf(current);
+        if (index >= 0)
+        {
+            ViewModel.Project.Rewards.Items[index] = updated;
+            RewardItemsList.SelectedIndex = index;
+            ViewModel.IsModified = true;
+            ViewModel.StatusText = "Reward item updated.";
+            UpdatePreview();
+        }
+    }
+
+    private void OnRemoveRewardItem(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null)
+        {
+            return;
+        }
+
+        if (RewardItemsList.SelectedItem is string item)
+        {
+            ViewModel.Project.Rewards.Items.Remove(item);
+            ViewModel.IsModified = true;
+            ViewModel.StatusText = "Reward item removed.";
+            UpdatePreview();
+        }
+    }
+
     private void OnAddRewardAbility(object sender, RoutedEventArgs e)
     {
         if (ViewModel == null)

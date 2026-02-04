@@ -45,12 +45,27 @@ public sealed class QuestRewards
     public float Morality { get; set; }
 
     /// <summary>
-    /// Single item reward given directly to player.
-    /// Use item definition names like "ITEM_SWORD_MASTER" or "ITEM_POTION_HEALTH".
-    /// Limited to one item due to Fable engine constraints.
-    /// For multiple items, use Container instead.
+    /// Item rewards given directly to the player on quest completion.
+    /// Use item definition names like "OBJECT_SWORD_MASTER" or "OBJECT_HEALTH_POTION".
     /// </summary>
-    public string? DirectRewardItem { get; set; }
+    public ObservableCollection<string> Items { get; set; } = new();
+
+    /// <summary>
+    /// Legacy single-item reward (for backward compatibility).
+    /// When loaded, this value is migrated into Items.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DirectRewardItem
+    {
+        get => null; // Do not serialize forward
+        set
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                Items.Add(value);
+            }
+        }
+    }
 
     /// <summary>
     /// Container-based rewards for giving multiple items.
@@ -65,37 +80,7 @@ public sealed class QuestRewards
     /// </summary>
     public ObservableCollection<string> Abilities { get; set; } = new();
 
-    /// <summary>
-    /// Legacy property for backward compatibility with old quest files.
-    /// Automatically migrates to DirectRewardItem (single) or Container (multiple).
-    /// Not serialized - only used during deserialization of old formats.
-    /// </summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ObservableCollection<string>? Items
-    {
-        get => null; // Never serialize this property
-        set
-        {
-            // Migrate old Items to new format during deserialization
-            if (value != null && value.Count > 0)
-            {
-                if (value.Count == 1)
-                {
-                    // Single item -> use DirectRewardItem
-                    DirectRewardItem = value[0];
-                }
-                else
-                {
-                    // Multiple items -> use Container
-                    Container ??= new ContainerReward();
-                    foreach (string item in value)
-                    {
-                        Container.Items.Add(item);
-                    }
-                }
-            }
-        }
-    }
+    // Legacy Items field is handled by the Items collection itself.
 }
 
 /// <summary>

@@ -66,6 +66,8 @@ public sealed class CodeGeneratorTests
         project.Regions.Add("OAKVALE");
         project.Rewards.Gold = 250;
         project.Rewards.Renown = 500;
+        project.Rewards.Items.Add("OBJECT_APPLE");
+        project.Rewards.Items.Add("OBJECT_CARROT");
 
         CodeGenerator generator = new CodeGenerator();
         string script = generator.GenerateQuestScript(project);
@@ -76,6 +78,8 @@ public sealed class CodeGeneratorTests
         Assert.Contains("Quest:SetQuestRenownReward(\"RewardQuest\", 500)", script);
         Assert.Contains("Quest:KickOffQuestStartScreen(\"RewardQuest\", false, true)", script);
         Assert.Contains("Quest:SetQuestAsCompleted(\"RewardQuest\", true, false, true)", script);
+        Assert.Contains("Quest:GiveHeroObject(\"OBJECT_APPLE\", 1)", script);
+        Assert.Contains("Quest:GiveHeroObject(\"OBJECT_CARROT\", 1)", script);
     }
 
     [Fact]

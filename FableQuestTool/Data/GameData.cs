@@ -188,6 +188,17 @@ public static class GameData
         "OBJECT_GUILD_SEAL"
     };
 
+    public static ObservableCollection<string> ContainerObjects { get; } = new()
+    {
+        "OBJECT_CHEST",
+        "OBJECT_CHEST_SILVER",
+        "OBJECT_CHEST_GOLD",
+        "OBJECT_CHEST_WOODEN",
+        "OBJECT_BARREL",
+        "OBJECT_CRATE",
+        "OBJECT_CHEST_OLD"
+    };
+
     public static ObservableCollection<string> Abilities { get; } = new()
     {
         "1 - Blade",

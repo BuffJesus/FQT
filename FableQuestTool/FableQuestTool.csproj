@@ -22,6 +22,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Resource Include="Resources\Images\FQT_Splash.png" />
+    </ItemGroup>
+
+    <ItemGroup>
         <None Include="tools\**\*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

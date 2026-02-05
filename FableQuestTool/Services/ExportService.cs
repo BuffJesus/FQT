@@ -3,15 +3,24 @@ using FableQuestTool.Models;
 
 namespace FableQuestTool.Services;
 
+/// <summary>
+/// Exports quests and entity scripts to a folder structure.
+/// </summary>
 public sealed class ExportService
 {
     private readonly CodeGenerator codeGenerator;
 
+    /// <summary>
+    /// Creates a new instance of ExportService.
+    /// </summary>
     public ExportService(CodeGenerator codeGenerator)
     {
         this.codeGenerator = codeGenerator;
     }
 
+    /// <summary>
+    /// Writes quest Lua files and returns the output folder path.
+    /// </summary>
     public string Export(QuestProject quest, string baseDirectory)
     {
         string questFolder = Path.Combine(baseDirectory, quest.Name);

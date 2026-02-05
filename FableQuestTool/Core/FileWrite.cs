@@ -5,6 +5,9 @@ namespace FableQuestTool.Core;
 
 public static class FileWrite
 {
+    /// <summary>
+    /// Executes WriteAllTextAtomic.
+    /// </summary>
     public static void WriteAllTextAtomic(string path, string content, bool createBackup = true)
     {
         if (string.IsNullOrWhiteSpace(path))

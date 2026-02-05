@@ -9,6 +9,9 @@ using FableQuestTool.ViewModels;
 
 namespace FableQuestTool.Views;
 
+/// <summary>
+/// Main node graph editor surface and property inspector.
+/// </summary>
 public partial class EntityEditorView : System.Windows.Controls.UserControl
 {
     private Nodify.NodifyEditor? _editor;
@@ -16,6 +19,9 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
     private System.Windows.Point? _variableDragStart;
     private readonly Dictionary<string, string> _literalPropertyCache = new();
 
+    /// <summary>
+    /// Creates a new instance of EntityEditorView.
+    /// </summary>
     public EntityEditorView()
     {
         InitializeComponent();
@@ -1518,8 +1524,14 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 }
 
 // Converter to access dictionary values by key
+/// <summary>
+/// Resolves a dictionary value from a key for binding scenarios.
+/// </summary>
 public class DictionaryItemConverter : IMultiValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
         if (values.Length >= 2 && values[0] is System.Collections.Generic.Dictionary<string, object> dict && values[1] is string key)
@@ -1532,6 +1544,9 @@ public class DictionaryItemConverter : IMultiValueConverter
         return string.Empty;
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
         return new[] { value };

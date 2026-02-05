@@ -5,18 +5,54 @@ using System.IO;
 
 namespace FableQuestTool.Formats;
 
+/// <summary>
+/// Represents a single entry inside a BIG archive bank.
+/// </summary>
 public sealed class BigEntry
 {
+    /// <summary>
+    /// Gets Magic.
+    /// </summary>
     public uint Magic { get; internal set; } = 42;
+    /// <summary>
+    /// Gets or sets SymbolName.
+    /// </summary>
     public string SymbolName { get; set; }
+    /// <summary>
+    /// Gets or sets Id.
+    /// </summary>
     public uint Id { get; set; }
+    /// <summary>
+    /// Gets or sets Type.
+    /// </summary>
     public uint Type { get; set; }
+    /// <summary>
+    /// Gets Length.
+    /// </summary>
     public uint Length { get; internal set; }
+    /// <summary>
+    /// Gets DataOffset.
+    /// </summary>
     public uint DataOffset { get; internal set; }
+    /// <summary>
+    /// Gets or sets DevFileType.
+    /// </summary>
     public uint DevFileType { get; set; }
+    /// <summary>
+    /// Gets or sets DevCrc.
+    /// </summary>
     public uint DevCrc { get; set; }
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public List<string> DevSources { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public byte[] SubHeader { get; set; } = Array.Empty<byte>();
+    /// <summary>
+    /// Gets IsModified.
+    /// </summary>
     public bool IsModified { get; private set; }
 
     internal string? SourcePath { get; private set; }
@@ -25,6 +61,9 @@ public sealed class BigEntry
 
     private byte[]? _data;
 
+    /// <summary>
+    /// Creates a new entry with inline data.
+    /// </summary>
     public BigEntry(string symbolName, uint id, uint type, byte[] data)
     {
         Guard.NotNullOrEmpty(symbolName, nameof(symbolName));
@@ -43,6 +82,9 @@ public sealed class BigEntry
         Type = type;
     }
 
+    /// <summary>
+    /// Gets the entry payload, loading it from disk if needed.
+    /// </summary>
     public byte[] GetData()
     {
         if (_data != null)
@@ -67,6 +109,9 @@ public sealed class BigEntry
         return _data;
     }
 
+    /// <summary>
+    /// Replaces the entry payload and marks it as modified.
+    /// </summary>
     public void ReplaceData(byte[] data)
     {
         Guard.NotNull(data, nameof(data));
@@ -75,6 +120,9 @@ public sealed class BigEntry
         IsModified = true;
     }
 
+    /// <summary>
+    /// Writes the entry payload to the specified file.
+    /// </summary>
     public void ExtractTo(string filePath)
     {
         Guard.NotNullOrEmpty(filePath, nameof(filePath));
@@ -82,6 +130,9 @@ public sealed class BigEntry
         WriteDataTo(output);
     }
 
+    /// <summary>
+    /// Writes the entry payload to the given stream.
+    /// </summary>
     public void WriteDataTo(Stream output)
     {
         Guard.NotNull(output, nameof(output));

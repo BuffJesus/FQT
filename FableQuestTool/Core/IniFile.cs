@@ -4,6 +4,9 @@ using System.IO;
 
 namespace FableQuestTool.Core;
 
+/// <summary>
+/// Lightweight INI reader/writer used for local configuration.
+/// </summary>
 public sealed class IniFile
 {
     private readonly Dictionary<string, Dictionary<string, string>> sections;
@@ -13,11 +16,17 @@ public sealed class IniFile
         this.sections = sections;
     }
 
+    /// <summary>
+    /// Creates a new empty INI structure.
+    /// </summary>
     public static IniFile CreateEmpty()
     {
         return new IniFile(new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase));
     }
 
+    /// <summary>
+    /// Loads and parses an INI file from disk.
+    /// </summary>
     public static IniFile Load(string path)
     {
         Dictionary<string, Dictionary<string, string>> sections = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
@@ -62,6 +71,9 @@ public sealed class IniFile
         return new IniFile(sections);
     }
 
+    /// <summary>
+    /// Gets a value from a section and key pair.
+    /// </summary>
     public string? Get(string section, string key)
     {
         if (sections.TryGetValue(section, out Dictionary<string, string>? values)
@@ -73,6 +85,9 @@ public sealed class IniFile
         return null;
     }
 
+    /// <summary>
+    /// Gets all key/value pairs for a section.
+    /// </summary>
     public IReadOnlyDictionary<string, string>? GetSection(string section)
     {
         if (sections.TryGetValue(section, out Dictionary<string, string>? values))
@@ -83,6 +98,9 @@ public sealed class IniFile
         return null;
     }
 
+    /// <summary>
+    /// Sets a value in a section, creating the section if needed.
+    /// </summary>
     public void Set(string section, string key, string value)
     {
         if (!sections.TryGetValue(section, out Dictionary<string, string>? values))
@@ -94,6 +112,9 @@ public sealed class IniFile
         values[key] = value;
     }
 
+    /// <summary>
+    /// Writes the INI contents back to disk.
+    /// </summary>
     public void Save(string path)
     {
         using StreamWriter writer = new StreamWriter(path);

@@ -30,6 +30,9 @@ public sealed partial class ApiReferenceViewModel : ObservableObject
     [ObservableProperty]
     private bool hasApiData;
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> Categories { get; } = new()
     {
         "All",
@@ -40,8 +43,14 @@ public sealed partial class ApiReferenceViewModel : ObservableObject
         "Game API"
     };
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<ApiFunction> FilteredFunctions { get; } = new();
 
+    /// <summary>
+    /// Creates a new instance of ApiReferenceViewModel.
+    /// </summary>
     public ApiReferenceViewModel()
     {
         LoadApiData();

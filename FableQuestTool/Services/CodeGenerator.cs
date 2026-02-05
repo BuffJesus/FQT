@@ -313,6 +313,9 @@ public sealed class CodeGenerator
                !quest.Rewards.Container.AutoGiveOnComplete;
     }
 
+    /// <summary>
+    /// Executes GenerateRegistrationSnippet.
+    /// </summary>
     public string GenerateRegistrationSnippet(QuestProject quest)
     {
         StringBuilder sb = new StringBuilder();
@@ -1165,6 +1168,9 @@ public sealed class CodeGenerator
         };
     }
 
+    /// <summary>
+    /// Executes GenerateBehaviorCode.
+    /// </summary>
     public string GenerateBehaviorCode(QuestEntity entity, string questName, int indent = 2)
     {
         if (entity.Nodes.Count == 0)

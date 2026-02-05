@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -20,14 +20,35 @@ public sealed partial class EntityTabViewModel : ObservableObject
     private readonly Func<IReadOnlyList<ExternalVariableInfo>>? getExternalVariables;
     private List<TngEntity> allEntities = new();
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> AvailableDefinitions { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> AvailableRegions { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> AvailableMarkers { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> AvailableEvents { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<VariableDefinition> Variables { get; } = new();
 
     // Object Reward properties
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> ObjectRewardItems { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> AvailableRewardItems { get; } = new();
 
     [ObservableProperty]
@@ -39,16 +60,46 @@ public sealed partial class EntityTabViewModel : ObservableObject
     [ObservableProperty]
     private string entityIcon;
 
+    /// <summary>
+    /// Member Entity.
+    /// </summary>
     public QuestEntity Entity => entity;
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeViewModel> Nodes { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<ConnectionViewModel> Connections { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> SimpleNodes { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> AdvancedNodes { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> InternalVariableNodes { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> ExternalVariableNodes { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> FilteredInternalVariableNodes { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> FilteredExternalVariableNodes { get; } = new();
+    /// <summary>
+    /// Member SelectedNodes.
+    /// </summary>
     public ObservableCollection<NodeViewModel> SelectedNodes
     {
         get => selectedNodes;
@@ -71,7 +122,13 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
     private ObservableCollection<NodeViewModel> selectedNodes = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> RecentNodes { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> FavoriteNodes { get; } = new();
 
     [ObservableProperty]
@@ -116,10 +173,19 @@ public sealed partial class EntityTabViewModel : ObservableObject
         UpdateFilteredNodes();
     }
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeOption> FilteredNodes { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<NodeCategoryGroup> GroupedFilteredNodes { get; } = new();
     private const int MaxRecentNodes = 6;
     private const int MaxFavoriteNodes = 8;
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> GraphWarnings { get; } = new();
 
     private const string ExternalEntityKey = "extEntity";
@@ -136,6 +202,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
     private int nodeSeed = 0;
     private readonly Dictionary<string, int> variableUsageIndices = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Creates a new instance of EntityTabViewModel.
+    /// </summary>
     public EntityTabViewModel(
         QuestEntity entity,
         IEnumerable<string>? favoriteTypes = null,
@@ -542,7 +611,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
                     Id = node.Id,
                     Title = string.Empty,
                     Category = "flow",
-                    Icon = "◇",
+                    Icon = "?",
                     Type = "reroute",
                     IsRerouteNode = true,
                     IsRedirectionNode = true,
@@ -617,6 +686,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Executes SaveToEntity.
+    /// </summary>
     public void SaveToEntity()
     {
         SaveVariablesToEntity();
@@ -691,7 +763,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 {
                     sourceNode.Output.Add(new ConnectorViewModel
                     {
-                        Title = "▶",
+                        Title = "?",
                         ConnectorType = ConnectorType.Exec,
                         IsInput = false
                     });
@@ -718,7 +790,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 {
                     sourceNode.Output.Add(new ConnectorViewModel
                     {
-                        Title = "▶",
+                        Title = "?",
                         ConnectorType = ConnectorType.Exec,
                         IsInput = false
                     });
@@ -1735,17 +1807,53 @@ public sealed partial class EntityTabViewModel : ObservableObject
         NotifySelectedVariableChanged();
     }
 
+    /// <summary>
+    /// Member HasSelection.
+    /// </summary>
     public bool HasSelection => SelectedNodes.Count > 0 || SelectedNode != null;
+    /// <summary>
+    /// Member HasMultipleSelection.
+    /// </summary>
     public bool HasMultipleSelection => SelectedNodes.Count > 1;
+    /// <summary>
+    /// Member SelectedNodeCount.
+    /// </summary>
     public int SelectedNodeCount => SelectedNodes.Count;
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public bool HasRecentNodes => RecentNodes.Count > 0 && string.IsNullOrWhiteSpace(NodeSearchText);
+    /// <summary>
+    /// Member HasFavoriteNodes.
+    /// </summary>
     public bool HasFavoriteNodes => FavoriteNodes.Count > 0;
+    /// <summary>
+    /// Member HasGraphWarnings.
+    /// </summary>
     public bool HasGraphWarnings => GraphWarnings.Count > 0;
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public bool HasSelectedVariableNode => SelectedNode != null && IsVariableNodeType(SelectedNode.Type);
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public string SelectedVariableName => GetSelectedVariableInfo().Name;
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public string SelectedVariableType => GetSelectedVariableInfo().Type;
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public string SelectedVariableDefault => GetSelectedVariableInfo().DefaultValue;
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public string SelectedVariableExposureText => GetSelectedVariableInfo().Exposure;
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public string SelectedVariableRuntime => GetSelectedVariableInfo().RuntimeValue;
 
     private void NotifySelectedVariableChanged()
@@ -2353,7 +2461,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             var getDefinition = CreateExternalVariableDefinition(external.VariableType, isSetNode: false);
             var setDefinition = CreateExternalVariableDefinition(external.VariableType, isSetNode: true);
 
-            ExternalVariableNodes.Add(new NodeOption($"Get {displayName}", "variable-external", "📥",
+            ExternalVariableNodes.Add(new NodeOption($"Get {displayName}", "variable-external", "??",
                 $"Gets exposed variable '{displayName}'")
             {
                 Type = $"var_get_ext_{displayName}",
@@ -2364,7 +2472,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
                 ExternalVariableDefault = external.DefaultValue
             });
 
-            ExternalVariableNodes.Add(new NodeOption($"Set {displayName}", "variable-external", "📤",
+            ExternalVariableNodes.Add(new NodeOption($"Set {displayName}", "variable-external", "??",
                 $"Sets exposed variable '{displayName}'")
             {
                 Type = $"var_set_ext_{displayName}",
@@ -2388,7 +2496,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Type = isSetNode ? "var_set_ext" : "var_get_ext",
             Label = isSetNode ? "Set External Variable" : "Get External Variable",
             Category = "variable",
-            Icon = isSetNode ? "📤" : "📥",
+            Icon = isSetNode ? "??" : "??",
             IsAdvanced = false,
             Description = isSetNode ? "Sets an exposed variable from another entity" : "Gets an exposed variable from another entity",
             ValueType = variableType,
@@ -2398,6 +2506,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         };
     }
 
+    /// <summary>
+    /// Executes RenameVariable.
+    /// </summary>
     public bool RenameVariable(string oldName, string newName)
     {
         if (string.IsNullOrWhiteSpace(oldName))
@@ -2898,12 +3009,18 @@ public sealed partial class EntityTabViewModel : ObservableObject
         };
     }
 
+    /// <summary>
+    /// Executes UpdateTabTitle.
+    /// </summary>
     public void UpdateTabTitle()
     {
         TabTitle = string.IsNullOrWhiteSpace(entity.ScriptName) ? "New Entity" : entity.ScriptName;
         EntityIcon = GetEntityIcon(entity.EntityType);
     }
 
+    /// <summary>
+    /// Executes CreateVariableNodeAtPosition.
+    /// </summary>
     public NodeViewModel? CreateVariableNodeAtPosition(string variableName, bool isSetNode, System.Windows.Point graphPosition)
     {
         if (string.IsNullOrWhiteSpace(variableName))
@@ -2928,6 +3045,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         return node;
     }
 
+    /// <summary>
+    /// Executes CreateVariableNodeFromConnector.
+    /// </summary>
     public NodeViewModel? CreateVariableNodeFromConnector(ConnectorViewModel sourceConnector, System.Windows.Point graphPosition)
     {
         if (sourceConnector.ConnectorType == ConnectorType.Exec)
@@ -3022,14 +3142,23 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Member IsObjectRewardSupported.
+    /// </summary>
     public bool IsObjectRewardSupported =>
         entity.EntityType == EntityType.Object &&
         !string.IsNullOrWhiteSpace(entity.DefName) &&
         GameData.ContainerObjects.Contains(entity.DefName);
 
+    /// <summary>
+    /// Member ShowObjectRewardUnsupportedMessage.
+    /// </summary>
     public bool ShowObjectRewardUnsupportedMessage =>
         entity.EntityType == EntityType.Object && !IsObjectRewardSupported;
 
+    /// <summary>
+    /// Member ObjectRewardGold.
+    /// </summary>
     public int ObjectRewardGold
     {
         get => entity.ObjectReward?.Gold ?? 0;
@@ -3041,6 +3170,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Member ObjectRewardExperience.
+    /// </summary>
     public int ObjectRewardExperience
     {
         get => entity.ObjectReward?.Experience ?? 0;
@@ -3052,6 +3184,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Member ObjectRewardOneTimeOnly.
+    /// </summary>
     public bool ObjectRewardOneTimeOnly
     {
         get => entity.ObjectReward?.OneTimeOnly ?? true;
@@ -3063,6 +3198,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Member ObjectRewardDestroyAfter.
+    /// </summary>
     public bool ObjectRewardDestroyAfter
     {
         get => entity.ObjectReward?.DestroyAfterReward ?? true;
@@ -3074,6 +3212,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Member ObjectRewardShowMessage.
+    /// </summary>
     public bool ObjectRewardShowMessage
     {
         get => entity.ObjectReward?.ShowMessage ?? true;
@@ -3085,6 +3226,9 @@ public sealed partial class EntityTabViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Member ObjectRewardCustomMessage.
+    /// </summary>
     public string ObjectRewardCustomMessage
     {
         get => entity.ObjectReward?.CustomMessage ?? string.Empty;

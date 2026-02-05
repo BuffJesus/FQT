@@ -16,6 +16,9 @@ public sealed partial class EntityEditorViewModel : ObservableObject
 {
     private readonly MainViewModel mainViewModel;
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<EntityTabViewModel> EntityTabs { get; } = new();
 
     [ObservableProperty]
@@ -24,6 +27,9 @@ public sealed partial class EntityEditorViewModel : ObservableObject
     [ObservableProperty]
     private EntityTabViewModel? selectedTab;
 
+    /// <summary>
+    /// Creates a new instance of EntityEditorViewModel.
+    /// </summary>
     public EntityEditorViewModel(MainViewModel mainViewModel)
     {
         this.mainViewModel = mainViewModel;
@@ -190,6 +196,9 @@ public sealed partial class EntityEditorViewModel : ObservableObject
         mainViewModel.StatusText = "Entity duplicated.";
     }
 
+    /// <summary>
+    /// Executes SaveAllTabs.
+    /// </summary>
     public void SaveAllTabs()
     {
         foreach (var tab in EntityTabs)
@@ -198,6 +207,9 @@ public sealed partial class EntityEditorViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Executes RefreshFromProject.
+    /// </summary>
     public void RefreshFromProject()
     {
         LoadExistingEntities();

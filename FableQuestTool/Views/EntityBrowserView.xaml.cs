@@ -4,14 +4,23 @@ using System.Windows;
 
 namespace FableQuestTool.Views;
 
+/// <summary>
+/// Modal window for browsing and selecting game entities.
+/// </summary>
 public partial class EntityBrowserView : Window
 {
+    /// <summary>
+    /// Creates a new instance of EntityBrowserView.
+    /// </summary>
     public EntityBrowserView()
     {
         InitializeComponent();
         Loaded += OnLoaded;
     }
 
+    /// <summary>
+    /// Gets SelectedEntity.
+    /// </summary>
     public TngEntity? SelectedEntity { get; private set; }
 
     private void OnLoaded(object sender, RoutedEventArgs e)

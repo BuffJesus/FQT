@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -16,6 +16,9 @@ namespace FableQuestTool.Converters;
 /// </summary>
 public class StringToColorBrushConverter : IValueConverter
 {
+    /// <summary>
+    /// Converts a hex color string into a SolidColorBrush.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is string colorString && !string.IsNullOrEmpty(colorString))
@@ -33,6 +36,9 @@ public class StringToColorBrushConverter : IValueConverter
         return new SolidColorBrush(Colors.Gray);
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("StringToColorBrushConverter is one-way only.");
@@ -44,6 +50,9 @@ public class StringToColorBrushConverter : IValueConverter
 /// </summary>
 public class StringToColorConverter : IValueConverter
 {
+    /// <summary>
+    /// Converts a hex color string into a Color value.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is string colorString && !string.IsNullOrEmpty(colorString))
@@ -60,6 +69,9 @@ public class StringToColorConverter : IValueConverter
         return Colors.Gray;
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("StringToColorConverter is one-way only.");
@@ -71,6 +83,9 @@ public class StringToColorConverter : IValueConverter
 /// </summary>
 public class HeaderGradientConverter : IMultiValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
         if (values.Length >= 2 && values[0] is string startColor && values[1] is string endColor)
@@ -97,45 +112,75 @@ public class HeaderGradientConverter : IMultiValueConverter
         return new SolidColorBrush(Colors.Gray);
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("HeaderGradientConverter is one-way only.");
     }
 }
 
+/// <summary>
+/// Converts null to Collapsed and non-null to Visible.
+/// </summary>
 public class NullToVisibilityConverter : IValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         return value != null ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("NullToVisibilityConverter is one-way only.");
     }
 }
 
+/// <summary>
+/// Converts null to Visible and non-null to Collapsed.
+/// </summary>
 public class InvertedNullToVisibilityConverter : IValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         return value == null ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("InvertedNullToVisibilityConverter is one-way only.");
     }
 }
 
+/// <summary>
+/// Converts null to false and non-null to true.
+/// </summary>
 public class NullToBoolConverter : IValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         return value != null;
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("NullToBoolConverter is one-way only.");
@@ -147,6 +192,9 @@ public class NullToBoolConverter : IValueConverter
 /// </summary>
 public class PointToThicknessConverter : IValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is WpfPoint point)
@@ -156,14 +204,23 @@ public class PointToThicknessConverter : IValueConverter
         return new Thickness(0);
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("PointToThicknessConverter is one-way only.");
     }
 }
 
+/// <summary>
+/// Converts true to Collapsed and false to Visible.
+/// </summary>
 public class InverseBoolToVisibilityConverter : IValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is bool b)
@@ -174,6 +231,12 @@ public class InverseBoolToVisibilityConverter : IValueConverter
         return Visibility.Visible;
     }
 
+    /// <summary>
+    /// ConvertBack is not supported.
+    /// </summary>
+    /// <summary>
+    /// ConvertBack is not supported.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("InverseBoolToVisibilityConverter is one-way only.");
@@ -185,6 +248,9 @@ public class InverseBoolToVisibilityConverter : IValueConverter
 /// </summary>
 public class PropertyTypeToColorBrushConverter : IValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not string type || string.IsNullOrWhiteSpace(type))
@@ -203,6 +269,9 @@ public class PropertyTypeToColorBrushConverter : IValueConverter
         };
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("PropertyTypeToColorBrushConverter is one-way only.");
@@ -214,6 +283,9 @@ public class PropertyTypeToColorBrushConverter : IValueConverter
 /// </summary>
 public class PropertyTypeToLabelConverter : IValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not string type || string.IsNullOrWhiteSpace(type))
@@ -232,6 +304,9 @@ public class PropertyTypeToLabelConverter : IValueConverter
         };
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("PropertyTypeToLabelConverter is one-way only.");
@@ -243,6 +318,9 @@ public class PropertyTypeToLabelConverter : IValueConverter
 /// </summary>
 public class IntEqualsConverter : IMultiValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
         if (values.Length < 2)
@@ -258,6 +336,9 @@ public class IntEqualsConverter : IMultiValueConverter
         return false;
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
         throw new NotSupportedException("IntEqualsConverter is one-way only.");

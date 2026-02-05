@@ -1,157 +1,58 @@
-﻿# Fable Quest Tool (FQT)
+# Fable Quest Tool (FQT)
 
-A visual quest editor for Fable: The Lost Chapters that generates Lua scripts using the Fable Script Extender (FSE).
+A visual quest editor for Fable: The Lost Chapters that generates Lua scripts using Fable Script Extender (FSE).
 
-> ?? **Early Development Warning**
-> This tool is in the very early stages of development. You may encounter bugs, missing features, and breaking changes. Use at your own risk and always back up your work.
-
-## Overview
-
-FQT is a WPF-based visual editor that allows you to create quests for Fable: The Lost Chapters using a node-based graph interface. The tool generates FSE-compatible Lua scripts that can be deployed directly into the game.
-
-### Features
-
-- **Visual Node Graph Editor** - Design quest logic using an intuitive node-based interface
-- **Entity Management** - Browse, create, and edit game entities
-- **Template System** - Reusable quest patterns and entity templates
-- **Code Generation** - Automatically generates FSE-compatible Lua scripts
-- **Quest Manager** - Deploy and manage quests in your game installation
-- **API Reference** - Built-in documentation for FSE functions
-- **Sample Quests** - Includes working examples demonstrating various quest patterns
-- **Item Browser** - Search inventory item IDs and copy with one click (e.g., OBJECT_TEDDY_BEAR)
+Early development warning: expect bugs, missing features, and breaking changes. Back up your work.
 
 ## Requirements
 
-- Windows OS (uses WPF)
-- Fable: The Lost Chapters (PC version)
-- [Fable Script Extender (FSE)](https://github.com/eeeeeAeoN/FableScriptExtender) by eeeeeAeoN
+- Windows (WPF)
+- Fable: The Lost Chapters (PC)
+- Fable Script Extender (FSE): https://github.com/eeeeeAeoN/FableScriptExtender
 
-## Installation
+## How To Use
 
-### Prerequisites: Installing FSE
+1. Install FSE into your Fable folder.
+2. Run `FableQuestTool.exe`.
+3. File -> New, build your node graph and entities.
+4. File -> Export and Deploy.
+5. Tools -> Launch FSE.
 
-**IMPORTANT:** FQT requires the Fable Script Extender (FSE) to be installed separately. FSE is not included with FQT.
+## Install FSE (Required)
 
-1. Download FSE from the official repository: https://github.com/eeeeeAeoN/FableScriptExtender
-2. Follow the installation instructions in the FSE repository
-3. Extract FSE files to your Fable: The Lost Chapters installation directory
-4. Ensure you have:
-   - `FSE_Launcher.exe` in your Fable root directory
-   - `FableScriptExtender.dll` in your Fable root directory
-   - `Mods.ini` configured to enable FSE
-   - `FSE` folder with the proper structure
+1. Download FSE from the official repository.
+2. Extract into your Fable install folder.
+3. Ensure these exist:
+   - `FSE_Launcher.exe`
+   - `FableScriptExtender.dll`
+   - `Mods.ini` configured for FSE
+   - `FSE` folder
 
-### For Users (Prebuilt Release)
+## Build From Source
 
-1. Download the latest release from the Releases page
-2. Extract the ZIP file to your preferred location
-3. Run `FableQuestTool.exe`
-
-No additional dependencies or .NET runtime installation required - everything is included in the standalone executable.
-
-**Note:** When you deploy a quest for the first time, FQT will check if FSE is installed and provide instructions if it's not found.
-
-### For Developers (Build from Source)
-
-**Requirements:**
-- .NET 8.0 SDK or higher
+Requirements:
+- .NET 8 SDK
 - Visual Studio 2022 or JetBrains Rider
 
-**Steps:**
-1. Clone this repository
-2. Open `FQT.sln` in your IDE
-3. Build the solution in Debug or Release configuration
-4. Run from the IDE or execute `FableQuestTool.exe` from the build output directory
+Steps:
+1. Open `FQT.sln`.
+2. Build Debug/Release.
+3. Run `FableQuestTool.exe`.
 
-**Creating a Release Build:**
-
-To create a standalone release that includes all dependencies:
+Release publish:
 
 ```bash
 dotnet publish FableQuestTool/FableQuestTool.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
-The output will be in `FableQuestTool/bin/Release/net8.0-windows/win-x64/publish/`
-
-## Usage
-
-### Creating a Quest
-
-1. **New Project** - Go to File ? New to create a new quest project
-2. **Design Quest Logic** - Use the node graph editor to design your quest flow:
-   - Add nodes for events, dialogues, spawning entities, etc.
-   - Connect nodes to define quest progression
-   - Configure node properties in the inspector
-3. **Create Entities** - Define NPCs, items, and other entities:
-   - Use Tools ? Browse Entities to view available entities
-   - Create custom entity behaviors using entity templates
-4. **Export and Deploy** - File ? Export and Deploy to generate Lua files and deploy to FSE
-
-### Managing Quests
-
-- **Tools ? Manage Deployed Quests** - View and manage quests in your FSE installation
-- **Tools ? Launch FSE** - Launch the game with FSE enabled
-
-### Sample Quests
-
-The `FSE_Source/SampleQuests/` folder contains working examples:
-- **NewQuest** - Complete example demonstrating best practices
-- **MyFirstQuest** - Basic quest with NPCs and dialogue
-- **MySecondQuest** - Bulletin board quest with item tracking
-- **GhostGrannyNecklaceLUA** - Complex multi-NPC quest
-- **WaspBossLUA** - Boss fight mechanics
-- **DemonDoorLUA** - Conditional access quest
-
-See `FSE_Source/SampleQuests/README.md` for detailed explanations of each example.
-
-## Project Structure
-
-```
-FQT/
-+-- FableQuestTool/       # Main WPF application
-�   +-- Data/             # Node definitions and data models
-�   +-- Services/         # Code generation and business logic
-�   +-- Views/            # UI views and controls
-�   +-- ViewModels/       # MVVM view models
-�   +-- Resources/        # Styles and themes
-+-- FableQuestTool.Tests/ # Test project
-+-- FSE_Source/           # Local reference copy of FSE source (optional)
-```
-
-## Known Issues
-
-As this tool is in early development, expect:
-- Potential crashes or unexpected behavior
-- Incomplete or missing features
-- Limited error handling
-- Breaking changes in future updates
-- Incomplete documentation
-
-Always save your work frequently and keep backups of your quest files.
+Output:
+`FableQuestTool/bin/Release/net8.0-windows/win-x64/publish/`
 
 ## Credits
 
-- **Fable Script Extender (FSE)** - Created by [eeeeeAeoN](https://github.com/eeeeeAeoN/FableScriptExtender)
-- **FQT** - Quest editor tool built on top of FSE
-
-## Dependencies
-
-- [Nodify](https://github.com/miroiu/nodify) - Node-based UI library
-- [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet) - MVVM toolkit
-- WPF & Windows Forms (.NET 8.0)
-
-## Contributing
-
-This project is in active development. If you encounter bugs or have suggestions, please open an issue on the repository.
-
-## Docs
-
-- `DOCS/PROJECT_FORMAT.md` � `.fqtproj` file format and compatibility notes
-- `DOCS/GAME_DATA.md` � source/maintenance notes for `GameData.cs` lists
-- `DOCS/LOGGING.md` � logging and error reporting plan
-- `DOCS/RELEASE.md` � release checklist and guidance
+- Fable Script Extender (FSE) by eeeeeAeoN
+- Fable Quest Tool (FQT)
 
 ## License
 
-See LICENSE file for details. Note that FSE has its own license - refer to the [FSE repository](https://github.com/eeeeeAeoN/FableScriptExtender) for more information.
-
+See `LICENSE`. FSE has its own license in its repository.

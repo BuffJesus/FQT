@@ -15,6 +15,9 @@ public sealed class LevelDataService
     private readonly FableConfig config;
     private Dictionary<string, BigArchive>? cachedArchives;
 
+    /// <summary>
+    /// Creates a new instance of LevelDataService.
+    /// </summary>
     public LevelDataService(FableConfig config)
     {
         this.config = config;
@@ -204,9 +207,24 @@ public sealed class LevelDataService
 /// </summary>
 public sealed class LevelInfo
 {
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>
+    /// Gets or sets LevFilePath.
+    /// </summary>
     public string LevFilePath { get; set; } = string.Empty;
+    /// <summary>
+    /// Gets or sets HasLevFile.
+    /// </summary>
     public bool HasLevFile { get; set; }
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public List<string> TngFiles { get; set; } = new();
+    /// <summary>
+    /// Gets or sets EntityCount.
+    /// </summary>
     public int EntityCount { get; set; }
 }

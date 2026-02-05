@@ -4,10 +4,16 @@ using System.Windows.Controls;
 
 namespace FableQuestTool.Views;
 
+/// <summary>
+/// Validates quest name format for file-safe identifiers.
+/// </summary>
 public sealed class QuestNameRule : ValidationRule
 {
     private static readonly Regex NamePattern = new("^[A-Za-z][A-Za-z0-9_]*$");
 
+    /// <summary>
+    /// Executes Validate.
+    /// </summary>
     public override ValidationResult Validate(object? value, CultureInfo cultureInfo)
     {
         string text = value?.ToString() ?? string.Empty;
@@ -25,8 +31,14 @@ public sealed class QuestNameRule : ValidationRule
     }
 }
 
+/// <summary>
+/// Validates quest IDs for the custom quest range.
+/// </summary>
 public sealed class QuestIdRule : ValidationRule
 {
+    /// <summary>
+    /// Executes Validate.
+    /// </summary>
     public override ValidationResult Validate(object? value, CultureInfo cultureInfo)
     {
         if (!int.TryParse(value?.ToString(), out int id))

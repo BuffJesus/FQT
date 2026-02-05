@@ -6,16 +6,28 @@ using FableQuestTool.Models;
 
 namespace FableQuestTool.Services;
 
+/// <summary>
+/// Severity level for validation issues.
+/// </summary>
 public enum ValidationSeverity
 {
     Error,
     Warning
 }
 
+/// <summary>
+/// Represents a validation result with severity and message.
+/// </summary>
 public sealed record ValidationIssue(ValidationSeverity Severity, string Message);
 
+/// <summary>
+/// Performs structural and naming validation on quest projects.
+/// </summary>
 public sealed class ProjectValidator
 {
+    /// <summary>
+    /// Validates a quest project and returns a list of issues.
+    /// </summary>
     public List<ValidationIssue> Validate(QuestProject project)
     {
         var issues = new List<ValidationIssue>();

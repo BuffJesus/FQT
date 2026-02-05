@@ -11,6 +11,9 @@ public static class NameValidation
 {
     private static readonly Regex LuaIdentifier = new("^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
 
+    /// <summary>
+    /// Executes ValidateProject.
+    /// </summary>
     public static List<string> ValidateProject(QuestProject project)
     {
         var errors = new List<string>();

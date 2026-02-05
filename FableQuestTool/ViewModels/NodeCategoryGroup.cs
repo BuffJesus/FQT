@@ -9,9 +9,21 @@ namespace FableQuestTool.ViewModels;
 /// </summary>
 public class NodeCategoryGroup
 {
+    /// <summary>
+    /// Gets Name.
+    /// </summary>
     public string Name { get; }
+    /// <summary>
+    /// Gets Category.
+    /// </summary>
     public string Category { get; }
+    /// <summary>
+    /// Gets Nodes.
+    /// </summary>
     public List<NodeOption> Nodes { get; }
+    /// <summary>
+    /// Gets or sets IsExpanded.
+    /// </summary>
     public bool IsExpanded { get; set; } = true;
 
     /// <summary>

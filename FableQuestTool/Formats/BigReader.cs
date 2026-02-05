@@ -7,6 +7,9 @@ namespace FableQuestTool.Formats;
 
 internal static class BigReader
 {
+    /// <summary>
+    /// Executes Read.
+    /// </summary>
     public static BigArchive Read(Stream stream)
     {
         if (!stream.CanSeek)

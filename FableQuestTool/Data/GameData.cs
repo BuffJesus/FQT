@@ -59,6 +59,9 @@ public static class GameData
         "Chamber"
     };
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public static ObservableCollection<string> Creatures { get; } = new()
     {
         // Villagers & NPCs (Verified from working samples)
@@ -98,6 +101,9 @@ public static class GameData
         "CREATURE_BEETLE"
     };
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public static ObservableCollection<string> QuestCards { get; } = new()
     {
         "OBJECT_QUEST_CARD_GENERIC",
@@ -109,6 +115,9 @@ public static class GameData
         "OBJECT_QUEST_CARD_LOST_TRADER"
     };
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public static ObservableCollection<string> Objects { get; } = new()
     {
         // Potions
@@ -189,6 +198,9 @@ public static class GameData
         "OBJECT_GUILD_SEAL"
     };
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public static ObservableCollection<string> ContainerObjects { get; } = new()
     {
         "OBJECT_CHEST",
@@ -200,6 +212,9 @@ public static class GameData
         "OBJECT_CHEST_OLD"
     };
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public static ObservableCollection<string> Abilities { get; } = new()
     {
         "1 - Blade",
@@ -226,6 +241,9 @@ public static class GameData
     };
 
     // Ability ID to name mapping
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public static Dictionary<int, string> AbilityNames { get; } = new()
     {
         {1, "Blade"},
@@ -251,11 +269,17 @@ public static class GameData
         {21, "Ages of Will"}
     };
 
+    /// <summary>
+    /// Executes GetAbilityName.
+    /// </summary>
     public static string GetAbilityName(int id)
     {
         return AbilityNames.TryGetValue(id, out var name) ? name : $"Ability {id}";
     }
 
+    /// <summary>
+    /// Executes ParseAbilityId.
+    /// </summary>
     public static int? ParseAbilityId(string text)
     {
         if (string.IsNullOrWhiteSpace(text))

@@ -5,6 +5,9 @@ using System.IO;
 
 namespace FableQuestTool.Config;
 
+/// <summary>
+/// Manages persisted settings such as the Fable install path and UI preferences.
+/// </summary>
 public sealed class FableConfig
 {
     private readonly IniFile? ini;
@@ -16,8 +19,14 @@ public sealed class FableConfig
         this.ini = ini;
     }
 
+    /// <summary>
+    /// Gets the resolved Fable installation path, if available.
+    /// </summary>
     public string? FablePath { get; private set; }
 
+    /// <summary>
+    /// Loads configuration from the local INI file and resolves defaults.
+    /// </summary>
     public static FableConfig Load()
     {
         string? iniPath = FindIniPath();
@@ -36,6 +45,9 @@ public sealed class FableConfig
         return config;
     }
 
+    /// <summary>
+    /// Writes the current configuration back to disk.
+    /// </summary>
     public void Save()
     {
         if (ini == null || string.IsNullOrWhiteSpace(iniPath))
@@ -46,6 +58,9 @@ public sealed class FableConfig
         ini.Save(iniPath);
     }
 
+    /// <summary>
+    /// Ensures the Fable path is valid, prompting the user if needed.
+    /// </summary>
     public bool EnsureFablePath()
     {
         if (IsValidFablePath(FablePath))
@@ -56,6 +71,9 @@ public sealed class FableConfig
         return PromptForFablePath();
     }
 
+    /// <summary>
+    /// Opens a folder picker to set the Fable install path.
+    /// </summary>
     public bool PromptForFablePath()
     {
         var dialog = new System.Windows.Forms.FolderBrowserDialog();
@@ -82,12 +100,18 @@ public sealed class FableConfig
         return true;
     }
 
+    /// <summary>
+    /// Sets the Fable install path and persists it to the INI.
+    /// </summary>
     public void SetFablePath(string path)
     {
         FablePath = path;
         ini?.Set("Settings", "FablePath", path);
     }
 
+    /// <summary>
+    /// Gets the list of favorite node types for the node menu.
+    /// </summary>
     public string[] GetFavoriteNodeTypes()
     {
         string? raw = ini?.Get("UI", "FavoriteNodes");
@@ -99,6 +123,9 @@ public sealed class FableConfig
         return raw.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
+    /// <summary>
+    /// Stores favorite node types for quick access in the UI.
+    /// </summary>
     public void SetFavoriteNodeTypes(IEnumerable<string> types)
     {
         if (ini == null)
@@ -110,6 +137,9 @@ public sealed class FableConfig
         ini.Set("UI", "FavoriteNodes", value);
     }
 
+    /// <summary>
+    /// Gets whether the startup splash image is enabled.
+    /// </summary>
     public bool GetShowStartupImage()
     {
         string? raw = ini?.Get("UI", "ShowStartupImage");
@@ -121,11 +151,17 @@ public sealed class FableConfig
         return bool.TryParse(raw, out bool value) ? value : true;
     }
 
+    /// <summary>
+    /// Stores the startup splash preference.
+    /// </summary>
     public void SetShowStartupImage(bool value)
     {
         ini?.Set("UI", "ShowStartupImage", value.ToString());
     }
 
+    /// <summary>
+    /// Gets the FSE folder path based on the configured install path.
+    /// </summary>
     public string? GetFseFolder()
     {
         if (string.IsNullOrWhiteSpace(FablePath))
@@ -136,6 +172,9 @@ public sealed class FableConfig
         return Path.Combine(FablePath, "FSE");
     }
 
+    /// <summary>
+    /// Gets the full path to the FSE launcher executable if available.
+    /// </summary>
     public string? GetFseLauncherPath()
     {
         if (string.IsNullOrWhiteSpace(FablePath))

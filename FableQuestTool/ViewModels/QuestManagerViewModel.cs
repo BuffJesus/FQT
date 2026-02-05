@@ -24,6 +24,9 @@ public sealed partial class QuestManagerViewModel : ObservableObject
     [ObservableProperty]
     private string statusText = "Ready";
 
+    /// <summary>
+    /// Creates a new instance of QuestManagerViewModel.
+    /// </summary>
     public QuestManagerViewModel()
     {
         config = FableConfig.Load();
@@ -259,6 +262,9 @@ public sealed partial class QuestManagerViewModel : ObservableObject
     }
 }
 
+/// <summary>
+/// Model for quests discovered in quests.lua for the quest manager UI.
+/// </summary>
 public sealed class DeployedQuestInfo : ObservableObject
 {
     private string name = string.Empty;
@@ -267,35 +273,53 @@ public sealed class DeployedQuestInfo : ObservableObject
     private bool isEnabled = true;
     private bool folderExists = true;
 
+    /// <summary>
+    /// Member Name.
+    /// </summary>
     public string Name
     {
         get => name;
         set => SetProperty(ref name, value);
     }
 
+    /// <summary>
+    /// Member Id.
+    /// </summary>
     public int Id
     {
         get => id;
         set => SetProperty(ref id, value);
     }
 
+    /// <summary>
+    /// Member FilePath.
+    /// </summary>
     public string FilePath
     {
         get => filePath;
         set => SetProperty(ref filePath, value);
     }
 
+    /// <summary>
+    /// Member IsEnabled.
+    /// </summary>
     public bool IsEnabled
     {
         get => isEnabled;
         set => SetProperty(ref isEnabled, value);
     }
 
+    /// <summary>
+    /// Member FolderExists.
+    /// </summary>
     public bool FolderExists
     {
         get => folderExists;
         set => SetProperty(ref folderExists, value);
     }
 
+    /// <summary>
+    /// Member Status.
+    /// </summary>
     public string Status => IsEnabled ? "Enabled" : "Disabled";
 }

@@ -21,8 +21,14 @@ public sealed partial class TemplatesViewModel : ObservableObject
     [ObservableProperty]
     private string selectedCategory = "All";
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> Categories { get; } = new();
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<QuestTemplate> FilteredTemplates { get; } = new();
     private List<QuestTemplate> allTemplates = new();
 
@@ -32,6 +38,9 @@ public sealed partial class TemplatesViewModel : ObservableObject
     /// </summary>
     public event Action<QuestProject>? TemplateSelected;
 
+    /// <summary>
+    /// Creates a new instance of TemplatesViewModel.
+    /// </summary>
     public TemplatesViewModel()
     {
         questIdManager = new QuestIdManager(FableConfig.Load());

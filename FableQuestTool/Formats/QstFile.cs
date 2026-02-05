@@ -6,6 +6,9 @@ using FableQuestTool.Core;
 
 namespace FableQuestTool.Formats;
 
+/// <summary>
+/// Parses and updates FinalAlbion.qst quest registration entries.
+/// </summary>
 public sealed class QstFile
 {
     private readonly List<QstQuestEntry> quests = new List<QstQuestEntry>();
@@ -16,8 +19,14 @@ public sealed class QstFile
         sourcePath = path;
     }
 
+    /// <summary>
+    /// Member Quests.
+    /// </summary>
     public IReadOnlyList<QstQuestEntry> Quests => quests;
 
+    /// <summary>
+    /// Loads and parses a QST file from disk.
+    /// </summary>
     public static QstFile Load(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -251,6 +260,9 @@ public sealed class QstFile
         return null;
     }
 
+    /// <summary>
+    /// Checks whether a quest is already present in the QST file.
+    /// </summary>
     public bool HasQuest(string questName)
     {
         if (string.IsNullOrWhiteSpace(questName))
@@ -269,6 +281,9 @@ public sealed class QstFile
         return false;
     }
 
+    /// <summary>
+    /// Adds a quest if it does not already exist.
+    /// </summary>
     public bool AddQuestIfMissing(string questName, bool enabled = false)
     {
         if (HasQuest(questName))
@@ -280,6 +295,9 @@ public sealed class QstFile
         return true;
     }
 
+    /// <summary>
+    /// Updates the enabled flag for a quest entry.
+    /// </summary>
     public bool UpdateQuestStatus(string questName, bool enabled)
     {
         if (string.IsNullOrWhiteSpace(questName))
@@ -300,6 +318,9 @@ public sealed class QstFile
         return false;
     }
 
+    /// <summary>
+    /// Removes a quest entry unless it is protected.
+    /// </summary>
     public bool RemoveQuest(string questName)
     {
         if (string.IsNullOrWhiteSpace(questName))
@@ -398,6 +419,9 @@ public sealed class QstFile
         return false;
     }
 
+    /// <summary>
+    /// Saves the QST file back to disk.
+    /// </summary>
     public void Save(string? outputPath = null)
     {
         string path = outputPath ?? sourcePath;
@@ -422,8 +446,14 @@ public sealed class QstFile
     }
 }
 
+/// <summary>
+/// Represents a single AddQuest entry in the QST file.
+/// </summary>
 public sealed class QstQuestEntry
 {
+    /// <summary>
+    /// Creates a new instance of QstQuestEntry.
+    /// </summary>
     public QstQuestEntry(string name, bool? enabled, string rawEnabled)
     {
         Name = name ?? string.Empty;
@@ -431,7 +461,16 @@ public sealed class QstQuestEntry
         RawEnabled = rawEnabled ?? string.Empty;
     }
 
+    /// <summary>
+    /// Gets Name.
+    /// </summary>
     public string Name { get; }
+    /// <summary>
+    /// Gets Enabled.
+    /// </summary>
     public bool? Enabled { get; }
+    /// <summary>
+    /// Gets RawEnabled.
+    /// </summary>
     public string RawEnabled { get; }
 }

@@ -4,14 +4,29 @@ using System.IO;
 
 namespace FableQuestTool.Formats;
 
+/// <summary>
+/// Represents a BIG archive made up of one or more banks.
+/// </summary>
 public sealed class BigArchive
 {
+    /// <summary>
+    /// Gets Version.
+    /// </summary>
     public uint Version { get; internal set; } = 100;
+    /// <summary>
+    /// Gets or sets ContentType.
+    /// </summary>
     public uint ContentType { get; set; }
+    /// <summary>
+    /// Member Banks.
+    /// </summary>
     public IReadOnlyList<BigBank> Banks => _banks;
 
     private readonly List<BigBank> _banks = new();
 
+    /// <summary>
+    /// Loads a BIG archive from a file path.
+    /// </summary>
     public static BigArchive Load(string filePath)
     {
         Guard.NotNullOrEmpty(filePath, nameof(filePath));
@@ -19,12 +34,18 @@ public sealed class BigArchive
         return Load(stream);
     }
 
+    /// <summary>
+    /// Loads a BIG archive from an input stream.
+    /// </summary>
     public static BigArchive Load(Stream stream)
     {
         Guard.NotNull(stream, nameof(stream));
         return BigReader.Read(stream);
     }
 
+    /// <summary>
+    /// Adds a bank to the archive.
+    /// </summary>
     public void AddBank(BigBank bank)
     {
         Guard.NotNull(bank, nameof(bank));

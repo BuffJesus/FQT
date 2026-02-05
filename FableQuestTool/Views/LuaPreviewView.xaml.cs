@@ -4,8 +4,14 @@ using FableQuestTool.ViewModels;
 
 namespace FableQuestTool.Views;
 
+/// <summary>
+/// Displays generated Lua scripts for inspection.
+/// </summary>
 public partial class LuaPreviewView : Window
 {
+    /// <summary>
+    /// Creates a new instance of LuaPreviewView.
+    /// </summary>
     public LuaPreviewView()
     {
         InitializeComponent();

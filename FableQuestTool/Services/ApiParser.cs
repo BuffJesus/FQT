@@ -1,11 +1,17 @@
-﻿using System.IO;
+using System.IO;
 using System.Text.RegularExpressions;
 using FableQuestTool.Models;
 
 namespace FableQuestTool.Services;
 
+/// <summary>
+/// Parses FSE header files into API metadata for the in-app reference view.
+/// </summary>
 public class ApiParser
 {
+    /// <summary>
+    /// Parses a header file and returns discovered API functions.
+    /// </summary>
     public List<ApiFunction> ParseHeaderFile(string filePath)
     {
         var functions = new List<ApiFunction>();

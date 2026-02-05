@@ -84,10 +84,19 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string sampleQuestsPathDisplay = "(not found)";
 
+    /// <summary>
+    /// Gets or sets EntityEditorViewModel.
+    /// </summary>
     public EntityEditorViewModel? EntityEditorViewModel { get; set; }
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public string Title => "Fable Quest Tool (FQT)";
 
+    /// <summary>
+    /// Creates a new instance of MainViewModel.
+    /// </summary>
     public MainViewModel()
     {
         fableConfig = FableConfig.Load();
@@ -97,6 +106,9 @@ public sealed partial class MainViewModel : ObservableObject
         IsStartupImageEnabled = fableConfig.GetShowStartupImage();
     }
 
+    /// <summary>
+    /// Executes GetFavoriteNodeTypes.
+    /// </summary>
     public IReadOnlyList<string> GetFavoriteNodeTypes()
     {
         return fableConfig.GetFavoriteNodeTypes();

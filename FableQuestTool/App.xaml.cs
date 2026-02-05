@@ -1,7 +1,13 @@
 namespace FableQuestTool;
 
+/// <summary>
+/// Application entry point that handles startup flow and splash timing.
+/// </summary>
 public partial class App : System.Windows.Application
 {
+    /// <summary>
+    /// Boots the main window and optionally shows the splash screen.
+    /// </summary>
     protected override void OnStartup(System.Windows.StartupEventArgs e)
     {
         base.OnStartup(e);

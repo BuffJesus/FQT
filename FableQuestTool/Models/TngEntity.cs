@@ -123,6 +123,9 @@ public sealed class TngEntity
         }
     }
 
+    /// <summary>
+    /// Executes ToString.
+    /// </summary>
     public override string ToString()
     {
         return $"{DisplayName} ({DefinitionType})";

@@ -3,10 +3,16 @@ using FableQuestTool.ViewModels;
 
 namespace FableQuestTool;
 
+/// <summary>
+/// Main shell window that wires primary view models to views.
+/// </summary>
 public partial class MainWindow : Window
 {
     private readonly MainViewModel mainViewModel;
 
+    /// <summary>
+    /// Creates a new instance of MainWindow.
+    /// </summary>
     public MainWindow()
     {
         InitializeComponent();
@@ -17,6 +23,9 @@ public partial class MainWindow : Window
         Loaded += OnLoaded;
     }
 
+    /// <summary>
+    /// Connects nested views to their view models after the window loads.
+    /// </summary>
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         // Find EntityEditorView and set its DataContext

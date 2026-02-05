@@ -10,13 +10,22 @@ using FableQuestTool.ViewModels;
 
 namespace FableQuestTool.Views;
 
+/// <summary>
+/// Converts null to false and non-null to true for quest config bindings.
+/// </summary>
 public sealed class NullToBoolConverter : IValueConverter
 {
+    /// <summary>
+    /// Executes Convert.
+    /// </summary>
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         return value != null;
     }
 
+    /// <summary>
+    /// Executes ConvertBack.
+    /// </summary>
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         // ConvertBack is handled by the OnUseContainerChanged event handler
@@ -25,10 +34,16 @@ public sealed class NullToBoolConverter : IValueConverter
     }
 }
 
+/// <summary>
+/// Quest setup panel for metadata, rewards, and objectives.
+/// </summary>
 public partial class QuestConfigView : System.Windows.Controls.UserControl
 {
     private MainViewModel? ViewModel => DataContext as MainViewModel;
 
+    /// <summary>
+    /// Creates a new instance of QuestConfigView.
+    /// </summary>
     public QuestConfigView()
     {
         InitializeComponent();
@@ -752,6 +767,9 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         };
     }
 
+    /// <summary>
+    /// Executes UpdatePreview.
+    /// </summary>
     public void UpdatePreview()
     {
         if (ViewModel?.Project == null || PreviewText == null)

@@ -6,8 +6,14 @@ using System.Text.Json;
 
 namespace FableQuestTool.Services;
 
+/// <summary>
+/// Wraps the SilverChest.WadBridge CLI for listing and extracting WAD entries.
+/// </summary>
 public static class WadBridgeClient
 {
+    /// <summary>
+    /// Lists entries in a WAD file via the bridge tool.
+    /// </summary>
     public static bool TryListEntries(string wadPath, out List<WadEntryInfo> entries, out string? error)
     {
         entries = new List<WadEntryInfo>();
@@ -83,6 +89,9 @@ public static class WadBridgeClient
         return true;
     }
 
+    /// <summary>
+    /// Extracts a single entry from a WAD file via the bridge tool.
+    /// </summary>
     public static bool TryExtractEntry(string wadPath, int index, string outputPath, out string? error)
     {
         error = null;
@@ -138,6 +147,9 @@ public static class WadBridgeClient
         return true;
     }
 
+    /// <summary>
+    /// Extracts all entries from a WAD file via the bridge tool.
+    /// </summary>
     public static bool TryExtractAll(string wadPath, string outputDir, out string? error)
     {
         error = null;
@@ -208,10 +220,25 @@ public static class WadBridgeClient
     }
 }
 
+/// <summary>
+/// Represents a single entry as reported by the WAD bridge tool.
+/// </summary>
 public sealed class WadEntryInfo
 {
+    /// <summary>
+    /// Gets or sets Index.
+    /// </summary>
     public int Index { get; set; }
+    /// <summary>
+    /// Gets or sets Name.
+    /// </summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>
+    /// Gets or sets Size.
+    /// </summary>
     public uint Size { get; set; }
+    /// <summary>
+    /// Gets or sets Type.
+    /// </summary>
     public string Type { get; set; } = string.Empty;
 }

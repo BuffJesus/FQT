@@ -97,6 +97,9 @@ public sealed partial class NodeViewModel : ObservableObject
         _ => "#2980B9"
     };
 
+    /// <summary>
+    /// Member Properties.
+    /// </summary>
     public Dictionary<string, object> Properties
     {
         get => properties;
@@ -110,9 +113,18 @@ public sealed partial class NodeViewModel : ObservableObject
     }
     private Dictionary<string, object> properties = new();
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<ConnectorViewModel> Input { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<ConnectorViewModel> Output { get; } = new();
 
+    /// <summary>
+    /// Creates a new instance of NodeViewModel.
+    /// </summary>
     public NodeViewModel()
     {
         // Most nodes have one input and one output (exec flow by default)
@@ -120,6 +132,9 @@ public sealed partial class NodeViewModel : ObservableObject
         Output.Add(new ConnectorViewModel { Title = "Exec", ConnectorType = ConnectorType.Exec, IsInput = false });
     }
 
+    /// <summary>
+    /// Executes InitializeConnectors.
+    /// </summary>
     public void InitializeConnectors()
     {
         // Clear default connectors first
@@ -246,6 +261,9 @@ public sealed partial class NodeViewModel : ObservableObject
         OnPropertyChanged(nameof(HeaderColorDark));
     }
 
+    /// <summary>
+    /// Executes UpdateTitleForEventNodes.
+    /// </summary>
     public void UpdateTitleForEventNodes()
     {
         // Update title for event nodes to show the event name
@@ -266,6 +284,9 @@ public sealed partial class NodeViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Executes SetProperty.
+    /// </summary>
     public void SetProperty(string propertyName, object value)
     {
         Properties[propertyName] = value;

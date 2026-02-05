@@ -12,6 +12,9 @@ public static class Guard
         }
     }
 
+    /// <summary>
+    /// Executes NotNullOrEmpty.
+    /// </summary>
     public static void NotNullOrEmpty(string value, string paramName)
     {
         if (string.IsNullOrWhiteSpace(value))

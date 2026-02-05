@@ -7,12 +7,18 @@ using System.Text.RegularExpressions;
 
 namespace FableQuestTool.Services;
 
+/// <summary>
+/// Manages quest ID discovery and availability checks.
+/// </summary>
 public sealed class QuestIdManager
 {
     private readonly FableConfig config;
     private const int MinCustomQuestId = 50000;
     private const int MaxCustomQuestId = 99999;
 
+    /// <summary>
+    /// Creates a new instance of QuestIdManager.
+    /// </summary>
     public QuestIdManager(FableConfig config)
     {
         this.config = config;
@@ -21,6 +27,9 @@ public sealed class QuestIdManager
     /// <summary>
     /// Scans the FSE folder and quests.lua to find all used quest IDs.
     /// Returns the next available ID starting from 50000.
+    /// </summary>
+    /// <summary>
+    /// Suggests the next available quest ID in the custom range.
     /// </summary>
     public int SuggestNextQuestId()
     {
@@ -41,6 +50,9 @@ public sealed class QuestIdManager
 
     /// <summary>
     /// Gets all quest IDs currently in use by parsing quests.lua.
+    /// </summary>
+    /// <summary>
+    /// Gets all quest IDs currently registered in quests.lua.
     /// </summary>
     public HashSet<int> GetUsedQuestIds()
     {
@@ -84,6 +96,9 @@ public sealed class QuestIdManager
     /// <summary>
     /// Checks if a quest ID is available (not in use).
     /// </summary>
+    /// <summary>
+    /// Checks whether a quest ID is unused.
+    /// </summary>
     public bool IsQuestIdAvailable(int questId)
     {
         var usedIds = GetUsedQuestIds();
@@ -92,6 +107,9 @@ public sealed class QuestIdManager
 
     /// <summary>
     /// Gets a list of all quest names currently in the FSE folder.
+    /// </summary>
+    /// <summary>
+    /// Gets all quest names currently registered in quests.lua.
     /// </summary>
     public List<string> GetExistingQuestNames()
     {

@@ -9,6 +9,9 @@ public sealed partial class QuestConfigViewModel : ObservableObject
 {
     private readonly QuestIdManager questIdManager;
 
+    /// <summary>
+    /// Creates a new instance of QuestConfigViewModel.
+    /// </summary>
     public QuestConfigViewModel()
     {
         var config = FableConfig.Load();

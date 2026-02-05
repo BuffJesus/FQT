@@ -15,6 +15,9 @@ public sealed class EntityBrowserService
     private readonly FableConfig config;
     private readonly GameDataCatalogService catalogService;
 
+    /// <summary>
+    /// Creates a new instance of EntityBrowserService.
+    /// </summary>
     public EntityBrowserService(FableConfig config)
     {
         this.config = config;

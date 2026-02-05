@@ -50,9 +50,18 @@ public sealed partial class EntityBrowserViewModel : ObservableObject
     [ObservableProperty]
     private string itemSearchText = string.Empty;
 
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<string> Regions { get; } = new();
+    /// <summary>
+    /// Executes This member.
+    /// </summary>
     public ObservableCollection<EntityCategory> Categories { get; } = new();
 
+    /// <summary>
+    /// Creates a new instance of EntityBrowserViewModel.
+    /// </summary>
     public EntityBrowserViewModel()
     {
         var config = FableConfig.Load();

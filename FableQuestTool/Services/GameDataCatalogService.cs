@@ -22,6 +22,9 @@ public sealed class GameDataCatalogService
     private DateTime? cacheTime;
     private readonly TimeSpan cacheExpiration = TimeSpan.FromMinutes(10);
 
+    /// <summary>
+    /// Creates a new instance of GameDataCatalogService.
+    /// </summary>
     public GameDataCatalogService(FableConfig config)
     {
         this.config = config;
@@ -440,6 +443,9 @@ public sealed class GameDataCatalogService
         return string.Empty;
     }
 
+    /// <summary>
+    /// Executes ClearCache.
+    /// </summary>
     public void ClearCache()
     {
         cachedAllEntities = null;
@@ -454,14 +460,44 @@ public sealed class GameDataCatalogService
 /// </summary>
 public sealed class GameDataStatistics
 {
+    /// <summary>
+    /// Gets or sets TotalEntities.
+    /// </summary>
     public int TotalEntities { get; set; }
+    /// <summary>
+    /// Gets or sets EntitiesWithScriptName.
+    /// </summary>
     public int EntitiesWithScriptName { get; set; }
+    /// <summary>
+    /// Gets or sets RegionCount.
+    /// </summary>
     public int RegionCount { get; set; }
+    /// <summary>
+    /// Gets or sets MarkerCount.
+    /// </summary>
     public int MarkerCount { get; set; }
+    /// <summary>
+    /// Gets or sets NpcCount.
+    /// </summary>
     public int NpcCount { get; set; }
+    /// <summary>
+    /// Gets or sets CreatureCount.
+    /// </summary>
     public int CreatureCount { get; set; }
+    /// <summary>
+    /// Gets or sets ObjectCount.
+    /// </summary>
     public int ObjectCount { get; set; }
+    /// <summary>
+    /// Gets or sets ChestCount.
+    /// </summary>
     public int ChestCount { get; set; }
+    /// <summary>
+    /// Gets or sets DoorCount.
+    /// </summary>
     public int DoorCount { get; set; }
+    /// <summary>
+    /// Gets or sets QuestItemCount.
+    /// </summary>
     public int QuestItemCount { get; set; }
 }

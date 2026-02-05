@@ -1993,7 +1993,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Id = Guid.NewGuid().ToString(),
             Title = "",  // No title for reroute nodes
             Category = "flow",
-            Icon = "â—†",  // Diamond icon
+            Icon = "\u25C7",  // Diamond icon
             Type = "reroute",
             IsRerouteNode = true,
             IsRedirectionNode = true,  // Keep for backwards compatibility
@@ -2064,7 +2064,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Id = Guid.NewGuid().ToString(),
             Title = "",
             Category = "flow",
-            Icon = "â—†",
+            Icon = "\u25C7",
             Type = "reroute",
             IsRerouteNode = true,
             IsRedirectionNode = true,
@@ -2132,7 +2132,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Id = Guid.NewGuid().ToString(),
             Title = "",
             Category = "flow",
-            Icon = "â—†",
+            Icon = "\u25C7",
             Type = "reroute",
             IsRerouteNode = true,
             IsRedirectionNode = true,
@@ -2316,14 +2316,14 @@ public sealed partial class EntityTabViewModel : ObservableObject
         // Add Get/Set nodes for each variable
         foreach (var variable in Variables)
         {
-            InternalVariableNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "ðŸ“¥",
+            InternalVariableNodes.Add(new NodeOption($"Get {variable.Name}", "variable", "\U0001F4E5",
                 $"Gets the value of variable '{variable.Name}'")
             {
                 Type = $"var_get_{variable.Name}",
                 Definition = CreateGetVariableDefinition(variable)
             });
 
-            InternalVariableNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "ðŸ“¤",
+            InternalVariableNodes.Add(new NodeOption($"Set {variable.Name}", "variable", "\U0001F4E4",
                 $"Sets the value of variable '{variable.Name}'")
             {
                 Type = $"var_set_{variable.Name}",
@@ -2761,7 +2761,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Type = $"var_get_{variable.Name}",
             Label = $"Get {variable.Name}",
             Category = "variable",
-            Icon = "ðŸ“¥",
+            Icon = "\U0001F4E5",
             IsAdvanced = false,
             Description = $"Gets the value of variable '{variable.Name}'",
             ValueType = variable.Type,
@@ -2782,7 +2782,7 @@ public sealed partial class EntityTabViewModel : ObservableObject
             Type = $"var_set_{variable.Name}",
             Label = $"Set {variable.Name}",
             Category = "variable",
-            Icon = "ðŸ“¤",
+            Icon = "\U0001F4E4",
             IsAdvanced = false,
             Description = $"Sets the value of variable '{variable.Name}'",
             ValueType = variable.Type,
@@ -2890,11 +2890,11 @@ public sealed partial class EntityTabViewModel : ObservableObject
     {
         return type switch
         {
-            EntityType.Creature => "ðŸ‘¤",
-            EntityType.Object => "ðŸ“¦",
-            EntityType.Effect => "âœ¨",
-            EntityType.Light => "ðŸ’¡",
-            _ => "â“"
+            EntityType.Creature => "\U0001F464",
+            EntityType.Object => "\U0001F4E6",
+            EntityType.Effect => "\u2728",
+            EntityType.Light => "\U0001F4A1",
+            _ => "\u2753"
         };
     }
 

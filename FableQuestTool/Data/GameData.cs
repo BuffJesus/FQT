@@ -160,6 +160,7 @@ public static class GameData
         // Gifts & Items
         "OBJECT_CHOCOLATE_BOX_01",
         "OBJECT_TEDDY_BEAR",
+        "OBJECT_TEDDY_BEAR_UNGIVEABLE",
         "OBJECT_WEDDING_RING",
         "OBJECT_ROSE",
         "OBJECT_PERFUME",

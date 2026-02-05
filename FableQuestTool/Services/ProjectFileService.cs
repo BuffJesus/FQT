@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FableQuestTool.Models;
@@ -43,6 +45,7 @@ public sealed class ProjectFileService
     /// <param name="project">The quest project to save</param>
     public void Save(string path, QuestProject project)
     {
+        NormalizeItemNodes(project);
         ProjectFileData data = new()
         {
             Project = project
@@ -74,5 +77,79 @@ public sealed class ProjectFileService
         }
 
         return data.Project ?? new QuestProject();
+    }
+
+    private static void NormalizeItemNodes(QuestProject project)
+    {
+        foreach (QuestEntity entity in project.Entities)
+        {
+            string? preferredItem = FindPreferredItem(entity, "takeItem");
+            if (string.IsNullOrWhiteSpace(preferredItem))
+            {
+                preferredItem = FindPreferredItem(entity, "checkHasItem");
+            }
+
+            if (string.IsNullOrWhiteSpace(preferredItem))
+            {
+                continue;
+            }
+
+            foreach (var node in entity.Nodes)
+            {
+                if (!NodeUsesItemProperty(node))
+                {
+                    continue;
+                }
+
+                if (!TryGetItemValue(node, out var itemValue) || IsDefaultItemValue(itemValue))
+                {
+                    node.Config ??= new();
+                    node.Config["item"] = preferredItem;
+                }
+            }
+        }
+    }
+
+    private static string? FindPreferredItem(QuestEntity entity, string nodeType)
+    {
+        foreach (var node in entity.Nodes)
+        {
+            if (!node.Type.Equals(nodeType, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (TryGetItemValue(node, out var itemValue) && !IsDefaultItemValue(itemValue))
+            {
+                return itemValue;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool NodeUsesItemProperty(BehaviorNode node)
+    {
+        return node.Type.Equals("checkHasItem", StringComparison.OrdinalIgnoreCase) ||
+               node.Type.Equals("takeItem", StringComparison.OrdinalIgnoreCase) ||
+               node.Type.Equals("onItemPresented", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryGetItemValue(BehaviorNode node, out string value)
+    {
+        if (node.Config != null && node.Config.TryGetValue("item", out var itemValue))
+        {
+            value = itemValue?.ToString() ?? string.Empty;
+            return true;
+        }
+
+        value = string.Empty;
+        return false;
+    }
+
+    private static bool IsDefaultItemValue(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ||
+               value.Equals("OBJECT_APPLE", StringComparison.OrdinalIgnoreCase);
     }
 }

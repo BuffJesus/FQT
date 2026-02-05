@@ -70,7 +70,7 @@ public static class NodeDefinitions
                 Properties = new() {
                     new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
-                CodeTemplate = "if Me:MsgIsPresentedWithItem(\"{item}\") then\n{CHILDREN}\nend" },
+                CodeTemplate = "local wasPresented = Me:MsgIsPresentedWithItem()\nlocal presentedItemName = g_PresentedItemName\nif wasPresented then\n    Quest:Log(\"Presented item: \" .. tostring(presentedItemName))\n    g_PresentedItemName = nil\nend\nif wasPresented and presentedItemName == \"{item}\" then\n{CHILDREN}\nend" },
             
             new() { Type = "onHeroUsed", Label = "When Used By Hero", Category = "trigger", Icon = "🔧", IsAdvanced = false,
                 Description = "Triggered when hero uses/activates this entity",
@@ -183,11 +183,11 @@ public static class NodeDefinitions
                 CodeTemplate = "Quest:GiveHeroObject(\"{item}\", {amount})\n{CHILDREN}" },
 
             new() { Type = "takeItem", Label = "Take Item", Category = "action", Icon = "📤", IsAdvanced = false,
-                Description = "Remove item from hero's inventory",
+                Description = "Remove item from hero's inventory or possession",
                 Properties = new() {
                     new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
-                CodeTemplate = "Quest:TakeObjectFromHero(\"{item}\")\n{CHILDREN}" },
+                CodeTemplate = "local ok = pcall(function() Quest:ConfiscateItemsOfTypeFromHero(\"{item}\") end)\nlocal stillHas = false\nif Quest:GetNumberOfItemsOfTypeInInventory(\"{item}\") > 0 then\n    stillHas = true\nelseif Quest:IsObjectInHeroPossession(\"{item}\") then\n    stillHas = true\nelseif Quest:IsPlayerCarryingItemOfType(\"{item}\") then\n    stillHas = true\nend\nif not ok or stillHas then\n    Quest:TakeObjectFromHero(\"{item}\")\nend\n{CHILDREN}" },
 
             // ===== STATE MANAGEMENT =====
             new() { Type = "setState", Label = "Set State", Category = "action", Icon = "💾", IsAdvanced = false,
@@ -277,7 +277,7 @@ public static class NodeDefinitions
                 Properties = new(),
                 CodeTemplate = "Quest:StartMovieSequence()\nQuest:Pause(0.1)\n{CHILDREN}" },
 
-            new() { Type = "endMovieSequence", Label = "End Movie Sequence", Category = "action", Icon = "🎬✅", IsAdvanced = false,
+            new() { Type = "endMovieSequence", Label = "End Movie Sequence", Category = "action", Icon = "✅", IsAdvanced = false,
                 Description = "End cinematic mode and return control to player",
                 Properties = new(),
                 CodeTemplate = "Quest:EndMovieSequence()\n{CHILDREN}" },
@@ -314,7 +314,7 @@ public static class NodeDefinitions
             // For dialogue scenes, use "Conversation Camera" node instead (CameraDoConversation).
             // Only basic camera reset works from entity scripts.
 
-            new() { Type = "cameraResetToHero", Label = "Reset Camera To Hero", Category = "action", Icon = "🔄🎥", IsAdvanced = false,
+            new() { Type = "cameraResetToHero", Label = "Reset Camera To Hero", Category = "action", Icon = "🎥", IsAdvanced = false,
                 Description = "Return camera to default third-person view behind hero",
                 Properties = new() {
                     new NodeProperty { Name = "duration", Type = "float", Label = "Duration", DefaultValue = "1.0" }
@@ -331,7 +331,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "local camPoint = Quest:GetThingWithScriptName(\"{cameraPoint}\")\nif camPoint ~= nil then\n    Quest:CameraUseCameraPoint(camPoint, Me, {duration}, {easeIn}, {easeOut})\n    Quest:Pause({duration})\nelse\n    Quest:Log(\"Warning: Camera point '{cameraPoint}' not found\")\nend\n{CHILDREN}" },
 
-            new() { Type = "cameraConversation", Label = "Conversation Camera", Category = "action", Icon = "🎬💬", IsAdvanced = true,
+            new() { Type = "cameraConversation", Label = "Conversation Camera", Category = "action", Icon = "🎥", IsAdvanced = true,
                 Description = "Set up camera for dialogue scene (0=Default, 1=Close, 2=OTS_Speaker, 3=OTS_Listener) - QUEST THREAD ONLY",
                 Properties = new() {
                     new NodeProperty { Name = "cameraOp", Type = "int", Label = "Camera Type", DefaultValue = "3" }
@@ -366,7 +366,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "Quest:RadialBlurFadeTo({intensity}, {innerRadius}, {outerRadius}, {fadeIn}, {hold}, {fadeOut}, {unknown})\nQuest:Pause({fadeIn})\n{CHILDREN}" },
 
-            new() { Type = "radialBlurOff", Label = "Radial Blur Off", Category = "action", Icon = "🌀❌", IsAdvanced = true,
+            new() { Type = "radialBlurOff", Label = "Radial Blur Off", Category = "action", Icon = "🚫", IsAdvanced = true,
                 Description = "Cancel any active radial blur effect",
                 Properties = new(),
                 CodeTemplate = "Quest:CancelRadialBlurFade()\n{CHILDREN}" },
@@ -385,7 +385,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "Quest:ScreenFilterFadeTo({saturation}, {brightness}, {contrast}, {intensity}, {fadeTime}, {r={r}, g={g}, b={b}})\nQuest:Pause({fadeTime})\n{CHILDREN}" },
 
-            new() { Type = "colorFilterOff", Label = "Color Filter Off", Category = "action", Icon = "🔲🎨", IsAdvanced = true,
+            new() { Type = "colorFilterOff", Label = "Color Filter Off", Category = "action", Icon = "🚫", IsAdvanced = true,
                 Description = "Reset color filter to neutral (requires handle from FadeTo - use neutral values instead)",
                 Properties = new() {
                     new NodeProperty { Name = "fadeTime", Type = "float", Label = "Fade Time", DefaultValue = "0.5" }
@@ -402,12 +402,12 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "Quest:OverrideMusic({musicSetType}, {isCutscene}, {forcePlay})\n{CHILDREN}" },
 
-            new() { Type = "stopMusicOverride", Label = "Stop Music Override", Category = "action", Icon = "⏹️🎵", IsAdvanced = false,
+            new() { Type = "stopMusicOverride", Label = "Stop Music Override", Category = "action", Icon = "⏹️", IsAdvanced = false,
                 Description = "Stop overriding music and return to normal",
                 Properties = new(),
                 CodeTemplate = "Quest:StopOverrideMusic()\n{CHILDREN}" },
 
-            new() { Type = "enableDangerMusic", Label = "Enable Danger Music", Category = "action", Icon = "⚠️🎵", IsAdvanced = true,
+            new() { Type = "enableDangerMusic", Label = "Enable Danger Music", Category = "action", Icon = "⚠️", IsAdvanced = true,
                 Description = "Enable or disable danger/combat music",
                 Properties = new() {
                     new NodeProperty { Name = "enabled", Type = "bool", Label = "Enabled", DefaultValue = "true" }
@@ -458,7 +458,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "local followTarget = \"{target}\"\nlocal followThing = nil\nif followTarget == \"Hero\" then\n    followThing = Quest:GetHero()\nelse\n    followThing = Quest:GetThingWithScriptName(followTarget)\nend\nif followThing ~= nil then\n    Me:StopFollowingThing(followThing)\nend\n{CHILDREN}" },
 
-            new() { Type = "sheatheWeapons", Label = "Sheathe Weapons", Category = "action", Icon = "🔒🗡️", IsAdvanced = true,
+            new() { Type = "sheatheWeapons", Label = "Sheathe Weapons", Category = "action", Icon = "🔒", IsAdvanced = true,
                 Description = "Put weapons away",
                 Properties = new(),
                 CodeTemplate = "Quest:EntitySheatheWeapons(Me)\n{CHILDREN}" },
@@ -469,7 +469,7 @@ public static class NodeDefinitions
                 CodeTemplate = "Quest:EntityUnsheatheWeapons(Me)\n{CHILDREN}" },
 
             // ===== MOVEMENT =====
-            new() { Type = "moveToMarker", Label = "Move To Marker", Category = "action", Icon = "🚶📍", IsAdvanced = false,
+            new() { Type = "moveToMarker", Label = "Move To Marker", Category = "action", Icon = "📍", IsAdvanced = false,
                 Description = "Walk to specified marker",
                 Properties = new() {
                     new NodeProperty { Name = "marker", Type = "string", Label = "Marker Name", DefaultValue = "MARKER_1" }
@@ -502,7 +502,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "Me:PlayAnimation(\"{anim}\", {stayOnLastFrame}, {allowLooking})\n{CHILDREN}" },
 
-            new() { Type = "playAnimationBlocking", Label = "Play Animation (Wait)", Category = "action", Icon = "🎬⏳", IsAdvanced = true,
+            new() { Type = "playAnimationBlocking", Label = "Play Animation (Wait)", Category = "action", Icon = "⏳", IsAdvanced = true,
                 Description = "Play an animation and wait for completion",
                 Properties = new() {
                     new NodeProperty { Name = "anim", Type = "string", Label = "Animation", DefaultValue = "idle" },
@@ -565,14 +565,14 @@ public static class NodeDefinitions
     {
         return new List<NodeDefinition>
         {
-            new() { Type = "checkState", Label = "Check State", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
+            new() { Type = "checkState", Label = "Check State", Category = "condition", Icon = "❓", IsAdvanced = false, HasBranching = true,
                 Description = "Check if state variable equals value",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "questStarted" },
                     new NodeProperty { Name = "value", Type = "string", Label = "Expected Value", DefaultValue = "true" }
                 },
                 CodeTemplate = "if Quest:GetStateBool(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
-            new() { Type = "checkStateBool", Label = "Check State (Bool)", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
+            new() { Type = "checkStateBool", Label = "Check State (Bool)", Category = "condition", Icon = "❓", IsAdvanced = false, HasBranching = true,
                 Description = "Check if boolean state variable equals value",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "questStarted" },
@@ -580,7 +580,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "if Quest:GetStateBool(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkStateInt", Label = "Check State (Int)", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
+            new() { Type = "checkStateInt", Label = "Check State (Int)", Category = "condition", Icon = "❓", IsAdvanced = true, HasBranching = true,
                 Description = "Check if integer state variable equals value",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "killCount" },
@@ -588,7 +588,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "if Quest:GetStateInt(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkStateFloat", Label = "Check State (Float)", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
+            new() { Type = "checkStateFloat", Label = "Check State (Float)", Category = "condition", Icon = "❓", IsAdvanced = true, HasBranching = true,
                 Description = "Check if float state variable equals value",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "progress" },
@@ -596,7 +596,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "if tonumber(Quest:GetStateString(\"{name}\")) == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkStateString", Label = "Check State (String)", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
+            new() { Type = "checkStateString", Label = "Check State (String)", Category = "condition", Icon = "❓", IsAdvanced = true, HasBranching = true,
                 Description = "Check if string state variable equals value",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "State Name", DefaultValue = "questStage" },
@@ -604,7 +604,7 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "if Quest:GetStateString(\"{name}\") == \"{value}\" then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkGlobal", Label = "Check Global", Category = "condition", Icon = "?🌍", IsAdvanced = true, HasBranching = true,
+            new() { Type = "checkGlobal", Label = "Check Global", Category = "condition", Icon = "🌍", IsAdvanced = true, HasBranching = true,
                 Description = "Check a global state variable",
                 Properties = new() {
                     new NodeProperty { Name = "name", Type = "string", Label = "Variable Name", DefaultValue = "globalFlag" },
@@ -612,39 +612,39 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "if Quest:GetGlobalBool(\"{name}\") == {value} then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkHasItem", Label = "Has Item", Category = "condition", Icon = "?🎒", IsAdvanced = false, HasBranching = true,
-                Description = "Check if hero has specific item",
+            new() { Type = "checkHasItem", Label = "Has Item", Category = "condition", Icon = "🎒", IsAdvanced = false, HasBranching = true,
+                Description = "Check if hero has specific item in inventory or possession",
                 Properties = new() {
                     new NodeProperty { Name = "item", Type = "string", Label = "Item", DefaultValue = "OBJECT_APPLE", Options = new List<string>(GameData.Objects) }
                 },
-                CodeTemplate = "if Quest:IsPlayerCarryingItemOfType(\"{item}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
+                CodeTemplate = "local hasItem = false\nif Quest:IsObjectInHeroPossession(\"{item}\") then\n    hasItem = true\nelseif Quest:GetNumberOfItemsOfTypeInInventory(\"{item}\") > 0 then\n    hasItem = true\nelseif Quest:IsPlayerCarryingItemOfType(\"{item}\") then\n    hasItem = true\nend\nif hasItem then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkIsAlive", Label = "Is Alive", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
+            new() { Type = "checkIsAlive", Label = "Is Alive", Category = "condition", Icon = "❓", IsAdvanced = false, HasBranching = true,
                 Description = "Check if entity is alive",
                 Properties = new(),
                 CodeTemplate = "if Me:IsAlive() then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkYesNoAnswer", Label = "Check Answer", Category = "condition", Icon = "?", IsAdvanced = false, HasBranching = true,
+            new() { Type = "checkYesNoAnswer", Label = "Check Answer", Category = "condition", Icon = "❓", IsAdvanced = false, HasBranching = true,
                 Description = "Check yes/no question answer and branch (Yes/No/Unsure) - Use after Yes/No Question node",
                 Properties = new(),
                 BranchLabels = new List<string> { "Yes", "No", "Unsure" },
                 CodeTemplate = "if answer ~= nil then\n    if answer == 0 then\n{Yes}\n    elseif answer == 1 then\n{No}\n    else\n{Unsure}\n    end\nend" },
             
-            new() { Type = "checkRegionLoaded", Label = "Region Loaded", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
+            new() { Type = "checkRegionLoaded", Label = "Region Loaded", Category = "condition", Icon = "❓", IsAdvanced = true, HasBranching = true,
                 Description = "Check if region is currently loaded",
                 Properties = new() {
                     new NodeProperty { Name = "region", Type = "string", Label = "Region", DefaultValue = "Oakvale", Options = new List<string>(GameData.Regions) }
                 },
                 CodeTemplate = "if Quest:IsRegionLoaded(\"{region}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkQuestComplete", Label = "Quest Complete", Category = "condition", Icon = "?", IsAdvanced = true, HasBranching = true,
+            new() { Type = "checkQuestComplete", Label = "Quest Complete", Category = "condition", Icon = "❓", IsAdvanced = true, HasBranching = true,
                 Description = "Check if another quest is completed",
                 Properties = new() {
                     new NodeProperty { Name = "questName", Type = "string", Label = "Quest Name", DefaultValue = "QUEST_NAME" }
                 },
                 CodeTemplate = "if Quest:IsQuestCompleted(\"{questName}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkBoastTaken", Label = "Boast Taken", Category = "condition", Icon = "?🏆", IsAdvanced = true, HasBranching = true,
+            new() { Type = "checkBoastTaken", Label = "Boast Taken", Category = "condition", Icon = "🏆", IsAdvanced = true, HasBranching = true,
                 Description = "Check if hero has taken a specific boast",
                 Properties = new() {
                     new NodeProperty { Name = "boastID", Type = "int", Label = "Boast ID", DefaultValue = "1" },
@@ -652,12 +652,12 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "if Quest:IsBoastTaken({boastID}, \"{questName}\") then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkCameraScripted", Label = "Camera Scripted", Category = "condition", Icon = "?🎥", IsAdvanced = true, HasBranching = true,
+            new() { Type = "checkCameraScripted", Label = "Camera Scripted", Category = "condition", Icon = "🎥", IsAdvanced = true, HasBranching = true,
                 Description = "Check if camera is currently in scripted mode",
                 Properties = new(),
                 CodeTemplate = "if Quest:IsCameraInScriptedMode() then\n{TRUE}\nelse\n{FALSE}\nend" },
 
-            new() { Type = "checkDistanceToHero", Label = "Distance To Hero", Category = "condition", Icon = "?📏", IsAdvanced = false, HasBranching = true,
+            new() { Type = "checkDistanceToHero", Label = "Distance To Hero", Category = "condition", Icon = "📏", IsAdvanced = false, HasBranching = true,
                 Description = "Check if distance between entity and hero is under threshold",
                 Properties = new() {
                     new NodeProperty { Name = "distance", Type = "float", Label = "Distance", DefaultValue = "5.0" }

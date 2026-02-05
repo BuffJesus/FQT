@@ -870,7 +870,11 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             value is string strValue &&
             strValue.StartsWith("$", StringComparison.Ordinal))
         {
-            checkBox.IsChecked = true;
+            // External bindings ($@Entity.Var) should remain visible in the text box.
+            if (!strValue.StartsWith("$@", StringComparison.Ordinal))
+            {
+                checkBox.IsChecked = true;
+            }
         }
     }
 
@@ -895,6 +899,14 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
         string? propertyName = checkBox.Tag as string;
         if (string.IsNullOrWhiteSpace(propertyName))
         {
+            return;
+        }
+
+        if (currentTab.SelectedNode.Properties.TryGetValue(propertyName, out var existingValue) &&
+            existingValue is string existingStr &&
+            existingStr.StartsWith("$@", StringComparison.Ordinal))
+        {
+            // Keep external bindings intact; do not replace with an internal variable.
             return;
         }
 
@@ -989,11 +1001,12 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             .Where(v => IsVariableTypeCompatible(v.Type, expectedType))
             .ToList();
 
+        string? boundName = null;
         if (currentTab.SelectedNode.Properties.TryGetValue(propertyName, out var existingValue) &&
             existingValue is string existingStr &&
             existingStr.StartsWith("$", StringComparison.Ordinal))
         {
-            string boundName = existingStr.Substring(1);
+            boundName = existingStr.Substring(1);
             var boundVariable = currentTab.Variables.FirstOrDefault(v =>
                 v.Name.Equals(boundName, StringComparison.OrdinalIgnoreCase));
             if (boundVariable != null && !compatible.Contains(boundVariable))
@@ -1007,13 +1020,24 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             compatible = currentTab.Variables.ToList();
         }
 
+        if (!string.IsNullOrWhiteSpace(boundName))
+        {
+            bool exists = compatible.Any(v => v.Name.Equals(boundName, StringComparison.OrdinalIgnoreCase));
+            if (!exists)
+            {
+                compatible.Add(new VariableDefinition
+                {
+                    Name = boundName,
+                    Type = MapPropertyTypeToVariableType(expectedType) ?? "String"
+                });
+            }
+        }
+
         comboBox.ItemsSource = compatible;
 
-        if (currentTab.SelectedNode.Properties.TryGetValue(propertyName, out var value) &&
-            value is string strValue &&
-            strValue.StartsWith("$", StringComparison.Ordinal))
+        if (!string.IsNullOrWhiteSpace(boundName))
         {
-            comboBox.SelectedValue = strValue.Substring(1);
+            comboBox.SelectedValue = boundName;
         }
     }
 
@@ -1381,6 +1405,12 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
 
     private bool TryBindVariableToProperty(EntityTabViewModel currentTab, string propertyName, string variableName)
     {
+        if (variableName.StartsWith("@", StringComparison.Ordinal))
+        {
+            currentTab.SelectedNode?.SetProperty(propertyName, $"${variableName}");
+            return true;
+        }
+
         string? variableType = currentTab.Variables
             .FirstOrDefault(v => v.Name.Equals(variableName, StringComparison.OrdinalIgnoreCase))
             ?.Type;
@@ -1463,6 +1493,25 @@ public partial class EntityEditorView : System.Windows.Controls.UserControl
             "Integer" => "int",
             "Float" => "float",
             "Object" => "object",
+            _ => null
+        };
+    }
+
+    private static string? MapPropertyTypeToVariableType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+        {
+            return null;
+        }
+
+        return type switch
+        {
+            "text" => "String",
+            "string" => "String",
+            "bool" => "Boolean",
+            "int" => "Integer",
+            "float" => "Float",
+            "object" => "Object",
             _ => null
         };
     }

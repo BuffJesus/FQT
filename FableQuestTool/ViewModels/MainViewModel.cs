@@ -86,7 +86,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public EntityEditorViewModel? EntityEditorViewModel { get; set; }
 
-    public string Title => "FSE Quest Creator Pro";
+    public string Title => "Fable Quest Tool (FQT)";
 
     public MainViewModel()
     {
@@ -298,7 +298,14 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
 
-            if (deploymentService.DeployQuest(Project, out string message))
+            QuestProject questToDeploy = Project;
+            if (!string.IsNullOrWhiteSpace(ProjectPath))
+            {
+                fileService.Save(ProjectPath, Project);
+                questToDeploy = fileService.Load(ProjectPath);
+            }
+
+            if (deploymentService.DeployQuest(questToDeploy, out string message))
             {
                 StatusText = "Quest deployed successfully";
                 System.Windows.MessageBox.Show(message, "Deployment Success", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);

@@ -109,6 +109,8 @@ public sealed class DeploymentService
 
         try
         {
+            NormalizeItemNodes(quest);
+
             // Create FSE folder if it doesn't exist
             Directory.CreateDirectory(fseFolder);
 
@@ -171,6 +173,88 @@ public sealed class DeploymentService
             message = $"Deployment failed: {ex.Message}";
             return false;
         }
+    }
+
+    private static void NormalizeItemNodes(QuestProject quest)
+    {
+        foreach (QuestEntity entity in quest.Entities)
+        {
+            string? preferredItem = null;
+
+            foreach (var node in entity.Nodes)
+            {
+                if (!node.Type.Equals("takeItem", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (TryGetItemValue(node, out var itemValue) && !IsDefaultItemValue(itemValue))
+                {
+                    preferredItem = itemValue;
+                    break;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(preferredItem))
+            {
+                foreach (var node in entity.Nodes)
+                {
+                    if (!node.Type.Equals("checkHasItem", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (TryGetItemValue(node, out var itemValue) && !IsDefaultItemValue(itemValue))
+                    {
+                        preferredItem = itemValue;
+                        break;
+                    }
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(preferredItem))
+            {
+                continue;
+            }
+
+            foreach (var node in entity.Nodes)
+            {
+                if (!NodeUsesItemProperty(node))
+                {
+                    continue;
+                }
+
+                if (!TryGetItemValue(node, out var itemValue) || IsDefaultItemValue(itemValue))
+                {
+                    node.Config["item"] = preferredItem;
+                }
+            }
+        }
+    }
+
+    private static bool NodeUsesItemProperty(BehaviorNode node)
+    {
+        return node.Type.Equals("checkHasItem", StringComparison.OrdinalIgnoreCase) ||
+               node.Type.Equals("takeItem", StringComparison.OrdinalIgnoreCase) ||
+               node.Type.Equals("onItemPresented", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryGetItemValue(BehaviorNode node, out string value)
+    {
+        if (node.Config != null && node.Config.TryGetValue("item", out var itemValue))
+        {
+            value = itemValue?.ToString() ?? string.Empty;
+            return true;
+        }
+
+        value = string.Empty;
+        return false;
+    }
+
+    private static bool IsDefaultItemValue(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ||
+               value.Equals("OBJECT_APPLE", StringComparison.OrdinalIgnoreCase);
     }
 
     private bool RegisterInQuestsLua(string fseFolder, QuestProject quest, out string? error)

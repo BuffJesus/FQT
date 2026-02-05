@@ -1714,23 +1714,39 @@ public class TemplateService
             IsExposed = true
         });
 
-        string giveItemId = Guid.NewGuid().ToString();
+        const string itemId = "OBJECT_TEDDY_BEAR_UNGIVEABLE";
+        string talkId = Guid.NewGuid().ToString();
+        string presentedId = Guid.NewGuid().ToString();
+        string hasItemId = Guid.NewGuid().ToString();
+        string takeItemId = Guid.NewGuid().ToString();
         string setTrueId = Guid.NewGuid().ToString();
         string confirmId = Guid.NewGuid().ToString();
+        string noItemId = Guid.NewGuid().ToString();
 
         source.Nodes = new List<BehaviorNode>
         {
-            new BehaviorNode { Id = giveItemId, Type = "onItemPresented", Category = "trigger", Label = "Item Given", Icon = "??", X = 80, Y = 140,
-                Config = new Dictionary<string, object> { { "item", "OBJECT_APPLE" } } },
-            new BehaviorNode { Id = setTrueId, Type = "var_set_HasToken", Category = "variable", Label = "Set HasToken", Icon = "??", X = 260, Y = 140,
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 220 },
+            new BehaviorNode { Id = hasItemId, Type = "checkHasItem", Category = "condition", Label = "Has Item?", Icon = "??", X = 280, Y = 220,
+                Config = new Dictionary<string, object> { { "item", itemId } } },
+              new BehaviorNode { Id = noItemId, Type = "showDialogue", Category = "action", Label = "Needs Item", Icon = "??", X = 520, Y = 260,
+                  Config = new Dictionary<string, object> { { "text", "A bully's leaning on a boy to hand over his bear. Go sort the bully out and bring the bear here. The girl can manage without it for once." } } },
+            new BehaviorNode { Id = presentedId, Type = "onItemPresented", Category = "trigger", Label = "When Item Given", Icon = "??", X = 80, Y = 80,
+                Config = new Dictionary<string, object> { { "item", itemId } } },
+            new BehaviorNode { Id = takeItemId, Type = "takeItem", Category = "action", Label = "Take Item", Icon = "??", X = 520, Y = 80,
+                Config = new Dictionary<string, object> { { "item", itemId } } },
+            new BehaviorNode { Id = setTrueId, Type = "var_set_HasToken", Category = "variable", Label = "Set HasToken", Icon = "??", X = 760, Y = 80,
                 Config = new Dictionary<string, object> { { "value", "true" } } },
-            new BehaviorNode { Id = confirmId, Type = "showDialogue", Category = "action", Label = "Confirm", Icon = "??", X = 440, Y = 140,
-                Config = new Dictionary<string, object> { { "text", "Thanks! Tell the listener you're ready." } } }
+              new BehaviorNode { Id = confirmId, Type = "showDialogue", Category = "action", Label = "Confirm", Icon = "??", X = 1000, Y = 80,
+                  Config = new Dictionary<string, object> { { "text", "Lovely. The boy gets his bear, the bully gets a bruise, and you get the glory. Go tell the listener." } } }
         };
 
         source.Connections = new List<NodeConnection>
         {
-            new NodeConnection { FromNodeId = giveItemId, FromPort = "Output", ToNodeId = setTrueId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = hasItemId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = hasItemId, FromPort = "True", ToNodeId = takeItemId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = hasItemId, FromPort = "False", ToNodeId = noItemId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = presentedId, FromPort = "Output", ToNodeId = takeItemId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = takeItemId, FromPort = "Output", ToNodeId = setTrueId, ToPort = "Input" },
             new NodeConnection { FromNodeId = setTrueId, FromPort = "Output", ToNodeId = confirmId, ToPort = "Input" }
         };
 
@@ -1744,27 +1760,32 @@ public class TemplateService
             ExclusiveControl = true
         };
 
-        string talkId = Guid.NewGuid().ToString();
+        string listenerTalkId = Guid.NewGuid().ToString();
         string branchId = Guid.NewGuid().ToString();
         string yesId = Guid.NewGuid().ToString();
         string noId = Guid.NewGuid().ToString();
+        string completeId = Guid.NewGuid().ToString();
 
         listener.Nodes = new List<BehaviorNode>
         {
-            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 320 },
+            new BehaviorNode { Id = listenerTalkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 320 },
             new BehaviorNode { Id = branchId, Type = "branch", Category = "flow", Label = "Branch", Icon = "??", X = 260, Y = 320,
                 Config = new Dictionary<string, object> { { "condition", "$@VarSource.HasToken" } } },
             new BehaviorNode { Id = yesId, Type = "showDialogue", Category = "action", Label = "Has Token", Icon = "??", X = 440, Y = 280,
-                Config = new Dictionary<string, object> { { "text", "Great, you brought the token!" } } },
+                Config = new Dictionary<string, object> { { "text", "Ah, the bear! The boy will be chuffed. The girl can make do with a stick and her imagination." } } },
             new BehaviorNode { Id = noId, Type = "showDialogue", Category = "action", Label = "No Token", Icon = "??", X = 440, Y = 360,
-                Config = new Dictionary<string, object> { { "text", "Come back after you give the item to VarSource." } } }
+                Config = new Dictionary<string, object> { { "text", "No bear, no peace. Go give that bully a lesson and bring the bear to VarSource." } } }
+            ,
+            new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete Quest", Icon = "??", X = 640, Y = 280,
+                Config = new Dictionary<string, object> { { "showScreen", "true" } } }
         };
 
         listener.Connections = new List<NodeConnection>
         {
-            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = branchId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = listenerTalkId, FromPort = "Output", ToNodeId = branchId, ToPort = "Input" },
             new NodeConnection { FromNodeId = branchId, FromPort = "True", ToNodeId = yesId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = branchId, FromPort = "False", ToNodeId = noId, ToPort = "Input" }
+            new NodeConnection { FromNodeId = branchId, FromPort = "False", ToNodeId = noId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = yesId, FromPort = "Output", ToNodeId = completeId, ToPort = "Input" }
         };
 
         project.Entities.Add(source);

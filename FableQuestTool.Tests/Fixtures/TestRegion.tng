@@ -1,0 +1,23 @@
+NewThing Object;
+ScriptName MK_TEST_CHEST;
+DefinitionType OBJECT_CHEST_WOOD;
+UID 1234;
+PositionX 10.5;
+PositionY 2.0;
+PositionZ -3.25;
+ScriptData "NULL";
+ThingGamePersistent TRUE;
+ThingLevelPersistent FALSE;
+EndThing
+
+NewThing AICreature;
+ScriptName TEST_VILLAGER;
+DefinitionType CREATURE_VILLAGER_FARMER;
+UID 5678;
+PositionX 1.0;
+PositionY 0.0;
+PositionZ 2.0;
+ScriptData "NULL";
+ThingGamePersistent FALSE;
+ThingLevelPersistent TRUE;
+EndThing

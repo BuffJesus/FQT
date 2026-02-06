@@ -144,6 +144,121 @@ public sealed class CodeGeneratorSnapshotTests
         Assert.Equal(expected, NormalizeLineEndings(script));
     }
 
+    [Fact]
+    public void GenerateEntityScript_Loop_MatchesSnapshot()
+    {
+        QuestProject quest = new QuestProject { Name = "LoopQuest" };
+        QuestEntity entity = BuildLoopEntity();
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateEntityScript(quest, entity);
+
+        string snapshotPath = TestPaths.GetFixturePath(Path.Combine("Snapshots", "EntityScript_Loop.lua"));
+        string expected = LoadSnapshot(snapshotPath, script);
+
+        Assert.Equal(expected, NormalizeLineEndings(script));
+    }
+
+    [Fact]
+    public void GenerateEntityScript_WhileLoop_MatchesSnapshot()
+    {
+        QuestProject quest = new QuestProject { Name = "WhileQuest" };
+        QuestEntity entity = BuildWhileLoopEntity();
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateEntityScript(quest, entity);
+
+        string snapshotPath = TestPaths.GetFixturePath(Path.Combine("Snapshots", "EntityScript_WhileLoop.lua"));
+        string expected = LoadSnapshot(snapshotPath, script);
+
+        Assert.Equal(expected, NormalizeLineEndings(script));
+    }
+
+    [Fact]
+    public void GenerateEntityScript_Event_MatchesSnapshot()
+    {
+        QuestProject quest = new QuestProject { Name = "EventQuest" };
+        QuestEntity entity = BuildEventEntity();
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateEntityScript(quest, entity);
+
+        string snapshotPath = TestPaths.GetFixturePath(Path.Combine("Snapshots", "EntityScript_Event.lua"));
+        string expected = LoadSnapshot(snapshotPath, script);
+
+        Assert.Equal(expected, NormalizeLineEndings(script));
+    }
+
+    [Fact]
+    public void GenerateQuestScript_ExposedVariables_MatchesSnapshot()
+    {
+        QuestProject quest = BuildExposedVariablesQuest();
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateQuestScript(quest);
+
+        string snapshotPath = TestPaths.GetFixturePath(Path.Combine("Snapshots", "QuestScript_ExposedVariables.lua"));
+        string expected = LoadSnapshot(snapshotPath, script);
+
+        Assert.Equal(expected, NormalizeLineEndings(script));
+    }
+
+    [Fact]
+    public void GenerateQuestScript_Threads_MatchesSnapshot()
+    {
+        QuestProject quest = BuildThreadQuest();
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateQuestScript(quest);
+
+        string snapshotPath = TestPaths.GetFixturePath(Path.Combine("Snapshots", "QuestScript_Threads.lua"));
+        string expected = LoadSnapshot(snapshotPath, script);
+
+        Assert.Equal(expected, NormalizeLineEndings(script));
+    }
+
+    [Fact]
+    public void GenerateQuestScript_QuestCardScreens_MatchesSnapshot()
+    {
+        QuestProject quest = BuildQuestCardQuest();
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateQuestScript(quest);
+
+        string snapshotPath = TestPaths.GetFixturePath(Path.Combine("Snapshots", "QuestScript_QuestCardScreens.lua"));
+        string expected = LoadSnapshot(snapshotPath, script);
+
+        Assert.Equal(expected, NormalizeLineEndings(script));
+    }
+
+    [Fact]
+    public void GenerateQuestScript_StatePersistence_MatchesSnapshot()
+    {
+        QuestProject quest = BuildStatePersistenceQuest();
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateQuestScript(quest);
+
+        string snapshotPath = TestPaths.GetFixturePath(Path.Combine("Snapshots", "QuestScript_StatePersistence.lua"));
+        string expected = LoadSnapshot(snapshotPath, script);
+
+        Assert.Equal(expected, NormalizeLineEndings(script));
+    }
+
+    [Fact]
+    public void GenerateRegistrationSnippet_MatchesSnapshot()
+    {
+        QuestProject quest = BuildRegistrationQuest();
+
+        CodeGenerator generator = new CodeGenerator();
+        string snippet = generator.GenerateRegistrationSnippet(quest);
+
+        string snapshotPath = TestPaths.GetFixturePath(Path.Combine("Snapshots", "QuestRegistrationSnippet.lua"));
+        string expected = LoadSnapshot(snapshotPath, snippet);
+
+        Assert.Equal(expected, NormalizeLineEndings(snippet));
+    }
+
     private static QuestProject BuildSnapshotQuest()
     {
         QuestProject quest = new QuestProject
@@ -485,6 +600,335 @@ public sealed class CodeGeneratorSnapshotTests
         entity.ObjectReward.Items.Add("OBJECT_CARROT");
 
         return entity;
+    }
+
+    private static QuestEntity BuildLoopEntity()
+    {
+        BehaviorNode trigger = new BehaviorNode
+        {
+            Id = "trigger",
+            Type = "onHeroUsed",
+            Category = "trigger"
+        };
+        BehaviorNode loop = new BehaviorNode
+        {
+            Id = "loop",
+            Type = "loop",
+            Category = "flow",
+            Config = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["count"] = "2"
+            }
+        };
+        BehaviorNode action = new BehaviorNode
+        {
+            Id = "action",
+            Type = "showMessage",
+            Category = "action",
+            Config = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["text"] = "Looping",
+                ["duration"] = "1.0"
+            }
+        };
+
+        QuestEntity entity = new QuestEntity
+        {
+            ScriptName = "LoopEntity",
+            MakeBehavioral = true,
+            AcquireControl = true
+        };
+
+        entity.Nodes.Add(trigger);
+        entity.Nodes.Add(loop);
+        entity.Nodes.Add(action);
+
+        entity.Connections.Add(new NodeConnection
+        {
+            FromNodeId = trigger.Id,
+            FromPort = "Output",
+            ToNodeId = loop.Id,
+            ToPort = "Input"
+        });
+        entity.Connections.Add(new NodeConnection
+        {
+            FromNodeId = loop.Id,
+            FromPort = "Output",
+            ToNodeId = action.Id,
+            ToPort = "Input"
+        });
+
+        return entity;
+    }
+
+    private static QuestEntity BuildWhileLoopEntity()
+    {
+        BehaviorNode trigger = new BehaviorNode
+        {
+            Id = "trigger",
+            Type = "onHeroUsed",
+            Category = "trigger"
+        };
+        BehaviorNode loop = new BehaviorNode
+        {
+            Id = "whileLoop",
+            Type = "whileLoop",
+            Category = "flow",
+            Config = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["condition"] = "Me:IsAlive()"
+            }
+        };
+        BehaviorNode action = new BehaviorNode
+        {
+            Id = "action",
+            Type = "showMessage",
+            Category = "action",
+            Config = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["text"] = "While",
+                ["duration"] = "1.0"
+            }
+        };
+
+        QuestEntity entity = new QuestEntity
+        {
+            ScriptName = "WhileEntity",
+            MakeBehavioral = true,
+            AcquireControl = true
+        };
+
+        entity.Nodes.Add(trigger);
+        entity.Nodes.Add(loop);
+        entity.Nodes.Add(action);
+
+        entity.Connections.Add(new NodeConnection
+        {
+            FromNodeId = trigger.Id,
+            FromPort = "Output",
+            ToNodeId = loop.Id,
+            ToPort = "Input"
+        });
+        entity.Connections.Add(new NodeConnection
+        {
+            FromNodeId = loop.Id,
+            FromPort = "Output",
+            ToNodeId = action.Id,
+            ToPort = "Input"
+        });
+
+        return entity;
+    }
+
+    private static QuestEntity BuildEventEntity()
+    {
+        BehaviorNode defineEvent = new BehaviorNode
+        {
+            Id = "defineEvent",
+            Type = "defineEvent",
+            Category = "custom",
+            Config = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["eventName"] = "OnGift"
+            }
+        };
+        BehaviorNode eventAction = new BehaviorNode
+        {
+            Id = "eventAction",
+            Type = "showMessage",
+            Category = "action",
+            Config = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["text"] = "Thanks",
+                ["duration"] = "2.0"
+            }
+        };
+        BehaviorNode trigger = new BehaviorNode
+        {
+            Id = "trigger",
+            Type = "onHeroUsed",
+            Category = "trigger"
+        };
+        BehaviorNode callEvent = new BehaviorNode
+        {
+            Id = "callEvent",
+            Type = "callEvent",
+            Category = "custom",
+            Config = new System.Collections.Generic.Dictionary<string, object>
+            {
+                ["eventName"] = "OnGift"
+            }
+        };
+
+        QuestEntity entity = new QuestEntity
+        {
+            ScriptName = "EventEntity",
+            MakeBehavioral = true,
+            AcquireControl = true
+        };
+
+        entity.Nodes.Add(defineEvent);
+        entity.Nodes.Add(eventAction);
+        entity.Nodes.Add(trigger);
+        entity.Nodes.Add(callEvent);
+
+        entity.Connections.Add(new NodeConnection
+        {
+            FromNodeId = defineEvent.Id,
+            FromPort = "Output",
+            ToNodeId = eventAction.Id,
+            ToPort = "Input"
+        });
+        entity.Connections.Add(new NodeConnection
+        {
+            FromNodeId = trigger.Id,
+            FromPort = "Output",
+            ToNodeId = callEvent.Id,
+            ToPort = "Input"
+        });
+
+        return entity;
+    }
+
+    private static QuestProject BuildExposedVariablesQuest()
+    {
+        QuestProject quest = new QuestProject
+        {
+            Name = "ExposedQuest",
+            DisplayName = "Exposed Quest"
+        };
+
+        quest.Regions.Add("Oakvale");
+
+        QuestEntity entity = new QuestEntity
+        {
+            ScriptName = "ExposedEntity"
+        };
+        entity.Variables.Add(new EntityVariable
+        {
+            Name = "IsReady",
+            Type = "Boolean",
+            DefaultValue = "true",
+            IsExposed = true
+        });
+        entity.Variables.Add(new EntityVariable
+        {
+            Name = "Count",
+            Type = "Integer",
+            DefaultValue = "3",
+            IsExposed = true
+        });
+        entity.Variables.Add(new EntityVariable
+        {
+            Name = "Ratio",
+            Type = "Float",
+            DefaultValue = "1.5",
+            IsExposed = true
+        });
+        entity.Variables.Add(new EntityVariable
+        {
+            Name = "Note",
+            Type = "String",
+            DefaultValue = "Hello",
+            IsExposed = true
+        });
+
+        quest.Entities.Add(entity);
+
+        return quest;
+    }
+
+    private static QuestProject BuildThreadQuest()
+    {
+        QuestProject quest = new QuestProject
+        {
+            Name = "ThreadQuest",
+            DisplayName = "Thread Quest"
+        };
+
+        quest.Regions.Add("Oakvale");
+
+        QuestEntity spawnEntity = new QuestEntity
+        {
+            ScriptName = "SpawnedNpc",
+            DefName = "CREATURE_VILLAGER_FARMER",
+            SpawnMethod = SpawnMethod.AtMarker,
+            SpawnMarker = "MK_OVID_DAD"
+        };
+        quest.Entities.Add(spawnEntity);
+
+        quest.Threads.Add(new QuestThread
+        {
+            FunctionName = "WatcherThread",
+            Region = "Oakvale",
+            Description = "Watch for conditions",
+            IntervalSeconds = 0.25f,
+            ExitStateName = "StopThread",
+            ExitStateValue = true
+        });
+
+        return quest;
+    }
+
+    private static QuestProject BuildQuestCardQuest()
+    {
+        QuestProject quest = new QuestProject
+        {
+            Name = "CardQuest",
+            DisplayName = "Card Quest",
+            Description = "A story quest",
+            ObjectiveText = "Reach the gate",
+            ObjectiveRegion1 = "Oakvale",
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true,
+            IsStoryQuest = true,
+            IsGoldQuest = false
+        };
+
+        quest.Regions.Add("Oakvale");
+        quest.Rewards.Gold = 50;
+        quest.Rewards.Renown = 25;
+        quest.Rewards.Items.Add("OBJECT_APPLE");
+
+        return quest;
+    }
+
+    private static QuestProject BuildStatePersistenceQuest()
+    {
+        QuestProject quest = new QuestProject
+        {
+            Name = "PersistQuest",
+            DisplayName = "Persist Quest"
+        };
+
+        quest.Regions.Add("Oakvale");
+        quest.States.Add(new QuestState { Name = "Flag", Type = "bool", Persist = true, DefaultValue = true });
+        quest.States.Add(new QuestState { Name = "Count", Type = "int", Persist = true, DefaultValue = 2 });
+        quest.States.Add(new QuestState { Name = "Ratio", Type = "float", Persist = true, DefaultValue = 1.25 });
+        quest.States.Add(new QuestState { Name = "Note", Type = "string", Persist = true, DefaultValue = "Hi" });
+
+        return quest;
+    }
+
+    private static QuestProject BuildRegistrationQuest()
+    {
+        QuestProject quest = new QuestProject
+        {
+            Name = "RegisterQuest",
+            DisplayName = "Register Quest",
+            Id = 60000
+        };
+
+        quest.Entities.Add(new QuestEntity { ScriptName = "NpcOne" });
+        quest.Entities.Add(new QuestEntity { ScriptName = "NpcTwo" });
+        quest.Rewards.Container = new ContainerReward
+        {
+            ContainerScriptName = "RegisterChest",
+            AutoGiveOnComplete = false
+        };
+        quest.Rewards.Container.Items.Add("OBJECT_APPLE");
+
+        return quest;
     }
 
     private static string NormalizeLineEndings(string text)

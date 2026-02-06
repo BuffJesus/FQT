@@ -136,4 +136,61 @@ public sealed class ViewModelBasicsTests
 
         Assert.True(viewModel.IsModified);
     }
+
+    [Fact]
+    public void VariableDefinition_TypeColorAndIconMatchType()
+    {
+        VariableDefinition variable = new VariableDefinition
+        {
+            Type = "String"
+        };
+
+        Assert.Equal("#F0A1D4", variable.TypeColor);
+        Assert.Equal("T", variable.TypeIcon);
+
+        variable.Type = "Object";
+
+        Assert.Equal("#0099DB", variable.TypeColor);
+        Assert.Equal("O", variable.TypeIcon);
+    }
+
+    [Fact]
+    public void NodeOption_StoresInitMetadata()
+    {
+        NodeOption option = new NodeOption("Label", "action", "icon", "desc")
+        {
+            Type = "showMessage",
+            MenuIndex = 2
+        };
+
+        Assert.Equal("Label", option.Label);
+        Assert.Equal("action", option.Category);
+        Assert.Equal("icon", option.Icon);
+        Assert.Equal("desc", option.Description);
+        Assert.Equal("showMessage", option.Type);
+        Assert.Equal(2, option.MenuIndex);
+    }
+
+    [Fact]
+    public void NodeCategoryGroup_DerivesCategoryFromNodes()
+    {
+        NodeOption option = new NodeOption("Label", "trigger", "icon");
+        NodeCategoryGroup group = new NodeCategoryGroup("Triggers", new() { option });
+
+        Assert.Equal("Triggers", group.Name);
+        Assert.Equal("trigger", group.Category);
+        Assert.Equal("#27AE60", group.CategoryColor);
+        Assert.NotEmpty(group.Nodes);
+    }
+
+    [Fact]
+    public void ExternalVariableInfo_StoresDetails()
+    {
+        ExternalVariableInfo info = new ExternalVariableInfo("EntityA", "VarB", "String", "Default");
+
+        Assert.Equal("EntityA", info.EntityScriptName);
+        Assert.Equal("VarB", info.VariableName);
+        Assert.Equal("String", info.VariableType);
+        Assert.Equal("Default", info.DefaultValue);
+    }
 }

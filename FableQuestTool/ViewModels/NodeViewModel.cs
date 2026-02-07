@@ -158,7 +158,7 @@ public sealed partial class NodeViewModel : ObservableObject
         {
             Input.Add(new ConnectorViewModel
             {
-                Title = "▶",
+                Title = ">",
                 ConnectorType = ConnectorType.Exec,
                 IsInput = true
             });
@@ -205,7 +205,7 @@ public sealed partial class NodeViewModel : ObservableObject
                 // Single output exec pin
                 Output.Add(new ConnectorViewModel
                 {
-                    Title = "▶",
+                    Title = ">",
                     ConnectorType = ConnectorType.Exec,
                     IsInput = false
                 });

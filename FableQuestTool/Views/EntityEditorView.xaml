@@ -340,18 +340,18 @@
                                     <!-- Entity Settings Section -->
                                     <Expander Header="Entity Settings" IsExpanded="True" Margin="0,0,0,12">
                                         <StackPanel Margin="8,8,0,0">
-                                            <TextBlock Text="Script Name" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                            <TextBlock Text="Script Name" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                             <TextBox Text="{Binding Entity.ScriptName, UpdateSourceTrigger=PropertyChanged}"
                                                      Margin="0,0,0,8" Padding="4,2" />
 
-                                            <TextBlock Text="Definition Name" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                            <TextBlock Text="Definition Name" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                             <ComboBox Text="{Binding Entity.DefName, UpdateSourceTrigger=PropertyChanged}"
                                                       ItemsSource="{Binding AvailableDefinitions}"
                                                       IsEditable="True"
                                                       IsTextSearchEnabled="True"
                                                       Margin="0,0,0,8" />
 
-                                            <TextBlock Text="Entity Type" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                            <TextBlock Text="Entity Type" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                             <ComboBox SelectedItem="{Binding Entity.EntityType}" Margin="0,0,0,8">
                                                 <ComboBox.ItemsSource>
                                                     <x:Array Type="models:EntityType">
@@ -363,7 +363,7 @@
                                                 </ComboBox.ItemsSource>
                                             </ComboBox>
 
-                                            <TextBlock Text="Spawn Method" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                            <TextBlock Text="Spawn Method" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                             <ComboBox SelectedItem="{Binding Entity.SpawnMethod}" Margin="0,0,0,8">
                                                 <ComboBox.ItemsSource>
                                                     <x:Array Type="models:SpawnMethod">
@@ -376,14 +376,14 @@
                                                 </ComboBox.ItemsSource>
                                             </ComboBox>
 
-                                            <TextBlock Text="Spawn Region" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                            <TextBlock Text="Spawn Region" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                             <ComboBox Text="{Binding Entity.SpawnRegion, UpdateSourceTrigger=PropertyChanged}"
                                                       ItemsSource="{Binding AvailableRegions}"
                                                       IsEditable="True"
                                                       IsTextSearchEnabled="True"
                                                       Margin="0,0,0,8" />
 
-                                            <TextBlock Text="Spawn Marker / Target" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                            <TextBlock Text="Spawn Marker / Target" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                             <ComboBox Text="{Binding Entity.SpawnMarker, UpdateSourceTrigger=PropertyChanged}"
                                                       ItemsSource="{Binding AvailableMarkers}"
                                                       IsEditable="True"
@@ -402,7 +402,7 @@
 
                                             <!-- NEW: Quest Target Options -->
                                             <Separator Margin="0,8,0,8" Background="{DynamicResource BorderBrush}" />
-                                            <TextBlock Text="Quest Target Options" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                            <TextBlock Text="Quest Target Options" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,8" />
 
                                             <CheckBox Content="Quest Target (Green Highlight)" 
                                                       IsChecked="{Binding Entity.IsQuestTarget}"
@@ -436,7 +436,10 @@
                                         </Expander.Style>
                                         <StackPanel Margin="8,8,0,0">
                                             <TextBlock Text="Configure rewards given when hero interacts with this object"
-                                                     FontSize="10" Opacity="0.7" TextWrapping="Wrap" Margin="0,0,0,8" />
+                                                     Style="{StaticResource MutedText}"
+                                                     FontSize="10"
+                                                     TextWrapping="Wrap"
+                                                     Margin="0,0,0,8" />
 
                                             <CheckBox Content="Enable Object Rewards"
                                                       IsChecked="{Binding HasObjectReward}"
@@ -444,15 +447,15 @@
                                                       ToolTip="When enabled, this object will give rewards when the hero interacts with it" />
 
                                             <StackPanel Visibility="{Binding HasObjectReward, Converter={StaticResource BoolToVisibility}}">
-                                                <TextBlock Text="Gold Reward" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                                <TextBlock Text="Gold Reward" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                                 <TextBox Text="{Binding ObjectRewardGold, UpdateSourceTrigger=PropertyChanged}"
                                                          Margin="0,0,0,8" Padding="4,2" />
 
-                                                <TextBlock Text="Experience Reward" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                                <TextBlock Text="Experience Reward" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                                 <TextBox Text="{Binding ObjectRewardExperience, UpdateSourceTrigger=PropertyChanged}"
                                                          Margin="0,0,0,8" Padding="4,2" />
 
-                                                <TextBlock Text="Reward Items" FontSize="10" Opacity="0.7" Margin="0,0,0,2" />
+                                                <TextBlock Text="Reward Items" Style="{StaticResource FormLabelText}" Margin="0,0,0,2" />
                                                 <Grid Margin="0,0,0,4">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
@@ -511,7 +514,7 @@
                                                           Margin="0,0,0,4"
                                                           ToolTip="If checked, shows a message when rewards are given" />
 
-                                                <TextBlock Text="Custom Message (optional)" FontSize="10" Opacity="0.7" Margin="0,4,0,2" />
+                                                <TextBlock Text="Custom Message (optional)" Style="{StaticResource FormLabelText}" Margin="0,4,0,2" />
                                                 <TextBox Text="{Binding ObjectRewardCustomMessage, UpdateSourceTrigger=PropertyChanged}"
                                                          Margin="0,0,0,4" Padding="4,2"
                                                          ToolTip="Leave empty for automatic message" />
@@ -520,8 +523,8 @@
                                     </Expander>
 
                                     <TextBlock Text="Object rewards only work with container objects (chests, barrels, crates)."
+                                               Style="{StaticResource MutedText}"
                                                FontSize="10"
-                                               Opacity="0.6"
                                                Margin="0,8,0,0"
                                                Visibility="{Binding ShowObjectRewardUnsupportedMessage, Converter={StaticResource BoolToVisibility}}" />
 
@@ -597,7 +600,10 @@
                                                 </StackPanel>
                                             </Expander>
                                             <TextBlock Text="Tip: Drag a variable onto a node property to bind it, drop on the graph to create a Get node (Shift for Set), or drag from a data pin to create a new variable"
-                                                     FontSize="9" Opacity="0.5" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                                     Style="{StaticResource MutedText}"
+                                                     FontSize="9"
+                                                     TextWrapping="Wrap"
+                                                     Margin="0,4,0,0" />
                                         </StackPanel>
                                     </Expander>
                                 </StackPanel>
@@ -717,10 +723,20 @@
                                             <Grid>
                                                 <!-- Normal node template -->
                                                 <nodify:Node Input="{Binding Input}"
-                                                           Output="{Binding Output}"
-                                                           Padding="0"
-                                                           PreviewMouseRightButtonDown="OnNodePreviewMouseRightButtonDown"
-                                                           ContextMenuOpening="OnNodeContextMenuOpening">
+                                                            Output="{Binding Output}"
+                                                            Padding="0"
+                                                            PreviewMouseRightButtonDown="OnNodePreviewMouseRightButtonDown"
+                                                            ContextMenuOpening="OnNodeContextMenuOpening"
+                                                            ToolTipService.ShowDuration="60000">
+                                                    <nodify:Node.ToolTip>
+                                                        <StackPanel MaxWidth="320">
+                                                            <TextBlock Text="{Binding Title}"
+                                                                       FontWeight="SemiBold"
+                                                                       Margin="0,0,0,4" />
+                                                            <TextBlock Text="{Binding Definition.Description}"
+                                                                       TextWrapping="Wrap" />
+                                                        </StackPanel>
+                                                    </nodify:Node.ToolTip>
                                                     <nodify:Node.Style>
                                                         <Style TargetType="nodify:Node" BasedOn="{StaticResource {x:Type nodify:Node}}">
                                                             <Setter Property="MinWidth" Value="180" />
@@ -1045,9 +1061,11 @@
                                     <StackPanel>
                                         <!-- Header with context hint -->
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                            <TextBlock Text="Add Node" FontWeight="SemiBold" />
+                                            <TextBlock Text="Add Node" Style="{StaticResource PanelHeaderText}" />
                                             <TextBlock Text=" - drag wire here to connect"
-                                                     FontSize="10" Opacity="0.6" VerticalAlignment="Center"
+                                                     Style="{StaticResource MutedText}"
+                                                     FontSize="10"
+                                                     VerticalAlignment="Center"
                                                      Visibility="{Binding HasPendingConnection, Converter={StaticResource BoolToVisibility}}" />
                                         </StackPanel>
 
@@ -1077,7 +1095,7 @@
                                                     Visibility="{Binding HasFavoriteNodes, Converter={StaticResource BoolToVisibility}}">
                                             <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3" Margin="0,0,0,4">
                                                 <TextBlock Text="Favorites"
-                                                         FontWeight="SemiBold"
+                                                         Style="{StaticResource SectionHeaderText}"
                                                          FontSize="11"
                                                          Foreground="#AAB8C2" />
                                             </Border>
@@ -1091,8 +1109,16 @@
                                                               BorderThickness="0"
                                                               HorizontalContentAlignment="Left"
                                                               Padding="8,4"
-                                                              Cursor="Hand"
-                                                              ToolTip="{Binding Description}">
+                                                              Cursor="Hand">
+                                                            <Button.ToolTip>
+                                                                <StackPanel MaxWidth="320">
+                                                                    <TextBlock Text="{Binding Label}"
+                                                                               FontWeight="SemiBold"
+                                                                               Margin="0,0,0,4" />
+                                                                    <TextBlock Text="{Binding Description}"
+                                                                               TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                            </Button.ToolTip>
                                                             <Button.ContextMenu>
                                                                 <ContextMenu>
                                                                     <MenuItem Header="Toggle Favorite"
@@ -1153,8 +1179,16 @@
                                                               BorderThickness="0"
                                                               HorizontalContentAlignment="Left"
                                                               Padding="8,4"
-                                                              Cursor="Hand"
-                                                              ToolTip="{Binding Description}">
+                                                              Cursor="Hand">
+                                                            <Button.ToolTip>
+                                                                <StackPanel MaxWidth="320">
+                                                                    <TextBlock Text="{Binding Label}"
+                                                                               FontWeight="SemiBold"
+                                                                               Margin="0,0,0,4" />
+                                                                    <TextBlock Text="{Binding Description}"
+                                                                               TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                            </Button.ToolTip>
                                                             <Button.ContextMenu>
                                                                 <ContextMenu>
                                                                     <MenuItem Header="Toggle Favorite"
@@ -1218,8 +1252,16 @@
                                                               BorderThickness="0"
                                                               HorizontalContentAlignment="Left"
                                                               Padding="8,4"
-                                                              Cursor="Hand"
-                                                              ToolTip="{Binding Description}">
+                                                                     Cursor="Hand">
+                                                                        <Button.ToolTip>
+                                                                            <StackPanel MaxWidth="320">
+                                                                                <TextBlock Text="{Binding Label}"
+                                                                                           FontWeight="SemiBold"
+                                                                                           Margin="0,0,0,4" />
+                                                                                <TextBlock Text="{Binding Description}"
+                                                                                           TextWrapping="Wrap" />
+                                                                            </StackPanel>
+                                                                        </Button.ToolTip>
                                                             <Button.ContextMenu>
                                                                 <ContextMenu>
                                                                     <MenuItem Header="Toggle Favorite"
@@ -1436,10 +1478,10 @@
                                         <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
                                               Margin="0,8,0,0" Padding="0,8,0,0">
                                             <StackPanel>
-                                                <TextBlock Text="Tips:" FontSize="10" Opacity="0.6" Margin="0,0,0,4" />
-                                                <TextBlock Text="- Double-click wire to add reroute" FontSize="9" Opacity="0.5" />
-                                                <TextBlock Text="- Ctrl+drag to create reroute inline" FontSize="9" Opacity="0.5" />
-                                                <TextBlock Text="- Right-click empty space for this menu" FontSize="9" Opacity="0.5" />
+                                                <TextBlock Text="Tips:" Style="{StaticResource SectionHeaderText}" FontSize="10" Margin="0,0,0,4" />
+                                                <TextBlock Text="- Double-click wire to add reroute" Style="{StaticResource MutedText}" FontSize="9" />
+                                                <TextBlock Text="- Ctrl+drag to create reroute inline" Style="{StaticResource MutedText}" FontSize="9" />
+                                                <TextBlock Text="- Right-click empty space for this menu" Style="{StaticResource MutedText}" FontSize="9" />
                                                 <Button Content="Close (Esc)"
                                                       Margin="0,8,0,0"
                                                       Command="{Binding CloseNodeMenuCommand}" />
@@ -1460,11 +1502,11 @@
                             <ScrollViewer>
                                 <StackPanel Margin="12">
                                     <Border Background="{DynamicResource SurfaceBackground}" Padding="8" Margin="0,0,0,12">
-                                        <TextBlock Text="Node Properties" FontWeight="SemiBold" />
+                                        <TextBlock Text="Node Properties" Style="{StaticResource PanelHeaderText}" />
                                     </Border>
 
                                     <StackPanel Visibility="{Binding HasGraphWarnings, Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="Graph Warnings" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                                        <TextBlock Text="Graph Warnings" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                                         <Border Background="{DynamicResource SurfaceBackground}"
                                                 BorderBrush="#FF8C1A"
                                                 BorderThickness="1"
@@ -1485,7 +1527,7 @@
                                     </StackPanel>
 
                                     <StackPanel Visibility="{Binding HasMultipleSelection, Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="Selection" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                                        <TextBlock Text="Selection" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                                         <Border Background="{DynamicResource SurfaceBackground}"
                                                 Padding="8"
                                                 CornerRadius="4"
@@ -1507,7 +1549,7 @@
                                     </StackPanel>
 
                                     <StackPanel Visibility="{Binding SelectedNode, Converter={StaticResource NullToVisibility}}">
-                                        <TextBlock Text="Selected Node" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                                        <TextBlock Text="Selected Node" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                                         <Border Background="{DynamicResource SurfaceBackground}"
                                                 Padding="8"
                                                 CornerRadius="4"
@@ -1517,37 +1559,37 @@
                                                          FontWeight="SemiBold"
                                                          Margin="0,0,0,4" />
                                                 <TextBlock Text="{Binding SelectedNode.Type}"
-                                                         FontSize="10"
-                                                         Opacity="0.7" />
+                                                         Style="{StaticResource MutedText}"
+                                                         FontSize="10" />
                                                 <TextBlock Text="{Binding SelectedNode.Definition.Description}"
+                                                         Style="{StaticResource MutedText}"
                                                          FontSize="10"
                                                          TextWrapping="Wrap"
                                                          Margin="0,8,0,0" />
                                                 <StackPanel Margin="0,8,0,0"
                                                             Visibility="{Binding HasSelectedVariableNode, Converter={StaticResource BoolToVisibility}}">
                                                     <TextBlock Text="Variable"
-                                                             FontSize="10"
-                                                             Opacity="0.7" />
+                                                             Style="{StaticResource SectionHeaderText}" />
                                                     <TextBlock Text="{Binding SelectedVariableName}"
                                                              FontSize="11"
                                                              FontWeight="SemiBold" />
                                                     <TextBlock Text="{Binding SelectedVariableType}"
-                                                             FontSize="10"
-                                                             Opacity="0.7" />
+                                                             Style="{StaticResource MutedText}"
+                                                             FontSize="10" />
                                                     <TextBlock Text="{Binding SelectedVariableDefault, StringFormat=Default: {0}}"
-                                                             FontSize="10"
-                                                             Opacity="0.7" />
+                                                             Style="{StaticResource MutedText}"
+                                                             FontSize="10" />
                                                     <TextBlock Text="{Binding SelectedVariableRuntime, StringFormat=Runtime (default): {0}}"
-                                                             FontSize="10"
-                                                             Opacity="0.7" />
+                                                             Style="{StaticResource MutedText}"
+                                                             FontSize="10" />
                                                     <TextBlock Text="{Binding SelectedVariableExposureText}"
-                                                             FontSize="10"
-                                                             Opacity="0.7" />
+                                                             Style="{StaticResource MutedText}"
+                                                             FontSize="10" />
                                                 </StackPanel>
                                             </StackPanel>
                                         </Border>
 
-                                        <TextBlock Text="Properties" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                                        <TextBlock Text="Properties" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                                         <ItemsControl ItemsSource="{Binding SelectedNode.Definition.Properties}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
@@ -1558,7 +1600,7 @@
                                                                 <ColumnDefinition Width="Auto" />
                                                                 <ColumnDefinition Width="Auto" />
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="10" />
+                                                            <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource FormLabelText}" FontSize="10" />
                                                             <Border Grid.Column="1"
                                                                     Background="{Binding Type, Converter={StaticResource PropertyTypeToColorBrush}}"
                                                                     CornerRadius="2"
@@ -1639,7 +1681,7 @@
                                                     </Style.Triggers>
                                                 </Style>
                                             </StackPanel.Style>
-                                            <TextBlock Text="Output Pins" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                                            <TextBlock Text="Output Pins" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                                             <StackPanel Orientation="Horizontal">
                                                 <Button Content="+ Add Output" Width="100"
                                                       Command="{Binding AddOutputPinCommand}" />
@@ -1657,7 +1699,7 @@
                                     </StackPanel>
 
                                     <TextBlock Text="Select a node to edit its properties"
-                                             Opacity="0.5"
+                                             Style="{StaticResource MutedText}"
                                              TextWrapping="Wrap"
                                              Visibility="{Binding SelectedNode, Converter={StaticResource InvertedNullToVisibility}}" />
                                 </StackPanel>

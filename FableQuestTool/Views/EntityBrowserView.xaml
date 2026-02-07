@@ -110,6 +110,9 @@
                                   AutoGenerateColumns="False"
                                   IsReadOnly="True"
                                   SelectionMode="Single"
+                                  SelectionUnit="FullRow"
+                                  RowHeaderWidth="0"
+                                  HeadersVisibility="Column"
                                   GridLinesVisibility="None"
                                   Background="{DynamicResource BackgroundSecondary}"
                                   Foreground="{DynamicResource TextPrimary}"
@@ -136,7 +139,7 @@
                     <Border Grid.Row="3" Background="{DynamicResource BackgroundSecondary}" Margin="8,0,8,8" Padding="12">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <TextBlock Text="Entity Details" FontWeight="Bold" FontSize="14" Margin="0,0,0,8" />
+                                <TextBlock Text="Entity Details" Style="{StaticResource PanelHeaderText}" Margin="0,0,0,8" />
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -154,19 +157,19 @@
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Script Name:" FontWeight="SemiBold" Margin="0,4" />
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Script Name:" Style="{StaticResource FormLabelText}" Margin="0,4" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEntity.ScriptName}" Margin="0,4" />
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Definition Type:" FontWeight="SemiBold" Margin="0,4" />
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Definition Type:" Style="{StaticResource FormLabelText}" Margin="0,4" />
                                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEntity.DefinitionType}" Margin="0,4" />
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Thing Type:" FontWeight="SemiBold" Margin="0,4" />
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Thing Type:" Style="{StaticResource FormLabelText}" Margin="0,4" />
                                     <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedEntity.ThingType}" Margin="0,4" />
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Category:" FontWeight="SemiBold" Margin="0,4" />
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Category:" Style="{StaticResource FormLabelText}" Margin="0,4" />
                                     <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedEntity.Category}" Margin="0,4" />
 
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Position:" FontWeight="SemiBold" Margin="0,4" />
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Position:" Style="{StaticResource FormLabelText}" Margin="0,4" />
                                     <TextBlock Grid.Row="4" Grid.Column="1" Margin="0,4">
                                         <Run Text="{Binding SelectedEntity.PositionX, StringFormat=F2}" />
                                         <Run Text=", " />
@@ -175,13 +178,13 @@
                                         <Run Text="{Binding SelectedEntity.PositionZ, StringFormat=F2}" />
                                     </TextBlock>
 
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Region:" FontWeight="SemiBold" Margin="0,4" />
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Region:" Style="{StaticResource FormLabelText}" Margin="0,4" />
                                     <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedEntity.RegionName}" Margin="0,4" />
 
-                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Source File:" FontWeight="SemiBold" Margin="0,4" />
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Source File:" Style="{StaticResource FormLabelText}" Margin="0,4" />
                                     <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedEntity.SourceFile}" Margin="0,4" />
 
-                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="UID:" FontWeight="SemiBold" Margin="0,4" />
+                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="UID:" Style="{StaticResource FormLabelText}" Margin="0,4" />
                                     <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedEntity.Uid}" Margin="0,4" />
                                 </Grid>
                             </StackPanel>

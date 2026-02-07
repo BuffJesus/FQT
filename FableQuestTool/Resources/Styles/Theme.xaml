@@ -53,6 +53,28 @@
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
     </Style>
 
+    <Style x:Key="PanelHeaderText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <Style x:Key="SectionHeaderText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+    </Style>
+
+    <Style x:Key="MutedText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+        <Setter Property="Opacity" Value="0.7" />
+    </Style>
+
+    <Style x:Key="FormLabelText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+    </Style>
+
     <Style TargetType="Label">
         <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
     </Style>
@@ -353,6 +375,8 @@
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="6,4" />
+        <Setter Property="MaxWidth" Value="320" />
+        <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
     </Style>
 
     <Style TargetType="ToolBarTray">

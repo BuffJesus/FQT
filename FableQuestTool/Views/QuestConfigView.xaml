@@ -19,8 +19,8 @@
         </Grid.ColumnDefinitions>
         <Border Grid.Column="0" Background="{DynamicResource PanelBackground}">
             <StackPanel Margin="12">
-                <TextBlock Text="Quest Setup" FontWeight="SemiBold" Margin="0,0,0,8" />
-                <TextBlock Text="Sections" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                <TextBlock Text="Quest Setup" Style="{StaticResource PanelHeaderText}" Margin="0,0,0,8" />
+                <TextBlock Text="Sections" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                 <ListBox x:Name="SectionList"
                          SelectionChanged="OnSectionChanged"
                          SelectedIndex="0"
@@ -38,12 +38,17 @@
                 </ListBox>
             </StackPanel>
         </Border>
+        <GridSplitter Grid.Column="0"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Stretch"
+                      Width="6"
+                      Background="{DynamicResource BorderBrush}" />
         <Border Grid.Column="1" Background="{DynamicResource SurfaceBackground}" Margin="8">
             <ScrollViewer>
                 <StackPanel Margin="16" Orientation="Vertical">
                     <Border Background="{DynamicResource PanelBackground}" Padding="10" Margin="0,0,0,12">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Quick Actions" FontWeight="SemiBold" Margin="0,0,12,0" />
+                            <TextBlock Text="Quick Actions" Style="{StaticResource SectionHeaderText}" Margin="0,0,12,0" />
                             <Button Content="Validate"
                                     Command="{Binding ValidateProjectCommand}"
                                     Margin="0,0,8,0" />
@@ -57,7 +62,7 @@
 
                     <GroupBox x:Name="GettingStartedGroup" Header="Getting Started" Margin="0,0,0,12">
                         <StackPanel Margin="12">
-                            <TextBlock Text="Complete these checks before deploying:" FontWeight="SemiBold" Margin="0,0,0,6" />
+                            <TextBlock Text="Complete these checks before deploying:" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,6" />
                             <CheckBox Content="Fable install detected"
                                       IsChecked="{Binding IsFablePathConfigured}"
                                       IsEnabled="False" />
@@ -68,12 +73,12 @@
                                       IsChecked="{Binding IsSampleQuestsAvailable}"
                                       IsEnabled="False" />
                             <TextBlock Text="{Binding FablePathDisplay}"
+                                       Style="{StaticResource MutedText}"
                                        FontSize="10"
-                                       Opacity="0.7"
                                        Margin="0,4,0,8" />
                             <TextBlock Text="{Binding SampleQuestsPathDisplay}"
+                                       Style="{StaticResource MutedText}"
                                        FontSize="10"
-                                       Opacity="0.7"
                                        Margin="0,0,0,8" />
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Configure Fable Path"
@@ -94,7 +99,7 @@
 
                     <GroupBox x:Name="BasicInfoGroup" Header="Basic Info" Margin="0,0,0,12">
                         <StackPanel Margin="12">
-                            <TextBlock Text="Quest Name" />
+                            <TextBlock Text="Quest Name" Style="{StaticResource FormLabelText}" />
                             <TextBox ToolTip="Internal script name used in Lua code (e.g., 'MyFirstQuest'). Must be unique and contain no spaces.">
                                 <TextBox.Text>
                                     <Binding Path="Project.Name" UpdateSourceTrigger="PropertyChanged">
@@ -105,11 +110,11 @@
                                 </TextBox.Text>
                             </TextBox>
 
-                            <TextBlock Text="Display Name" Margin="0,12,0,0" />
+                            <TextBlock Text="Display Name" Style="{StaticResource FormLabelText}" Margin="0,12,0,0" />
                             <TextBox ToolTip="Friendly name shown to players in quest log and UI."
                                      Text="{Binding Project.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
 
-                            <TextBlock Text="Quest ID" Margin="0,12,0,0" />
+                            <TextBlock Text="Quest ID" Style="{StaticResource FormLabelText}" Margin="0,12,0,0" />
                             <TextBox ToolTip="Unique numeric ID for this quest. Must not conflict with existing quest IDs. Recommend using 50000+ for custom quests.">
                                 <TextBox.Text>
                                     <Binding Path="Project.Id" UpdateSourceTrigger="PropertyChanged">
@@ -120,7 +125,7 @@
                                 </TextBox.Text>
                             </TextBox>
 
-                            <TextBlock Text="Description" Margin="0,12,0,0" />
+                            <TextBlock Text="Description" Style="{StaticResource FormLabelText}" Margin="0,12,0,0" />
                             <TextBox ToolTip="Quest description shown in quest log. Can be multiple lines. Not shown to players."
                                      AcceptsReturn="True" TextWrapping="Wrap" Height="60"
                                      Text="{Binding Project.Description, UpdateSourceTrigger=PropertyChanged}" />
@@ -132,26 +137,26 @@
 
                     <GroupBox x:Name="QuestCardGroup" Header="Quest Card" Margin="0,0,0,12">
                         <StackPanel Margin="12">
-                            <TextBlock Text="Quest Card Object" />
+                            <TextBlock Text="Quest Card Object" Style="{StaticResource FormLabelText}" />
                             <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                                       ItemsSource="{x:Static data:GameData.QuestCards}"
                                       Text="{Binding Project.QuestCardObject, UpdateSourceTrigger=PropertyChanged}"
                                       ToolTip="The physical quest card item given to the player. Different cards have different icons/appearance in the quest log (Generic, Gold, Silver, etc.)." />
 
-                            <TextBlock Text="Objective Text" Margin="0,12,0,0" />
+                            <TextBlock Text="Objective Text" Style="{StaticResource FormLabelText}" Margin="0,12,0,0" />
                             <TextBox Text="{Binding Project.ObjectiveText, UpdateSourceTrigger=PropertyChanged}"
                                      ToolTip="The quest objective shown to players in their quest log. Describes what they need to do to complete the quest." />
 
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                 <StackPanel Width="180">
-                                    <TextBlock Text="Objective Region 1" />
+                                    <TextBlock Text="Objective Region 1" Style="{StaticResource FormLabelText}" />
                                     <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                                               ItemsSource="{x:Static data:GameData.Regions}"
                                               Text="{Binding Project.ObjectiveRegion1, UpdateSourceTrigger=PropertyChanged}"
                                               ToolTip="Primary region where quest objectives are located. Used to show golden trail/breadcrumb path to guide players." />
                                 </StackPanel>
                                 <StackPanel Width="180" Margin="8,0,0,0">
-                                    <TextBlock Text="Objective Region 2" />
+                                    <TextBlock Text="Objective Region 2" Style="{StaticResource FormLabelText}" />
                                     <ComboBox IsEditable="True" IsTextSearchEnabled="True"
                                               ItemsSource="{x:Static data:GameData.Regions}"
                                               Text="{Binding Project.ObjectiveRegion2, UpdateSourceTrigger=PropertyChanged}"
@@ -162,12 +167,12 @@
                             <!-- World Map Offset with Auto-Calculate Button -->
                             <StackPanel x:Name="MapOffsetsPanel" Orientation="Horizontal" Margin="0,12,0,0">
                                 <StackPanel Width="100">
-                                    <TextBlock Text="World Map X" />
+                                    <TextBlock Text="World Map X" Style="{StaticResource FormLabelText}" />
                                     <TextBox Text="{Binding Project.WorldMapOffsetX, UpdateSourceTrigger=PropertyChanged}"
                                              ToolTip="Horizontal pixel offset for the quest marker on the world map. Set to 0 for auto-calculation." />
                                 </StackPanel>
                                 <StackPanel Width="100" Margin="8,0,0,0">
-                                    <TextBlock Text="World Map Y" />
+                                    <TextBlock Text="World Map Y" Style="{StaticResource FormLabelText}" />
                                     <TextBox Text="{Binding Project.WorldMapOffsetY, UpdateSourceTrigger=PropertyChanged}"
                                              ToolTip="Vertical pixel offset for the quest marker on the world map. Set to 0 for auto-calculation." />
                                 </StackPanel>
@@ -178,9 +183,9 @@
                                         Click="OnAutoCalculateMapOffset"
                                         ToolTip="Auto-calculate map offset based on primary region. Uses region center coordinates." />
                             </StackPanel>
-                            <TextBlock Text="Leave at 0,0 to auto-calculate from region" 
-                                       FontSize="10" 
-                                       Opacity="0.6" 
+                            <TextBlock Text="Leave at 0,0 to auto-calculate from region"
+                                       Style="{StaticResource MutedText}"
+                                       FontSize="10"
                                        Margin="0,4,0,0" />
 
                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
@@ -205,7 +210,7 @@
                     <GroupBox x:Name="RegionsGroup" Header="Regions" Margin="0,0,0,12">
                         <StackPanel Margin="12">
                             <StackPanel Orientation="Horizontal">
-                                <ComboBox x:Name="RegionInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
+                                <ComboBox x:Name="RegionInput" Width="220" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
                                           ItemsSource="{x:Static data:GameData.Regions}" />
                                 <Button Content="Add" Width="80" Click="OnAddRegion" />
                                 <Button Content="Remove" Width="80" Margin="8,0,0,0" Click="OnRemoveRegion" />
@@ -218,24 +223,24 @@
                         <StackPanel Margin="12">
                             <UniformGrid Columns="4">
                                 <StackPanel>
-                                    <TextBlock Text="Gold" />
+                                    <TextBlock Text="Gold" Style="{StaticResource FormLabelText}" />
                                     <TextBox Text="{Binding Project.Rewards.Gold, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                                 <StackPanel>
-                                    <TextBlock Text="Experience" />
+                                    <TextBlock Text="Experience" Style="{StaticResource FormLabelText}" />
                                     <TextBox Text="{Binding Project.Rewards.Experience, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                                 <StackPanel>
-                                    <TextBlock Text="Renown" />
+                                    <TextBlock Text="Renown" Style="{StaticResource FormLabelText}" />
                                     <TextBox Text="{Binding Project.Rewards.Renown, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                                 <StackPanel>
-                                    <TextBlock Text="Morality" />
+                                    <TextBlock Text="Morality" Style="{StaticResource FormLabelText}" />
                                     <TextBox Text="{Binding Project.Rewards.Morality, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                             </UniformGrid>
 
-                            <TextBlock Text="Direct Reward Items" Margin="0,12,0,0" />
+                            <TextBlock Text="Direct Reward Items" Style="{StaticResource FormLabelText}" Margin="0,12,0,0" />
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <ComboBox x:Name="RewardItemInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
@@ -255,16 +260,16 @@
                                               Margin="0,0,0,12" />
 
                                     <StackPanel x:Name="ContainerPanel" IsEnabled="{Binding IsChecked, ElementName=UseContainerCheckBox}">
-                                        <TextBlock Text="Container Object" />
+                                        <TextBlock Text="Container Object" Style="{StaticResource FormLabelText}" />
                                         <ComboBox x:Name="ContainerDefNameInput" IsEditable="True" IsTextSearchEnabled="True"
                                                   Text="{Binding Project.Rewards.Container.ContainerDefName, UpdateSourceTrigger=PropertyChanged}"
                                                   ToolTip="The container object (chest, barrel, etc.) to spawn for rewards. Populated from game files." />
 
-                                        <TextBlock Text="Container Script Name" Margin="0,8,0,0" />
+                                        <TextBlock Text="Container Script Name" Style="{StaticResource FormLabelText}" Margin="0,8,0,0" />
                                         <TextBox Text="{Binding Project.Rewards.Container.ContainerScriptName, UpdateSourceTrigger=PropertyChanged}"
                                                  ToolTip="Unique script name for this container instance." />
 
-                                        <TextBlock Text="Spawn Location" Margin="0,8,0,0" />
+                                        <TextBlock Text="Spawn Location" Style="{StaticResource FormLabelText}" Margin="0,8,0,0" />
                                         <ComboBox x:Name="SpawnLocationInput"
                                                   SelectedIndex="0"
                                                   SelectionChanged="OnSpawnLocationChanged"
@@ -275,14 +280,14 @@
                                         </ComboBox>
 
                                         <StackPanel x:Name="SpawnReferencePanel" Margin="0,8,0,0">
-                                            <TextBlock x:Name="SpawnReferenceLabel" Text="Marker/Entity Name" />
+                                            <TextBlock x:Name="SpawnReferenceLabel" Text="Marker/Entity Name" Style="{StaticResource FormLabelText}" />
                                             <ComboBox x:Name="SpawnReferenceInput" IsEditable="True" IsTextSearchEnabled="True"
                                                       Text="{Binding Project.Rewards.Container.SpawnReference, UpdateSourceTrigger=PropertyChanged}"
                                                       ToolTip="Name of the marker or entity to spawn near. Select from quest entities or type manually." />
                                         </StackPanel>
 
                                         <StackPanel x:Name="SpawnPositionPanel" Margin="0,8,0,0" Visibility="Collapsed">
-                                            <TextBlock Text="Position (X, Y, Z)" />
+                                            <TextBlock Text="Position (X, Y, Z)" Style="{StaticResource FormLabelText}" />
                                             <UniformGrid Columns="3">
                                                 <TextBox Text="{Binding Project.Rewards.Container.X, UpdateSourceTrigger=PropertyChanged}"
                                                          ToolTip="X coordinate" />
@@ -293,7 +298,7 @@
                                             </UniformGrid>
                                         </StackPanel>
 
-                                        <TextBlock Text="Container Items" Margin="0,12,0,0" />
+                                        <TextBlock Text="Container Items" Style="{StaticResource FormLabelText}" Margin="0,12,0,0" />
                                         <StackPanel Orientation="Horizontal">
                                             <ComboBox x:Name="ContainerItemInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
                                                       ItemsSource="{x:Static data:GameData.Objects}" />
@@ -315,7 +320,7 @@
                                 </StackPanel>
                             </Expander>
 
-                            <TextBlock Text="Reward Abilities" Margin="0,12,0,0" />
+                            <TextBlock Text="Reward Abilities" Style="{StaticResource FormLabelText}" Margin="0,12,0,0" />
                             <StackPanel Orientation="Horizontal">
                                 <ComboBox x:Name="RewardAbilityInput" Width="200" Margin="0,0,8,0" IsEditable="True" IsTextSearchEnabled="True"
                                           ItemsSource="{x:Static data:GameData.Abilities}" />
@@ -331,19 +336,19 @@
                         <StackPanel Margin="12">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <StackPanel Width="80">
-                                    <TextBlock Text="Boast ID" />
+                                    <TextBlock Text="Boast ID" Style="{StaticResource FormLabelText}" />
                                     <TextBox x:Name="BoastIdInput" />
                                 </StackPanel>
                                 <StackPanel Width="180" Margin="8,0,0,0">
-                                    <TextBlock Text="Boast Text" />
+                                    <TextBlock Text="Boast Text" Style="{StaticResource FormLabelText}" />
                                     <TextBox x:Name="BoastTextInput" />
                                 </StackPanel>
                                 <StackPanel Width="80" Margin="8,0,0,0">
-                                    <TextBlock Text="Renown" />
+                                    <TextBlock Text="Renown" Style="{StaticResource FormLabelText}" />
                                     <TextBox x:Name="BoastRenownInput" Text="0" />
                                 </StackPanel>
                                 <StackPanel Width="80" Margin="8,0,0,0">
-                                    <TextBlock Text="Gold" />
+                                    <TextBlock Text="Gold" Style="{StaticResource FormLabelText}" />
                                     <TextBox x:Name="BoastGoldInput" Text="0" />
                                 </StackPanel>
                                 <StackPanel Margin="8,18,0,0">
@@ -373,11 +378,11 @@
                         <StackPanel Margin="12">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <StackPanel Width="160">
-                                    <TextBlock Text="Name" />
+                                    <TextBlock Text="Name" Style="{StaticResource FormLabelText}" />
                                     <TextBox x:Name="StateNameInput" />
                                 </StackPanel>
                                 <StackPanel Width="110" Margin="8,0,0,0">
-                                    <TextBlock Text="Type" />
+                                    <TextBlock Text="Type" Style="{StaticResource FormLabelText}" />
                                     <ComboBox x:Name="StateTypeInput" SelectedIndex="0">
                                         <ComboBoxItem Content="bool" />
                                         <ComboBoxItem Content="int" />
@@ -385,7 +390,7 @@
                                     </ComboBox>
                                 </StackPanel>
                                 <StackPanel Width="140" Margin="8,0,0,0">
-                                    <TextBlock Text="Default" />
+                                    <TextBlock Text="Default" Style="{StaticResource FormLabelText}" />
                                     <TextBox x:Name="StateDefaultInput" />
                                 </StackPanel>
                                 <StackPanel Margin="8,18,0,0">
@@ -413,27 +418,27 @@
                         <StackPanel Margin="12">
                               <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                   <StackPanel Width="160">
-                                      <TextBlock Text="Function" />
+                                      <TextBlock Text="Function" Style="{StaticResource FormLabelText}" />
                                       <TextBox x:Name="ThreadFunctionInput" />
                                   </StackPanel>
                                   <StackPanel Width="160" Margin="8,0,0,0">
-                                      <TextBlock Text="Region" />
+                                      <TextBlock Text="Region" Style="{StaticResource FormLabelText}" />
                                       <TextBox x:Name="ThreadRegionInput" />
                                   </StackPanel>
                                   <StackPanel Width="220" Margin="8,0,0,0">
-                                      <TextBlock Text="Description" />
+                                      <TextBlock Text="Description" Style="{StaticResource FormLabelText}" />
                                       <TextBox x:Name="ThreadDescriptionInput" />
                                   </StackPanel>
                                   <StackPanel Width="120" Margin="8,0,0,0">
-                                      <TextBlock Text="Interval (s)" />
+                                      <TextBlock Text="Interval (s)" Style="{StaticResource FormLabelText}" />
                                       <TextBox x:Name="ThreadIntervalInput" />
                                   </StackPanel>
                                   <StackPanel Width="180" Margin="8,0,0,0">
-                                      <TextBlock Text="Exit State (bool)" />
+                                      <TextBlock Text="Exit State (bool)" Style="{StaticResource FormLabelText}" />
                                       <TextBox x:Name="ThreadExitStateInput" />
                                   </StackPanel>
                                   <StackPanel Width="120" Margin="8,0,0,0">
-                                      <TextBlock Text="Exit When True" />
+                                      <TextBlock Text="Exit When True" Style="{StaticResource FormLabelText}" />
                                       <CheckBox x:Name="ThreadExitValueInput" IsChecked="True" />
                                   </StackPanel>
                                   <Button Content="Add" Width="70" Margin="8,18,0,0" Click="OnAddThread" />
@@ -467,7 +472,7 @@
                       Background="{DynamicResource BorderBrush}" />
         <Border Grid.Column="2" Background="{DynamicResource PanelBackground}">
             <StackPanel Margin="12">
-                <TextBlock Text="Quest Script Preview" FontWeight="SemiBold" Margin="0,0,0,8" />
+                <TextBlock Text="Quest Script Preview" Style="{StaticResource PanelHeaderText}" Margin="0,0,0,8" />
                 <TextBox x:Name="PreviewText"
                          IsReadOnly="True"
                          AcceptsReturn="True"

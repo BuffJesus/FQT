@@ -24,9 +24,9 @@
         <!-- Left Panel: Categories -->
         <Border Grid.Column="0" Background="{DynamicResource PanelBackground}">
             <StackPanel Margin="12">
-                <TextBlock Text="Quest Templates" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,12" />
+                <TextBlock Text="Quest Templates" Style="{StaticResource PanelHeaderText}" Margin="0,0,0,12" />
                 
-                <TextBlock Text="Categories" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                <TextBlock Text="Categories" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                 <ListBox ItemsSource="{Binding Categories}"
                          SelectedItem="{Binding SelectedCategory}"
                          BorderThickness="0"
@@ -39,12 +39,17 @@
                 </ListBox>
             </StackPanel>
         </Border>
+        <GridSplitter Grid.Column="0"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Stretch"
+                      Width="6"
+                      Background="{DynamicResource BorderBrush}" />
         
         <!-- Middle Panel: Template List -->
         <Border Grid.Column="1" Background="{DynamicResource SurfaceBackground}" Margin="8">
             <DockPanel>
                 <Border DockPanel.Dock="Top" Background="{DynamicResource PanelBackground}" Padding="8" Margin="12,12,12,8">
-                    <TextBlock Text="Available Templates" FontWeight="SemiBold" />
+                    <TextBlock Text="Available Templates" Style="{StaticResource PanelHeaderText}" />
                 </Border>
                 <ListBox ItemsSource="{Binding FilteredTemplates}"
                          SelectedItem="{Binding SelectedTemplate}"
@@ -88,8 +93,8 @@
                                     <TextBlock Grid.Row="2"
                                              Text="{Binding Description}"
                                              TextWrapping="Wrap"
-                                             FontSize="11"
-                                             Opacity="0.7" />
+                                             Style="{StaticResource MutedText}"
+                                             FontSize="11" />
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -97,13 +102,18 @@
                 </ListBox>
             </DockPanel>
         </Border>
+        <GridSplitter Grid.Column="1"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Stretch"
+                      Width="6"
+                      Background="{DynamicResource BorderBrush}" />
         
         <!-- Right Panel: Template Details -->
         <Border Grid.Column="2" Background="{DynamicResource PanelBackground}">
             <ScrollViewer>
                 <StackPanel Margin="12">
                     <Border Background="{DynamicResource SurfaceBackground}" Padding="8" Margin="0,0,0,12">
-                        <TextBlock Text="Template Details" FontWeight="SemiBold" />
+                        <TextBlock Text="Template Details" Style="{StaticResource PanelHeaderText}" />
                     </Border>
                     
                     <StackPanel Visibility="{Binding SelectedTemplate, Converter={StaticResource NullToVisibilityConverter}}">
@@ -134,13 +144,13 @@
                         </StackPanel>
                         
                         <!-- Description -->
-                        <TextBlock Text="Description" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                        <TextBlock Text="Description" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                         <TextBlock Text="{Binding SelectedTemplate.Description}"
                                  TextWrapping="Wrap"
                                  Margin="0,0,0,12" />
                         
                         <!-- Template Info -->
-                        <TextBlock Text="What's Included" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />
+                        <TextBlock Text="What's Included" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,4" />
                         <Border Background="{DynamicResource SurfaceBackground}"
                               Padding="8"
                               CornerRadius="3"
@@ -179,7 +189,7 @@
                     
                     <!-- No Selection Message -->
                     <TextBlock Text="Select a template from the list to view details and create a new quest from it"
-                             Opacity="0.5"
+                             Style="{StaticResource MutedText}"
                              TextWrapping="Wrap"
                              Visibility="{Binding SelectedTemplate, Converter={StaticResource InvertedNullToVisibilityConverter}}" />
                 </StackPanel>

@@ -56,4 +56,28 @@ public sealed class NameValidationTests
 
         Assert.Contains(errors, e => e.Contains("Duplicate", System.StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void ValidateProject_FlagsInvalidEntityScriptName()
+    {
+        QuestProject project = new QuestProject { Name = "ValidQuest" };
+        project.Entities.Add(new QuestEntity { ScriptName = "1BadName" });
+
+        var errors = NameValidation.ValidateProject(project);
+
+        Assert.Contains(errors, e => e.Contains("Entity Script Name", System.StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("valid Lua identifier", System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ValidateProject_FlagsInvalidContainerScriptName()
+    {
+        QuestProject project = new QuestProject { Name = "ValidQuest" };
+        project.Rewards.Container = new ContainerReward { ContainerScriptName = "Bad/Chest" };
+
+        var errors = NameValidation.ValidateProject(project);
+
+        Assert.Contains(errors, e => e.Contains("Reward Container Script Name", System.StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(errors, e => e.Contains("invalid file name characters", System.StringComparison.OrdinalIgnoreCase));
+    }
 }

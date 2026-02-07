@@ -101,4 +101,55 @@ public sealed class DeploymentToggleTests
         Assert.Contains("FinalAlbion.qst updated: Not found", message, System.StringComparison.OrdinalIgnoreCase);
         Assert.Contains("FSE_Master.lua updated: Not found", message, System.StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void ToggleQuest_CommentsAndUncommentsQuestBlock()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        string questsLua = string.Join("\n", new[]
+        {
+            "Quests = {",
+            "    ToggleQuest = {",
+            "        name = \"ToggleQuest\",",
+            "        file = \"ToggleQuest/ToggleQuest\",",
+            "        id = 50001,",
+            "        entity_scripts = {",
+            "            { name = \"Npc\", file = \"ToggleQuest/Entities/Npc\", id = 50002 },",
+            "        }",
+            "    },",
+            "}",
+            string.Empty
+        });
+        File.WriteAllText(tempInstall.QuestsLuaPath, questsLua);
+        File.WriteAllText(tempInstall.MasterPath, string.Join("\n", new[]
+        {
+            "function Main(quest)",
+            "    quest:ActivateQuest(\"ToggleQuest\")",
+            "    quest:Log(\"FSE_Master: Activated ToggleQuest\")",
+            "end",
+            string.Empty
+        }));
+
+        DeploymentService service = new DeploymentService(config, new CodeGenerator());
+
+        Assert.True(service.ToggleQuest("ToggleQuest", false, out string disableMessage), disableMessage);
+        string disabledLua = File.ReadAllText(tempInstall.QuestsLuaPath);
+        Assert.Matches(new Regex(@"^\s*--\s*ToggleQuest\s*=\s*\{", RegexOptions.Multiline), disabledLua);
+        Assert.Matches(new Regex(@"^\s*--\s*name\s*=", RegexOptions.Multiline), disabledLua);
+
+        string disabledMaster = File.ReadAllText(tempInstall.MasterPath);
+        Assert.Matches(new Regex(@"^\s*--\s*quest:ActivateQuest\(""ToggleQuest""\)", RegexOptions.Multiline), disabledMaster);
+        Assert.Matches(new Regex(@"^\s*--\s*quest:Log\(""FSE_Master: Activated ToggleQuest""\)", RegexOptions.Multiline), disabledMaster);
+
+        Assert.True(service.ToggleQuest("ToggleQuest", true, out string enableMessage), enableMessage);
+        string enabledLua = File.ReadAllText(tempInstall.QuestsLuaPath);
+        Assert.DoesNotMatch(new Regex(@"^\s*--\s*ToggleQuest\s*=\s*\{", RegexOptions.Multiline), enabledLua);
+
+        string enabledMaster = File.ReadAllText(tempInstall.MasterPath);
+        Assert.DoesNotMatch(new Regex(@"^\s*--\s*quest:ActivateQuest\(""ToggleQuest""\)", RegexOptions.Multiline), enabledMaster);
+        Assert.DoesNotMatch(new Regex(@"^\s*--\s*quest:Log\(""FSE_Master: Activated ToggleQuest""\)", RegexOptions.Multiline), enabledMaster);
+    }
 }

@@ -109,4 +109,22 @@ public sealed class DeploymentServiceTests
         Assert.False(result);
         Assert.Contains("invalid", message, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void LaunchFse_FailsWhenFseMissing()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        File.Delete(Path.Combine(tempInstall.RootPath, "FSE_Launcher.exe"));
+        File.Delete(Path.Combine(tempInstall.RootPath, "FableScriptExtender.dll"));
+
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        DeploymentService service = new DeploymentService(config, new CodeGenerator());
+
+        bool result = service.LaunchFse(out string message);
+
+        Assert.False(result);
+        Assert.Contains("Cannot launch FSE", message, StringComparison.OrdinalIgnoreCase);
+    }
 }

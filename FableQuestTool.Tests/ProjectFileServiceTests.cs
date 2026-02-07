@@ -127,6 +127,19 @@ public sealed class ProjectFileServiceTests
         Assert.Throws<System.Text.Json.JsonException>(() => service.Load(path));
     }
 
+    [Fact]
+    public void Save_CreatesDirectory()
+    {
+        ProjectFileService service = new ProjectFileService();
+        QuestProject quest = new QuestProject { Name = "DirQuest" };
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = System.IO.Path.Combine(temp.Path, "nested", "DirQuest.fqtproj");
+
+        service.Save(path, quest);
+
+        Assert.True(File.Exists(path));
+    }
+
     private static QuestProject BuildProject()
     {
         QuestProject quest = new QuestProject

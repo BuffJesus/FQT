@@ -278,7 +278,7 @@
                                                  VerticalAlignment="Center" />
                                         <TextBlock Text="{Binding TabTitle}"
                                                  VerticalAlignment="Center" />
-                                        <Button Content="×"
+                                        <Button Content="x"
                                               Margin="8,0,0,0"
                                               Width="18"
                                               Height="18"
@@ -1661,7 +1661,7 @@
                 Margin="0,8,16,0"
                 Padding="12,6"
                 Command="{Binding AddNewEntityCommand}"
-                Background="{DynamicResource PrimaryAccent}"
+                Background="{DynamicResource AccentPrimary}"
                 BorderThickness="0"
                 Foreground="White"
                 FontWeight="SemiBold"

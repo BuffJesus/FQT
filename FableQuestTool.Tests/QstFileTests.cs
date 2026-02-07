@@ -100,4 +100,53 @@ public sealed class QstFileTests
         Assert.Contains("AddQuest(\"QuestSave\"", output);
         Assert.Contains("TRUE", output);
     }
+
+    [Fact]
+    public void Load_PreservesRawEnabledWhenUnknown()
+    {
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = Path.Combine(temp.Path, "FinalAlbion.qst");
+        File.WriteAllText(path, "AddQuest(\"QuestRaw\", \t\t\tMAYBE);\n");
+
+        QstFile file = QstFile.Load(path);
+        var entry = Assert.Single(file.Quests);
+
+        Assert.Equal("QuestRaw", entry.Name);
+        Assert.Null(entry.Enabled);
+        Assert.Equal("MAYBE", entry.RawEnabled);
+
+        file.Save();
+        string output = File.ReadAllText(path);
+        Assert.Contains("MAYBE", output);
+    }
+
+    [Fact]
+    public void Load_AllowsCommaInQuestName()
+    {
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = Path.Combine(temp.Path, "FinalAlbion.qst");
+        File.WriteAllText(path, "AddQuest(\"Quest,Name\", \t\t\tTRUE);\n");
+
+        QstFile file = QstFile.Load(path);
+
+        Assert.True(file.HasQuest("Quest,Name"));
+    }
+
+    [Fact]
+    public void Load_ThrowsWhenPathMissing()
+    {
+        Assert.Throws<ArgumentException>(() => QstFile.Load(string.Empty));
+    }
+
+    [Fact]
+    public void HasQuest_IsCaseInsensitive()
+    {
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = Path.Combine(temp.Path, "FinalAlbion.qst");
+        File.WriteAllText(path, "AddQuest(\"QuestCase\", \t\t\tTRUE);\n");
+
+        QstFile file = QstFile.Load(path);
+
+        Assert.True(file.HasQuest("questcase"));
+    }
 }

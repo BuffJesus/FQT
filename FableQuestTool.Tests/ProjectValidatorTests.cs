@@ -112,4 +112,25 @@ public sealed class ProjectValidatorTests
         Assert.Contains(issues, i => i.Severity == ValidationSeverity.Warning && i.Message.Contains("below 50000", System.StringComparison.OrdinalIgnoreCase));
         Assert.Contains(issues, i => i.Severity == ValidationSeverity.Warning && i.Message.Contains("no regions", System.StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void Validate_ReportsMissingConnectionTargets()
+    {
+        QuestProject project = new QuestProject { Name = "QuestOk" };
+        QuestEntity entity = new QuestEntity { ScriptName = "EntityA" };
+        entity.Nodes.Add(new BehaviorNode { Id = "n1", Type = "onHeroTalks", Category = "trigger" });
+        entity.Connections.Add(new NodeConnection
+        {
+            FromNodeId = "n1",
+            FromPort = "Output",
+            ToNodeId = "missing",
+            ToPort = "Input"
+        });
+        project.Entities.Add(entity);
+
+        ProjectValidator validator = new ProjectValidator();
+        var issues = validator.Validate(project);
+
+        Assert.Contains(issues, i => i.Severity == ValidationSeverity.Error && i.Message.Contains("missing node", System.StringComparison.OrdinalIgnoreCase));
+    }
 }

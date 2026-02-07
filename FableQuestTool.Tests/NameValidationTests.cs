@@ -80,4 +80,12 @@ public sealed class NameValidationTests
         Assert.Contains(errors, e => e.Contains("Reward Container Script Name", System.StringComparison.OrdinalIgnoreCase));
         Assert.Contains(errors, e => e.Contains("invalid file name characters", System.StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void ValidateProject_HandlesNullProject()
+    {
+        var errors = NameValidation.ValidateProject(null!);
+
+        Assert.Contains(errors, e => e.Contains("Project is null", System.StringComparison.OrdinalIgnoreCase));
+    }
 }

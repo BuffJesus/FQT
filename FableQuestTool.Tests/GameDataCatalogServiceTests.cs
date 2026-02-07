@@ -48,4 +48,27 @@ public sealed class GameDataCatalogServiceTests
         Assert.Equal("MK_CHEST", chests[0].ScriptName);
         Assert.Equal(EntityCategory.Chest, chests[0].Category);
     }
+
+    [Fact]
+    public void ExportCatalogToFile_WritesSummary()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        string levelsPath = Path.Combine(tempInstall.RootPath, "data", "Levels", "FinalAlbion");
+        File.WriteAllText(Path.Combine(levelsPath, "OakValeEast_v2.tng"),
+            "NewThing Object;\nScriptName MK_TEST;\nDefinitionType OBJECT_BARREL;\nUID 1;\nEndThing\n");
+
+        GameDataCatalogService service = new GameDataCatalogService(config);
+        string outputPath = Path.Combine(tempInstall.RootPath, "catalog.txt");
+
+        service.ExportCatalogToFile(outputPath);
+
+        string output = File.ReadAllText(outputPath);
+        Assert.Contains("STATISTICS", output);
+        Assert.Contains("Total Entities:", output);
+        Assert.Contains("Oakvale", output);
+        Assert.Contains("MK_TEST", output);
+    }
 }

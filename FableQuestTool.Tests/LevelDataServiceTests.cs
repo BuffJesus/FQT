@@ -21,6 +21,19 @@ public sealed class LevelDataServiceTests
     }
 
     [Fact]
+    public void GetLevelMetadata_ReturnsEmptyWhenMissing()
+    {
+        using TestTempDirectory temp = new TestTempDirectory();
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(temp.Path);
+
+        LevelDataService service = new LevelDataService(config);
+        var metadata = service.GetLevelMetadata();
+
+        Assert.Empty(metadata);
+    }
+
+    [Fact]
     public void GetLevelMetadata_FindsLevFilesAndMappedTngs()
     {
         using FakeFableInstall tempInstall = FakeFableInstall.Create();
@@ -39,5 +52,17 @@ public sealed class LevelDataServiceTests
         Assert.True(info.HasLevFile);
         Assert.Single(info.TngFiles);
         Assert.Contains("StartOakValeWest.tng", info.TngFiles[0]);
+    }
+
+    [Fact]
+    public void GetBigFiles_NoFablePath_ReturnsEmpty()
+    {
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(string.Empty);
+
+        LevelDataService service = new LevelDataService(config);
+        var bigFiles = service.GetBigFiles();
+
+        Assert.Empty(bigFiles);
     }
 }

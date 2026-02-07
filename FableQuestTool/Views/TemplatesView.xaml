@@ -146,25 +146,25 @@
                               Margin="0,0,0,12">
                             <StackPanel>
                                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
-                                    <Run Text="• Quest Name: " FontWeight="SemiBold" />
+                                    <Run Text="- Quest Name: " FontWeight="SemiBold" />
                                     <Run Text="{Binding SelectedTemplate.Template.Name}" />
                                 </TextBlock>
                                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
-                                    <Run Text="• Display Name: " FontWeight="SemiBold" />
+                                    <Run Text="- Display Name: " FontWeight="SemiBold" />
                                     <Run Text="{Binding SelectedTemplate.Template.DisplayName}" />
                                 </TextBlock>
                                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
-                                    <Run Text="• Regions: " FontWeight="SemiBold" />
+                                    <Run Text="- Regions: " FontWeight="SemiBold" />
                                     <Run Text="{Binding SelectedTemplate.Template.Regions.Count, Mode=OneWay}" />
                                     <Run Text=" region(s)" />
                                 </TextBlock>
                                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
-                                    <Run Text="• Entities: " FontWeight="SemiBold" />
+                                    <Run Text="- Entities: " FontWeight="SemiBold" />
                                     <Run Text="{Binding SelectedTemplate.Template.Entities.Count, Mode=OneWay}" />
                                     <Run Text=" entity(-ies)" />
                                 </TextBlock>
                                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
-                                    <Run Text="• Rewards: Gold, Renown, Experience" />
+                                    <Run Text="- Rewards: Gold, Renown, Experience" />
                                 </TextBlock>
                             </StackPanel>
                         </Border>

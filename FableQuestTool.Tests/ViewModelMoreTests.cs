@@ -146,6 +146,19 @@ public sealed class ViewModelMoreTests
         Assert.Equal("quests.lua not found", viewModel.StatusText);
     }
 
+    [Fact]
+    public void QuestManager_ReportsParseError()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        File.WriteAllText(tempInstall.QuestsLuaPath, "\0bad");
+
+        using IniScope ini = IniScope.WithFablePath(tempInstall.RootPath);
+        QuestManagerViewModel viewModel = new QuestManagerViewModel();
+
+        Assert.Empty(viewModel.Quests);
+        Assert.Equal("Loaded 0 quests", viewModel.StatusText);
+    }
+
     private sealed class IniScope : IDisposable
     {
         private readonly string iniPath;

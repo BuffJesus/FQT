@@ -152,4 +152,48 @@ public sealed class DeploymentToggleTests
         Assert.DoesNotMatch(new Regex(@"^\s*--\s*quest:ActivateQuest\(""ToggleQuest""\)", RegexOptions.Multiline), enabledMaster);
         Assert.DoesNotMatch(new Regex(@"^\s*--\s*quest:Log\(""FSE_Master: Activated ToggleQuest""\)", RegexOptions.Multiline), enabledMaster);
     }
+
+    [Fact]
+    public void ToggleQuest_LeavesOtherEntriesUntouched()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        string questsLua = string.Join("\n", new[]
+        {
+            "Quests = {",
+            "    ToggleQuest = {",
+            "        name = \"ToggleQuest\",",
+            "        id = 50001,",
+            "    },",
+            "    OtherQuest = {",
+            "        name = \"OtherQuest\",",
+            "        id = 50002,",
+            "    },",
+            "}",
+            string.Empty
+        });
+        File.WriteAllText(tempInstall.QuestsLuaPath, questsLua);
+
+        DeploymentService service = new DeploymentService(config, new CodeGenerator());
+
+        Assert.True(service.ToggleQuest("ToggleQuest", false, out string message), message);
+        string content = File.ReadAllText(tempInstall.QuestsLuaPath);
+        Assert.Matches(new Regex(@"^\s*--\s*ToggleQuest\s*=\s*\{", RegexOptions.Multiline), content);
+        Assert.Matches(new Regex(@"^\s*OtherQuest\s*=\s*\{", RegexOptions.Multiline), content);
+    }
+
+    [Fact]
+    public void DeleteQuest_ReturnsNotFoundWhenMissing()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        DeploymentService service = new DeploymentService(config, new CodeGenerator());
+
+        Assert.False(service.DeleteQuest("MissingQuest", out string message));
+        Assert.Contains("not found", message, System.StringComparison.OrdinalIgnoreCase);
+    }
 }

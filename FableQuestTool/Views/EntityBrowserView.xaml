@@ -49,17 +49,20 @@
                                      Height="28">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox">
-                                        <Setter Property="Foreground" Value="Gray"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
                                         <Style.Triggers>
                                             <Trigger Property="IsFocused" Value="True">
-                                                <Setter Property="Foreground" Value="Black"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
                                             </Trigger>
                                             <Trigger Property="Text" Value="">
                                                 <Setter Property="Background">
                                                     <Setter.Value>
                                                         <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                                             <VisualBrush.Visual>
-                                                                <TextBlock Text="Search by name or type..." Foreground="LightGray" Margin="4,0,0,0"/>
+                                                                <TextBlock Text="Search by name or type..."
+                                                                           Foreground="{DynamicResource TextSecondary}"
+                                                                           Opacity="0.7"
+                                                                           Margin="4,0,0,0" />
                                                             </VisualBrush.Visual>
                                                         </VisualBrush>
                                                     </Setter.Value>
@@ -107,8 +110,10 @@
                                   IsReadOnly="True"
                                   SelectionMode="Single"
                                   GridLinesVisibility="None"
-                                  RowBackground="Transparent"
-                                  AlternatingRowBackground="#F5F5F5">
+                                  Background="{DynamicResource BackgroundSecondary}"
+                                  Foreground="{DynamicResource TextPrimary}"
+                                  RowBackground="{DynamicResource BackgroundSecondary}"
+                                  AlternatingRowBackground="{DynamicResource SurfaceBackground}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Script Name" Binding="{Binding ScriptName}" Width="200" />
                                 <DataGridTextColumn Header="Definition Type" Binding="{Binding DefinitionType}" Width="250" />
@@ -199,17 +204,20 @@
                                      Height="28">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox">
-                                        <Setter Property="Foreground" Value="Gray"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
                                         <Style.Triggers>
                                             <Trigger Property="IsFocused" Value="True">
-                                                <Setter Property="Foreground" Value="Black"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
                                             </Trigger>
                                             <Trigger Property="Text" Value="">
                                                 <Setter Property="Background">
                                                     <Setter.Value>
                                                         <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                                             <VisualBrush.Visual>
-                                                                <TextBlock Text="Search items..." Foreground="LightGray" Margin="4,0,0,0"/>
+                                                                <TextBlock Text="Search items..."
+                                                                           Foreground="{DynamicResource TextSecondary}"
+                                                                           Opacity="0.7"
+                                                                           Margin="4,0,0,0" />
                                                             </VisualBrush.Visual>
                                                         </VisualBrush>
                                                     </Setter.Value>

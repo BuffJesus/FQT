@@ -64,4 +64,35 @@ public sealed class ProjectValidatorTests
 
         Assert.Contains(issues, i => i.Message.Contains("no behavior nodes", System.StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void Validate_SkipsVariableAndRerouteNodes()
+    {
+        QuestProject project = new QuestProject { Name = "QuestOk" };
+        QuestEntity entity = new QuestEntity { ScriptName = "EntityVar" };
+        entity.Nodes.Add(new BehaviorNode
+        {
+            Id = "var1",
+            Type = "var_get_Test",
+            Category = "variable"
+        });
+        entity.Nodes.Add(new BehaviorNode
+        {
+            Id = "reroute1",
+            Type = "reroute",
+            Category = "flow"
+        });
+        entity.Nodes.Add(new BehaviorNode
+        {
+            Id = "trigger1",
+            Type = "onHeroTalks",
+            Category = "trigger"
+        });
+        project.Entities.Add(entity);
+
+        ProjectValidator validator = new ProjectValidator();
+        var issues = validator.Validate(project);
+
+        Assert.DoesNotContain(issues, i => i.Message.Contains("unknown node type", System.StringComparison.OrdinalIgnoreCase));
+    }
 }

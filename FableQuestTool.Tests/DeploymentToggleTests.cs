@@ -82,4 +82,23 @@ public sealed class DeploymentToggleTests
         string qstText = File.ReadAllText(tempInstall.QstPath);
         Assert.DoesNotContain("AddQuest(\"DeleteQuest\"", qstText);
     }
+
+    [Fact]
+    public void ToggleQuest_MissingFiles_StillReturnsMessage()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        File.Delete(tempInstall.QuestsLuaPath);
+        File.Delete(tempInstall.MasterPath);
+        File.Delete(tempInstall.QstPath);
+
+        DeploymentService service = new DeploymentService(config, new CodeGenerator());
+
+        Assert.True(service.ToggleQuest("MissingQuest", false, out string message));
+        Assert.Contains("quests.lua updated: Not found", message, System.StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("FinalAlbion.qst updated: Not found", message, System.StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("FSE_Master.lua updated: Not found", message, System.StringComparison.OrdinalIgnoreCase);
+    }
 }

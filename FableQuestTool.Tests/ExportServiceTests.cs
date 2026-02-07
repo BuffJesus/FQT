@@ -30,6 +30,42 @@ public sealed class ExportServiceTests
         Assert.Contains("ExportQuest", registration);
     }
 
+    [Fact]
+    public void Export_ThrowsOnInvalidBaseDirectory()
+    {
+        QuestProject quest = BuildExportQuest();
+        ExportService service = new ExportService(new CodeGenerator());
+
+        string invalidBase = "?:\\invalid";
+
+        Assert.ThrowsAny<IOException>(() => service.Export(quest, invalidBase));
+    }
+
+    [Fact]
+    public void Export_SkipsContainerScriptWhenAutoGive()
+    {
+        QuestProject quest = new QuestProject
+        {
+            Name = "AutoGiveQuest",
+            DisplayName = "Auto Give Quest"
+        };
+        quest.Entities.Add(new QuestEntity { ScriptName = "AutoEntity" });
+        quest.Rewards.Container = new ContainerReward
+        {
+            ContainerScriptName = "AutoChest",
+            AutoGiveOnComplete = true
+        };
+        quest.Rewards.Container.Items.Add("OBJECT_APPLE");
+
+        ExportService service = new ExportService(new CodeGenerator());
+
+        using TestTempDirectory temp = new TestTempDirectory();
+        string output = service.Export(quest, temp.Path);
+
+        string containerPath = Path.Combine(output, "Entities", "AutoChest.lua");
+        Assert.False(File.Exists(containerPath));
+    }
+
     private static QuestProject BuildExportQuest()
     {
         QuestProject quest = new QuestProject

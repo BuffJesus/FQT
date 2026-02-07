@@ -140,6 +140,21 @@ public sealed class ProjectFileServiceTests
         Assert.True(File.Exists(path));
     }
 
+    [Fact]
+    public void Load_MissingProjectPayload_ReturnsDefaultProject()
+    {
+        ProjectFileService service = new ProjectFileService();
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = System.IO.Path.Combine(temp.Path, "Empty.fqtproj");
+
+        File.WriteAllText(path, "{\"version\":\"0.1\"}");
+
+        QuestProject loaded = service.Load(path);
+
+        Assert.NotNull(loaded);
+        Assert.Equal("NewQuest", loaded.Name);
+    }
+
     private static QuestProject BuildProject()
     {
         QuestProject quest = new QuestProject

@@ -5,6 +5,7 @@ using Xunit;
 
 namespace FableQuestTool.Tests;
 
+[Collection("IniFileTests")]
 public sealed class ViewModelEntityTabTests
 {
     [Fact]

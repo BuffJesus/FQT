@@ -38,6 +38,95 @@ public sealed class ProjectFileServiceTests
         Assert.Equal("OBJECT_CARROT", GetConfigString(checkHasItem, "item"));
     }
 
+    [Fact]
+    public void Save_NormalizesItemNodes_UsesPreferredItem()
+    {
+        QuestProject quest = new QuestProject { Name = "NormalizeQuest" };
+        QuestEntity entity = new QuestEntity { ScriptName = "EntityA" };
+
+        BehaviorNode takeItem = new BehaviorNode
+        {
+            Id = "take",
+            Type = "takeItem",
+            Category = "action"
+        };
+        takeItem.Config["item"] = "OBJECT_CARROT";
+
+        BehaviorNode checkHasItem = new BehaviorNode
+        {
+            Id = "check",
+            Type = "checkHasItem",
+            Category = "condition"
+        };
+
+        BehaviorNode onItemPresented = new BehaviorNode
+        {
+            Id = "present",
+            Type = "onItemPresented",
+            Category = "trigger"
+        };
+
+        entity.Nodes.Add(takeItem);
+        entity.Nodes.Add(checkHasItem);
+        entity.Nodes.Add(onItemPresented);
+        quest.Entities.Add(entity);
+
+        ProjectFileService service = new ProjectFileService();
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = System.IO.Path.Combine(temp.Path, "Normalize.fqtproj");
+
+        service.Save(path, quest);
+
+        Assert.Equal("OBJECT_CARROT", GetConfigString(checkHasItem, "item"));
+        Assert.Equal("OBJECT_CARROT", GetConfigString(onItemPresented, "item"));
+    }
+
+    [Fact]
+    public void Save_DoesNotNormalizeWhenOnlyDefaultItem()
+    {
+        QuestProject quest = new QuestProject { Name = "DefaultItemQuest" };
+        QuestEntity entity = new QuestEntity { ScriptName = "EntityA" };
+
+        BehaviorNode takeItem = new BehaviorNode
+        {
+            Id = "take",
+            Type = "takeItem",
+            Category = "action"
+        };
+        takeItem.Config["item"] = "OBJECT_APPLE";
+
+        BehaviorNode checkHasItem = new BehaviorNode
+        {
+            Id = "check",
+            Type = "checkHasItem",
+            Category = "condition"
+        };
+
+        entity.Nodes.Add(takeItem);
+        entity.Nodes.Add(checkHasItem);
+        quest.Entities.Add(entity);
+
+        ProjectFileService service = new ProjectFileService();
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = System.IO.Path.Combine(temp.Path, "DefaultItem.fqtproj");
+
+        service.Save(path, quest);
+
+        Assert.Equal(string.Empty, GetConfigString(checkHasItem, "item"));
+    }
+
+    [Fact]
+    public void Load_InvalidJson_Throws()
+    {
+        ProjectFileService service = new ProjectFileService();
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = System.IO.Path.Combine(temp.Path, "Invalid.fqtproj");
+
+        File.WriteAllText(path, "{ not valid json ");
+
+        Assert.Throws<System.Text.Json.JsonException>(() => service.Load(path));
+    }
+
     private static QuestProject BuildProject()
     {
         QuestProject quest = new QuestProject

@@ -633,13 +633,12 @@ public sealed partial class MainViewModel : ObservableObject
     private void OpenHelp()
     {
         string content = LoadHelpContent();
+        var viewModel = new HelpViewModel();
+        viewModel.Load(content);
         var view = new Views.HelpView
         {
             Owner = System.Windows.Application.Current.MainWindow,
-            DataContext = new HelpViewModel
-            {
-                Content = content
-            }
+            DataContext = viewModel
         };
 
         view.Show();

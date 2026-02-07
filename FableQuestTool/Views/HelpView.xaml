@@ -12,19 +12,58 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240" MinWidth="200" MaxWidth="320" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <Border Background="{DynamicResource BackgroundSecondary}" Padding="10">
-            <TextBlock Text="{Binding Title}" Style="{StaticResource PanelHeaderText}" />
+        <Border Grid.ColumnSpan="2" Background="{DynamicResource BackgroundSecondary}" Padding="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Title}" Style="{StaticResource PanelHeaderText}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Copy Section"
+                            Margin="0,0,8,0"
+                            Command="{Binding CopySectionCommand}"
+                            ToolTip="Copy the current section to clipboard" />
+                    <Button Content="Copy All"
+                            Command="{Binding CopyAllCommand}"
+                            ToolTip="Copy the entire guide to clipboard" />
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <TextBox Grid.Row="1"
-                 Margin="8"
-                 Text="{Binding Content}"
-                 IsReadOnly="True"
-                 AcceptsReturn="True"
-                 TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Auto"
-                 HorizontalScrollBarVisibility="Auto"
-                 BorderThickness="0" />
+        <Border Grid.Row="1" Background="{DynamicResource PanelBackground}">
+            <StackPanel Margin="10">
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,8"
+                         Padding="6,4"
+                         ToolTip="Search the guide" />
+                <ListBox ItemsSource="{Binding FilteredSections}"
+                         SelectedItem="{Binding SelectedSection}"
+                         BorderThickness="0"
+                         Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Title}" Padding="4,6" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource BackgroundPrimary}">
+            <TextBox Margin="10"
+                     Text="{Binding Content}"
+                     IsReadOnly="True"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     BorderThickness="0" />
+        </Border>
     </Grid>
 </Window>

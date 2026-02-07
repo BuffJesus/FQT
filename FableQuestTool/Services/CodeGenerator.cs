@@ -190,6 +190,20 @@ public sealed class CodeGenerator
 
         sb.AppendLine();
 
+        if (entity.IsQuestTarget || entity.ShowOnMinimap)
+        {
+            sb.AppendLine("    -- Quest target highlighting and minimap marker");
+            if (entity.IsQuestTarget)
+            {
+                sb.AppendLine("    Quest:SetThingHasInformation(Me, true)");
+            }
+            if (entity.ShowOnMinimap)
+            {
+                sb.AppendLine($"    Quest:MiniMapAddMarker(Me, \"{Escape(entity.ScriptName)}\")");
+            }
+            sb.AppendLine();
+        }
+
         // Check if this object entity has rewards configured
         bool hasObjectRewards = entity.EntityType == EntityType.Object &&
                                entity.ObjectReward != null &&
@@ -432,7 +446,7 @@ public sealed class CodeGenerator
             string isGold = quest.IsGoldQuest ? "true" : "false";
             sb.AppendLine();
             sb.AppendLine("    -- Set quest info for start screen");
-            sb.AppendLine($"    Quest:SetQuestInfoName(\"{Escape(quest.DisplayName)}\")");
+            sb.AppendLine($"    Quest:SetQuestInfoName(\"{Escape(GetQuestDisplayName(quest))}\")");
 
             // Build description with rewards info for start screen
             string description = BuildStartScreenDescription(quest);
@@ -449,7 +463,9 @@ public sealed class CodeGenerator
         // Start threads
         sb.AppendLine("    -- Start quest threads");
         
-        string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
+        string primaryRegion = quest.Regions.FirstOrDefault()
+                               ?? quest.ObjectiveRegion1
+                               ?? "Oakvale";
         
         if (quest.Entities.Any(e => e.SpawnMethod != SpawnMethod.BindExisting) ||
             quest.Entities.Any(e => e.IsQuestTarget || e.ShowOnMinimap))
@@ -492,7 +508,9 @@ public sealed class CodeGenerator
 
     private void GenerateEntitySpawnerThread(StringBuilder sb, QuestProject quest)
     {
-        string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
+        string primaryRegion = quest.Regions.FirstOrDefault()
+                               ?? quest.ObjectiveRegion1
+                               ?? "Oakvale";
 
         sb.AppendLine("function EntitySpawner(questObject)");
         sb.AppendLine("    Quest = questObject");
@@ -527,7 +545,14 @@ public sealed class CodeGenerator
             sb.AppendLine("    -- Set up quest target highlighting and minimap markers");
             foreach (QuestEntity entity in questTargets)
             {
-                sb.AppendLine($"    local {entity.ScriptName} = Quest:GetThingWithScriptName(\"{entity.ScriptName}\")");
+                string region = string.IsNullOrWhiteSpace(entity.SpawnRegion)
+                    ? primaryRegion
+                    : entity.SpawnRegion;
+
+                sb.AppendLine($"    local {entity.ScriptName} = Quest:GetThingWithScriptNameAtRegion(\"{entity.ScriptName}\", \"{region}\")");
+                sb.AppendLine($"    if {entity.ScriptName} == nil then");
+                sb.AppendLine($"        {entity.ScriptName} = Quest:GetThingWithScriptName(\"{entity.ScriptName}\")");
+                sb.AppendLine("    end");
                 sb.AppendLine($"    if {entity.ScriptName} ~= nil then");
                 
                 if (entity.IsQuestTarget)
@@ -737,6 +762,16 @@ public sealed class CodeGenerator
         sb.AppendLine();
         sb.AppendLine("            -- Complete and deactivate quest");
         string showEndScreen = quest.UseQuestEndScreen ? "true" : "false";
+        if (quest.UseQuestEndScreen)
+        {
+            sb.AppendLine("            -- Set quest info for end screen");
+            sb.AppendLine($"            Quest:SetQuestInfoName(\"{Escape(GetQuestDisplayName(quest))}\")");
+            string endDescription = BuildStartScreenDescription(quest);
+            if (!string.IsNullOrWhiteSpace(endDescription))
+            {
+                sb.AppendLine($"            Quest:SetQuestInfoText(\"{Escape(endDescription)}\")");
+            }
+        }
         sb.AppendLine($"            Quest:SetQuestAsCompleted(\"{quest.Name}\", true, false, {showEndScreen})");
         sb.AppendLine($"            Quest:DeactivateQuestLater(\"{quest.Name}\", 0)");
         sb.AppendLine("            break");
@@ -1060,6 +1095,10 @@ public sealed class CodeGenerator
         {
             parts.Add(quest.Description.Trim());
         }
+        else if (!string.IsNullOrWhiteSpace(quest.ObjectiveText))
+        {
+            parts.Add("Objective: " + quest.ObjectiveText.Trim());
+        }
 
         // Build rewards summary if any rewards are configured
         var rewardParts = new List<string>();
@@ -1088,6 +1127,16 @@ public sealed class CodeGenerator
         }
 
         return string.Join("\\n\\n", parts);
+    }
+
+    private static string GetQuestDisplayName(QuestProject quest)
+    {
+        if (!string.IsNullOrWhiteSpace(quest.DisplayName))
+        {
+            return quest.DisplayName;
+        }
+
+        return string.IsNullOrWhiteSpace(quest.Name) ? "Quest" : quest.Name;
     }
 
     private string RenderStateInit(QuestState state)

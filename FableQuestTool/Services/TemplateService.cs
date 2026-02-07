@@ -63,7 +63,7 @@ public class TemplateService
 
     private List<QuestTemplate> CreateBuiltInTemplates()
     {
-        return new List<QuestTemplate>
+        var templates = new List<QuestTemplate>
         {
             CreateTalkTemplate(),
             CreateCinematicDialogueTemplate(),
@@ -84,6 +84,13 @@ public class TemplateService
             CreateVariableBranchTemplate(),
             CreateVariableExternalFlowTemplate()
         };
+
+        foreach (QuestTemplate template in templates)
+        {
+            ApplyTemplateDefaults(template.Template);
+        }
+
+        return templates;
     }
 
     private IEnumerable<QuestTemplate> LoadExternalTemplates()
@@ -113,6 +120,8 @@ public class TemplateService
                         continue;
                     }
 
+                    ApplyTemplateDefaults(project);
+
                     string templateName = !string.IsNullOrWhiteSpace(project.DisplayName)
                         ? project.DisplayName
                         : (!string.IsNullOrWhiteSpace(project.Name) ? project.Name : Path.GetFileNameWithoutExtension(file));
@@ -138,6 +147,41 @@ public class TemplateService
         }
 
         return templates;
+    }
+
+    private static void ApplyTemplateDefaults(QuestProject project)
+    {
+        if (project == null)
+        {
+            return;
+        }
+
+        project.UseQuestStartScreen = true;
+        project.UseQuestEndScreen = true;
+
+        if (project.Regions == null)
+        {
+            project.Regions = new ObservableCollection<string>();
+        }
+
+        if (project.Regions.Count == 0)
+        {
+            string region = project.ObjectiveRegion1
+                ?? project.ObjectiveRegion2
+                ?? "Oakvale";
+            project.Regions.Add(region);
+        }
+
+        if (string.IsNullOrWhiteSpace(project.ObjectiveRegion1) && project.Regions.Count > 0)
+        {
+            project.ObjectiveRegion1 = project.Regions[0];
+        }
+
+        foreach (QuestEntity entity in project.Entities)
+        {
+            entity.IsQuestTarget = true;
+            entity.ShowOnMinimap = true;
+        }
     }
 
     private static IEnumerable<string> GetTemplateFolders()

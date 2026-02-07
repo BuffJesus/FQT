@@ -37,8 +37,9 @@
         </Border>
 
         <Border Grid.Row="1" Background="{DynamicResource PanelBackground}">
-            <StackPanel Margin="10">
-                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+            <DockPanel Margin="10">
+                <TextBox DockPanel.Dock="Top"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,8"
                          Padding="6,4"
                          ToolTip="Search the guide" />
@@ -52,7 +53,7 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-            </StackPanel>
+            </DockPanel>
         </Border>
 
         <Border Grid.Row="1" Grid.Column="1" Background="{DynamicResource BackgroundPrimary}">

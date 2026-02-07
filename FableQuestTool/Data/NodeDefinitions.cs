@@ -280,6 +280,29 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")\nQuest:EndMovieSequence()\n{CHILDREN}" },
 
+            // ===== QUEST TARGETS =====
+            new() { Type = "showMinimapMarker", Label = "Show Minimap Marker", Category = "action", Icon = "?", IsAdvanced = false,
+                Description = "Show a minimap marker on this entity",
+                Properties = new() {
+                    new NodeProperty { Name = "markerName", Type = "string", Label = "Marker Name", DefaultValue = "QuestTarget" }
+                },
+                CodeTemplate = "Quest:MiniMapAddMarker(Me, \"{markerName}\")\n{CHILDREN}" },
+
+            new() { Type = "hideMinimapMarker", Label = "Hide Minimap Marker", Category = "action", Icon = "?", IsAdvanced = false,
+                Description = "Remove the minimap marker from this entity",
+                Properties = new(),
+                CodeTemplate = "Quest:MiniMapRemoveMarker(Me)\n{CHILDREN}" },
+
+            new() { Type = "highlightQuestTarget", Label = "Highlight Quest Target", Category = "action", Icon = "??", IsAdvanced = false,
+                Description = "Highlight this entity as a quest target (green glow)",
+                Properties = new(),
+                CodeTemplate = "Quest:SetThingHasInformation(Me, true)\n{CHILDREN}" },
+
+            new() { Type = "clearQuestTargetHighlight", Label = "Clear Quest Target Highlight", Category = "action", Icon = "??", IsAdvanced = false,
+                Description = "Remove the quest target highlight from this entity",
+                Properties = new(),
+                CodeTemplate = "Quest:ClearThingHasInformation(Me)\n{CHILDREN}" },
+
             // ===== CINEMATIC - Movie Sequence (No frame checks during movie mode!) =====
             new() { Type = "startMovieSequence", Label = "Start Movie Sequence", Category = "action", Icon = "??", IsAdvanced = false,
                 Description = "Begin cinematic mode (prevents interruptions during cutscenes/conversations)",

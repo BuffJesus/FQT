@@ -67,6 +67,8 @@ public sealed partial class EntityEditorViewModel : ObservableObject
             ScriptName = $"Entity{mainViewModel.Project.Entities.Count + 1}",
             DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
             EntityType = EntityType.Creature,
+            IsQuestTarget = true,
+            ShowOnMinimap = true,
             SpawnMethod = SpawnMethod.AtMarker,
             SpawnMarker = "MK_OVID_DAD"
         };

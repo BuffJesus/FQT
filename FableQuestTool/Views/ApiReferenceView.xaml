@@ -11,6 +11,14 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:InvertedNullToVisibilityConverter x:Key="InvertedNullToVisibilityConverter" />
+        <Style x:Key="ApiStatusTextStyle" TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasApiData}" Value="False">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <UserControl.DataContext>
         <vm:ApiReferenceViewModel />
@@ -64,18 +72,8 @@
                 <TextBlock DockPanel.Dock="Top"
                            Text="{Binding ApiStatus}"
                            TextWrapping="Wrap"
-                           Margin="12,0,12,8">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasApiData}" Value="False">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                           Margin="12,0,12,8"
+                           Style="{StaticResource ApiStatusTextStyle}" />
                 <ListBox ItemsSource="{Binding FilteredFunctions}"
                          SelectedItem="{Binding SelectedFunction}"
                          BorderThickness="0"

@@ -29,6 +29,10 @@
         <None Include="tools\**\*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Include="..\DOCS\FQT_USER_GUIDE.md">
+            <Link>DOCS\FQT_USER_GUIDE.md</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Include="..\FSE_Source\ALL-INTERFACE-FUNCTIONS-FOR-FSE.h">
             <Link>FSE_Source\ALL-INTERFACE-FUNCTIONS-FOR-FSE.h</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

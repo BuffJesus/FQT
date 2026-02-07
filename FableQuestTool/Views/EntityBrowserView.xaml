@@ -24,6 +24,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="200" />
                     </Grid.RowDefinitions>
 
@@ -49,7 +50,7 @@
                                      Height="28">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox">
-                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
                                         <Style.Triggers>
                                             <Trigger Property="IsFocused" Value="True">
                                                 <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
@@ -124,8 +125,15 @@
                         </DataGrid>
                     </Border>
 
+                    <GridSplitter Grid.Row="2"
+                                  Height="6"
+                                  HorizontalAlignment="Stretch"
+                                  Background="{DynamicResource BorderBrush}"
+                                  Margin="8,0"
+                                  ShowsPreview="True" />
+
                     <!-- Entity Details -->
-                    <Border Grid.Row="2" Background="{DynamicResource BackgroundSecondary}" Margin="8,0,8,8" Padding="12">
+                    <Border Grid.Row="3" Background="{DynamicResource BackgroundSecondary}" Margin="8,0,8,8" Padding="12">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
                                 <TextBlock Text="Entity Details" FontWeight="Bold" FontSize="14" Margin="0,0,0,8" />
@@ -204,7 +212,7 @@
                                      Height="28">
                                 <TextBox.Style>
                                     <Style TargetType="TextBox">
-                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
                                         <Style.Triggers>
                                             <Trigger Property="IsFocused" Value="True">
                                                 <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />

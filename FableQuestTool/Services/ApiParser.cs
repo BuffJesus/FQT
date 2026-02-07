@@ -98,7 +98,7 @@ public class ApiParser
                 ReturnType = returnType,
                 Category = category,
                 Parameters = parameters,
-                Description = GenerateDescription(functionName, returnType),
+                Description = GenerateDescription(functionName, returnType, parameters, category),
                 Example = GenerateExample(functionName, parameters, category)
             };
         }
@@ -180,32 +180,258 @@ public class ApiParser
         return results;
     }
 
-    private string GenerateDescription(string functionName, string returnType)
+    private string GenerateDescription(string functionName, string returnType, List<ApiParameter> parameters, string category)
     {
-        // Generate basic description from function name
-        string name = functionName.Replace("_", " ");
-        
-        if (functionName.StartsWith("Is") || functionName.StartsWith("Msg"))
+        bool isNonBlocking = functionName.EndsWith("_NonBlocking", StringComparison.Ordinal);
+        string baseName = isNonBlocking
+            ? functionName[..^"_NonBlocking".Length]
+            : functionName;
+
+        if (DescriptionOverrides.TryGetValue(baseName, out string? overrideDescription))
         {
-            return $"Checks if {name.Substring(2).ToLower()}.";
+            return AppendAsyncNote(overrideDescription, isNonBlocking, category);
         }
-        else if (functionName.StartsWith("Get"))
+
+        string entityContext = GetEntityContext(parameters, category);
+        string normalizedName = baseName;
+        if (normalizedName.StartsWith("Entity", StringComparison.Ordinal))
         {
-            return $"Gets {name.Substring(3).ToLower()}.";
+            normalizedName = normalizedName["Entity".Length..];
+            if (string.IsNullOrWhiteSpace(entityContext))
+            {
+                entityContext = "the target entity";
+            }
         }
-        else if (functionName.StartsWith("Set"))
+
+        string description;
+        if (normalizedName.StartsWith("MsgIs", StringComparison.Ordinal))
         {
-            return $"Sets {name.Substring(3).ToLower()}.";
+            string eventName = Humanize(normalizedName["MsgIs".Length..]).ToLowerInvariant();
+            description = $"Returns true if {EventSubject(category)} {eventName}.";
+        }
+        else if (normalizedName.StartsWith("MsgReceived", StringComparison.Ordinal))
+        {
+            string eventName = Humanize(normalizedName["MsgReceived".Length..]).ToLowerInvariant();
+            description = $"Returns true if {EventSubject(category)} received {eventName}.";
+        }
+        else if (normalizedName.StartsWith("MsgWho", StringComparison.Ordinal))
+        {
+            string eventName = Humanize(normalizedName["MsgWho".Length..]).ToLowerInvariant();
+            description = $"Returns the entity that {eventName}.";
+        }
+        else if (normalizedName.StartsWith("Is", StringComparison.Ordinal))
+        {
+            string condition = Humanize(normalizedName["Is".Length..]).ToLowerInvariant();
+            string subject = Subject(category, entityContext);
+            description = string.IsNullOrWhiteSpace(subject)
+                ? $"Returns true if {condition}."
+                : $"Returns true if {subject} {condition}.";
+        }
+        else if (normalizedName.StartsWith("Get", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Get".Length..]).ToLowerInvariant();
+            if (returnType.Contains("table", StringComparison.OrdinalIgnoreCase) && target.Contains("pos", StringComparison.Ordinal))
+            {
+                description = $"Returns the position of {Subject(category, entityContext)} as a table {{x, y, z}}.";
+            }
+            else if (returnType.Contains("table", StringComparison.OrdinalIgnoreCase))
+            {
+                description = $"Returns a table containing {target}.";
+            }
+            else
+            {
+                description = $"Returns {target}.";
+            }
+        }
+        else if (normalizedName.StartsWith("Set", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Set".Length..]).ToLowerInvariant();
+            description = $"Sets {target}{ContextSuffix(category, entityContext)}.";
+        }
+        else if (normalizedName.StartsWith("Reset", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Reset".Length..]).ToLowerInvariant();
+            description = $"Resets {target}{ContextSuffix(category, entityContext)} to default.";
+        }
+        else if (normalizedName.StartsWith("Add", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Add".Length..]).ToLowerInvariant();
+            description = $"Adds {target}.";
+        }
+        else if (normalizedName.StartsWith("Remove", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Remove".Length..]).ToLowerInvariant();
+            description = $"Removes {target}.";
+        }
+        else if (normalizedName.StartsWith("Clear", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Clear".Length..]).ToLowerInvariant();
+            description = $"Clears {target}{ContextSuffix(category, entityContext)}.";
+        }
+        else if (normalizedName.StartsWith("Activate", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Activate".Length..]).ToLowerInvariant();
+            description = $"Activates {target}.";
+        }
+        else if (normalizedName.StartsWith("Deactivate", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Deactivate".Length..]).ToLowerInvariant();
+            description = $"Deactivates {target}.";
+        }
+        else if (normalizedName.StartsWith("GiveHero", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["GiveHero".Length..]).ToLowerInvariant();
+            description = $"Gives the hero {target}.";
+        }
+        else if (normalizedName.StartsWith("Give", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Give".Length..]).ToLowerInvariant();
+            description = $"Gives {target}.";
+        }
+        else if (normalizedName.StartsWith("Take", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Take".Length..]).ToLowerInvariant();
+            description = $"Takes {target}.";
+        }
+        else if (normalizedName.StartsWith("Show", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Show".Length..]).ToLowerInvariant();
+            description = $"Shows {target}.";
+        }
+        else if (normalizedName.StartsWith("Play", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Play".Length..]).ToLowerInvariant();
+            description = $"Plays {target}.";
+        }
+        else if (normalizedName.StartsWith("Camera", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Camera".Length..]).ToLowerInvariant();
+            description = string.IsNullOrWhiteSpace(target)
+                ? "Controls the camera."
+                : $"Controls the camera: {target}.";
+        }
+        else if (normalizedName.StartsWith("Create", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Create".Length..]).ToLowerInvariant();
+            description = $"Creates {target}.";
+        }
+        else if (normalizedName.StartsWith("Start", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Start".Length..]).ToLowerInvariant();
+            description = $"Starts {target}.";
+        }
+        else if (normalizedName.StartsWith("Stop", StringComparison.Ordinal))
+        {
+            string target = Humanize(normalizedName["Stop".Length..]).ToLowerInvariant();
+            description = $"Stops {target}.";
         }
         else if (returnType == "void")
         {
-            return $"Performs: {name.ToLower()}.";
+            description = $"Performs {Humanize(normalizedName).ToLowerInvariant()}.";
         }
         else
         {
-            return $"Returns {returnType}: {name.ToLower()}.";
+            description = $"Returns {returnType}: {Humanize(normalizedName).ToLowerInvariant()}.";
         }
+
+        return AppendAsyncNote(description, isNonBlocking, category);
     }
+
+    private static string AppendAsyncNote(string description, bool isNonBlocking, string category)
+    {
+        if (!isNonBlocking)
+        {
+            return description;
+        }
+
+        string note = " Returns immediately; action continues in the background.";
+        if (category == "Entity API")
+        {
+            note += " Requires AcquireControl first.";
+        }
+
+        return description + note;
+    }
+
+    private static string EventSubject(string category)
+    {
+        return category == "Entity API" ? "this entity" : "the entity";
+    }
+
+    private static string Subject(string category, string entityContext)
+    {
+        if (category == "Entity API")
+        {
+            return "this entity is";
+        }
+
+        if (!string.IsNullOrWhiteSpace(entityContext))
+        {
+            return $"{entityContext} is";
+        }
+
+        return string.Empty;
+    }
+
+    private static string ContextSuffix(string category, string entityContext)
+    {
+        if (category == "Entity API")
+        {
+            return " for this entity";
+        }
+
+        if (!string.IsNullOrWhiteSpace(entityContext))
+        {
+            return $" for {entityContext}";
+        }
+
+        return string.Empty;
+    }
+
+    private static string GetEntityContext(List<ApiParameter> parameters, string category)
+    {
+        if (category == "Entity API")
+        {
+            return "this entity";
+        }
+
+        int entityParams = parameters.Count(p => p.Type.Contains("CScriptThing", StringComparison.Ordinal));
+        if (entityParams >= 2)
+        {
+            return "the two entities";
+        }
+
+        return entityParams == 1 ? "the target entity" : string.Empty;
+    }
+
+    private static string Humanize(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+
+        string withSpaces = Regex.Replace(name, "([a-z0-9])([A-Z])", "$1 $2");
+        withSpaces = Regex.Replace(withSpaces, "([A-Z]+)([A-Z][a-z])", "$1 $2");
+        return withSpaces.Replace("_", " ").Trim();
+    }
+
+    private static readonly Dictionary<string, string> DescriptionOverrides = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["AcquireControl"] = "Acquires scripted control of this entity so actions can be issued from Lua.",
+        ["ReleaseControl"] = "Releases scripted control and returns the entity to normal AI behavior.",
+        ["TakeExclusiveControl"] = "Prevents other systems from controlling this entity while scripted.",
+        ["MakeBehavioral"] = "Attaches this entity to the quest behavior system.",
+        ["ClearCommands"] = "Clears the current command queue for this entity.",
+        ["ClearAllActions"] = "Stops all current actions on this entity.",
+        ["ClearAllActionsIncludingLoopingAnimations"] = "Stops all actions, including looping animations, on this entity.",
+        ["SpeakAndWait"] = "Plays the specified dialogue and waits for it to finish.",
+        ["GainControlAndSpeak"] = "Acquires control, then plays the specified dialogue and waits for completion.",
+        ["CreateThread"] = "Starts a Lua function in a new parallel thread.",
+        ["Pause"] = "Waits for the specified duration while yielding to the game loop.",
+        ["NewScriptFrame"] = "Yields control back to the game loop for this script frame.",
+        ["ShowMessage"] = "Displays an on-screen message for the given duration."
+    };
 
     private string GenerateExample(string functionName, List<ApiParameter> parameters, string category)
     {

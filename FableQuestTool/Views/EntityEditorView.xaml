@@ -326,9 +326,11 @@
                 <DataTemplate>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="240" />
+                            <ColumnDefinition Width="240" MinWidth="200" MaxWidth="320" />
+                            <ColumnDefinition Width="6" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="320" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="320" MinWidth="260" MaxWidth="420" />
                         </Grid.ColumnDefinitions>
 
                         <!-- Left Panel: Node Palette -->
@@ -602,8 +604,13 @@
                             </ScrollViewer>
                         </Border>
 
+                        <GridSplitter Grid.Column="1"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      Background="{DynamicResource BorderBrush}" />
+
                         <!-- Center Panel: Node Graph Canvas (UE5 Blueprint Style) -->
-                        <Border Grid.Column="1" Background="#141824" Margin="8" CornerRadius="4">
+                        <Border Grid.Column="2" Background="{DynamicResource SurfaceBackground}" Margin="8" CornerRadius="4">
                             <Grid>
                                 <!-- Blueprint-style grid background -->
                                 <Canvas ClipToBounds="True">
@@ -1443,11 +1450,18 @@
                             </Grid>
                         </Border>
 
+                        <GridSplitter Grid.Column="3"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      Background="{DynamicResource BorderBrush}" />
+
                         <!-- Right Panel: Node Properties -->
-                        <Border Grid.Column="2" Background="{DynamicResource PanelBackground}">
+                        <Border Grid.Column="4" Background="{DynamicResource PanelBackground}">
                             <ScrollViewer>
                                 <StackPanel Margin="12">
-                                    <TextBlock Text="Node Properties" FontWeight="SemiBold" Margin="0,0,0,12" />
+                                    <Border Background="{DynamicResource SurfaceBackground}" Padding="8" Margin="0,0,0,12">
+                                        <TextBlock Text="Node Properties" FontWeight="SemiBold" />
+                                    </Border>
 
                                     <StackPanel Visibility="{Binding HasGraphWarnings, Converter={StaticResource BoolToVisibility}}">
                                         <TextBlock Text="Graph Warnings" FontSize="11" Opacity="0.7" Margin="0,0,0,4" />

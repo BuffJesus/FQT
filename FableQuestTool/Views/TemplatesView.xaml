@@ -16,9 +16,9 @@
     </UserControl.DataContext>
     <Grid Background="{DynamicResource BackgroundPrimary}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="400" />
+            <ColumnDefinition Width="240" MinWidth="200" MaxWidth="320" />
+            <ColumnDefinition Width="*" MinWidth="360" />
+            <ColumnDefinition Width="400" MinWidth="320" MaxWidth="520" />
         </Grid.ColumnDefinitions>
         
         <!-- Left Panel: Categories -->
@@ -43,10 +43,9 @@
         <!-- Middle Panel: Template List -->
         <Border Grid.Column="1" Background="{DynamicResource SurfaceBackground}" Margin="8">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Top"
-                          Text="Available Templates"
-                          FontWeight="SemiBold"
-                          Margin="12,12,12,8" />
+                <Border DockPanel.Dock="Top" Background="{DynamicResource PanelBackground}" Padding="8" Margin="12,12,12,8">
+                    <TextBlock Text="Available Templates" FontWeight="SemiBold" />
+                </Border>
                 <ListBox ItemsSource="{Binding FilteredTemplates}"
                          SelectedItem="{Binding SelectedTemplate}"
                          BorderThickness="0"
@@ -103,7 +102,9 @@
         <Border Grid.Column="2" Background="{DynamicResource PanelBackground}">
             <ScrollViewer>
                 <StackPanel Margin="12">
-                    <TextBlock Text="Template Details" FontWeight="SemiBold" Margin="0,0,0,12" />
+                    <Border Background="{DynamicResource SurfaceBackground}" Padding="8" Margin="0,0,0,12">
+                        <TextBlock Text="Template Details" FontWeight="SemiBold" />
+                    </Border>
                     
                     <StackPanel Visibility="{Binding SelectedTemplate, Converter={StaticResource NullToVisibilityConverter}}">
                         <!-- Template Name -->

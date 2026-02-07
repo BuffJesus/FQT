@@ -127,4 +127,52 @@ public sealed class DeploymentServiceTests
         Assert.False(result);
         Assert.Contains("Cannot launch FSE", message, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void DeployQuest_DoesNotDuplicateActivation()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        string masterPath = tempInstall.MasterPath;
+        File.WriteAllText(masterPath, string.Join("\n", new[]
+        {
+            "function Main(quest)",
+            "    quest:ActivateQuest(\"DupQuest\")",
+            "end",
+            string.Empty
+        }));
+
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        DeploymentService service = new DeploymentService(config, new CodeGenerator());
+        QuestProject quest = new QuestProject { Name = "DupQuest", Id = 53000 };
+        quest.Entities.Add(new QuestEntity { ScriptName = "NpcDup" });
+
+        Assert.True(service.DeployQuest(quest, out string message), message);
+
+        string masterText = File.ReadAllText(masterPath);
+        int activationCount = masterText.Split("quest:ActivateQuest(\"DupQuest\")").Length - 1;
+        Assert.Equal(1, activationCount);
+    }
+
+    [Fact]
+    public void DeployQuest_MissingMainFunction_ReturnsWarning()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        File.WriteAllText(tempInstall.MasterPath, "function NotMain(quest)\nend\n");
+
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        DeploymentService service = new DeploymentService(config, new CodeGenerator());
+        QuestProject quest = new QuestProject { Name = "NoMainQuest", Id = 53001 };
+        quest.Entities.Add(new QuestEntity { ScriptName = "NpcNoMain" });
+
+        bool result = service.DeployQuest(quest, out string message);
+
+        Assert.True(result);
+        Assert.Contains("deployed successfully", message, StringComparison.OrdinalIgnoreCase);
+        string masterText = File.ReadAllText(tempInstall.MasterPath);
+        Assert.DoesNotContain("quest:ActivateQuest(\"NoMainQuest\")", masterText);
+    }
 }

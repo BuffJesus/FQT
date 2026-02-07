@@ -179,4 +179,287 @@ public sealed class ViewModelEntityTabTests
         Assert.Single(viewModel.Connections);
         Assert.Equal("$StrVar1", target.Properties["value"]);
     }
+
+    [Fact]
+    public void EntityTab_AddAndRemoveOutputPins_UpdatesConnections()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel flowNode = new NodeViewModel
+        {
+            Category = "flow"
+        };
+        viewModel.Nodes.Add(flowNode);
+        viewModel.SelectedNode = flowNode;
+
+        int initialOutputs = flowNode.Output.Count;
+        viewModel.AddOutputPinCommand.Execute(null);
+
+        Assert.Equal(initialOutputs + 1, flowNode.Output.Count);
+
+        ConnectorViewModel lastOutput = flowNode.Output.Last();
+        NodeViewModel target = new NodeViewModel();
+        viewModel.Nodes.Add(target);
+        viewModel.Connections.Add(new ConnectionViewModel
+        {
+            Source = lastOutput,
+            Target = target.Input.First()
+        });
+
+        viewModel.RemoveOutputPinCommand.Execute(null);
+
+        Assert.Equal(initialOutputs, flowNode.Output.Count);
+        Assert.Empty(viewModel.Connections);
+    }
+
+    [Fact]
+    public void EntityTab_BreakConnection_RemovesWire()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel source = new NodeViewModel();
+        NodeViewModel target = new NodeViewModel();
+        viewModel.Nodes.Add(source);
+        viewModel.Nodes.Add(target);
+
+        ConnectionViewModel connection = new ConnectionViewModel
+        {
+            Source = source.Output.First(),
+            Target = target.Input.First()
+        };
+        viewModel.Connections.Add(connection);
+
+        viewModel.BreakConnectionCommand.Execute(connection);
+
+        Assert.Empty(viewModel.Connections);
+    }
+
+    [Fact]
+    public void EntityTab_CreateRerouteOnConnection_ReplacesConnection()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel source = new NodeViewModel();
+        NodeViewModel target = new NodeViewModel();
+        viewModel.Nodes.Add(source);
+        viewModel.Nodes.Add(target);
+
+        ConnectionViewModel connection = new ConnectionViewModel
+        {
+            Source = source.Output.First(),
+            Target = target.Input.First()
+        };
+        viewModel.Connections.Add(connection);
+
+        viewModel.CreateRerouteOnConnectionCommand.Execute((connection, new System.Windows.Point(50, 60)));
+
+        Assert.Equal(3, viewModel.Nodes.Count);
+        Assert.Equal(2, viewModel.Connections.Count);
+        Assert.DoesNotContain(connection, viewModel.Connections);
+        Assert.Contains(viewModel.Nodes, node => node.IsRerouteNode);
+    }
+
+    [Fact]
+    public void EntityTab_DefineEventNode_UpdatesAvailableEvents()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel eventNode = new NodeViewModel
+        {
+            Type = "defineEvent",
+            Category = "custom"
+        };
+        eventNode.SetProperty("eventName", "MyEvent");
+
+        viewModel.Nodes.Add(eventNode);
+
+        Assert.Contains("MyEvent", viewModel.AvailableEvents);
+    }
+
+    [Fact]
+    public void EntityTab_AddAndRemoveVariable_UpdatesPaletteAndEntity()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        viewModel.NewVariableName = "Health";
+        viewModel.NewVariableType = "Integer";
+        viewModel.AddVariableCommand.Execute(null);
+
+        Assert.Contains(viewModel.Variables, v => v.Name == "Health");
+        Assert.Contains(entity.Variables, v => v.Name == "Health");
+        Assert.Contains(viewModel.InternalVariableNodes, n => n.Type == "var_get_Health");
+        Assert.Contains(viewModel.InternalVariableNodes, n => n.Type == "var_set_Health");
+
+        VariableDefinition variable = viewModel.Variables.First(v => v.Name == "Health");
+        viewModel.RemoveVariableCommand.Execute(variable);
+
+        Assert.DoesNotContain(viewModel.Variables, v => v.Name == "Health");
+        Assert.DoesNotContain(viewModel.InternalVariableNodes, n => n.Type == "var_get_Health");
+    }
+
+    [Fact]
+    public void EntityTab_ToggleFavoriteNode_SavesFavorites()
+    {
+        string[]? savedTypes = null;
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity, saveFavorites: types => savedTypes = types.ToArray());
+
+        NodeOption option = viewModel.SimpleNodes.First(n => n.Definition != null);
+        viewModel.ToggleFavoriteNodeCommand.Execute(option);
+
+        Assert.Contains(viewModel.FavoriteNodes, n => n.Type == option.Type);
+        Assert.NotNull(savedTypes);
+        Assert.Contains(option.Type, savedTypes!);
+
+        viewModel.ToggleFavoriteNodeCommand.Execute(option);
+
+        Assert.DoesNotContain(viewModel.FavoriteNodes, n => n.Type == option.Type);
+    }
+
+    [Fact]
+    public void EntityTab_NodeSearchFiltersAndGroups()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        viewModel.NodeSearchText = "hero";
+
+        Assert.NotEmpty(viewModel.FilteredNodes);
+        Assert.All(viewModel.FilteredNodes, n =>
+            Assert.True(n.Label.Contains("hero", System.StringComparison.OrdinalIgnoreCase) ||
+                        n.Category.Contains("hero", System.StringComparison.OrdinalIgnoreCase) ||
+                        (n.Type?.Contains("hero", System.StringComparison.OrdinalIgnoreCase) == true)));
+        Assert.False(viewModel.HasRecentNodes);
+        Assert.NotEmpty(viewModel.GroupedFilteredNodes);
+    }
+
+    [Fact]
+    public void EntityTab_ExternalVariables_AppearInMenuAndApplyMetadata()
+    {
+        var externals = new[]
+        {
+            new ExternalVariableInfo("EntityA", "VarB", "String", "Default")
+        };
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(
+            entity,
+            getExternalVariables: () => externals);
+
+        viewModel.NodeSearchText = "EntityA.VarB";
+
+        Assert.Contains(viewModel.FilteredExternalVariableNodes, n => n.Type == "var_get_ext_EntityA.VarB");
+
+        NodeOption option = viewModel.ExternalVariableNodes.First(n => n.Type == "var_get_ext_EntityA.VarB");
+        viewModel.SelectNodeFromMenuCommand.Execute(option);
+
+        NodeViewModel created = viewModel.Nodes.Last();
+        Assert.Equal("EntityA", created.Properties["extEntity"]);
+        Assert.Equal("VarB", created.Properties["extVariable"]);
+        Assert.Equal("String", created.Properties["extType"]);
+        Assert.Equal("Default", created.Properties["extDefault"]);
+    }
+
+    [Fact]
+    public void EntityTab_GraphWarnings_FlagsEntryWithoutOutgoing()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel entry = new NodeViewModel
+        {
+            Type = "onHeroTalks",
+            Category = "trigger"
+        };
+
+        viewModel.Nodes.Add(entry);
+
+        Assert.Contains(viewModel.GraphWarnings, warning =>
+            warning.Contains("Entry node 'onHeroTalks' has no outgoing connections.", System.StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void EntityTab_GraphWarnings_FlagsNodeWithoutIncoming()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel node = new NodeViewModel
+        {
+            Type = "showMessage",
+            Category = "action"
+        };
+
+        viewModel.Nodes.Add(node);
+
+        Assert.Contains(viewModel.GraphWarnings, warning =>
+            warning.Contains("Node 'showMessage' has no incoming connections.", System.StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void EntityTab_GraphWarnings_FlagsUnconnectedFlowOutputs()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel flow = new NodeViewModel
+        {
+            Type = "sequence",
+            Title = "Sequence",
+            Category = "flow"
+        };
+        viewModel.Nodes.Add(flow);
+        viewModel.SelectedNode = flow;
+        viewModel.AddOutputPinCommand.Execute(null);
+        viewModel.Connections.Add(new ConnectionViewModel());
+
+        Assert.Contains(viewModel.GraphWarnings, warning =>
+            warning.Contains("Flow node 'Sequence' has unconnected output", System.StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void EntityTab_UpdateVariableUsageCounts_FromNodeProperties()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        VariableDefinition variable = new VariableDefinition
+        {
+            Name = "Count",
+            Type = "Integer",
+            DefaultValue = "0"
+        };
+        viewModel.Variables.Add(variable);
+
+        NodeViewModel node = new NodeViewModel
+        {
+            Type = "setState",
+            Category = "action"
+        };
+        node.SetProperty("value", "$Count");
+        viewModel.Nodes.Add(node);
+
+        Assert.Equal(1, variable.UsageCount);
+    }
+
+    [Fact]
+    public void EntityTab_OpenNodeMenu_HidesTriggerNodesDuringConnection()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity)
+        {
+            PendingConnection = new PendingConnectionViewModel
+            {
+                Source = new ConnectorViewModel { ConnectorType = ConnectorType.Exec }
+            }
+        };
+
+        viewModel.OpenNodeMenuCommand.Execute(new System.Windows.Point(10, 10));
+
+        Assert.DoesNotContain(viewModel.FilteredNodes, n => n.Category == "trigger");
+    }
 }

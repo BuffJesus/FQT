@@ -60,6 +60,13 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         {
             UseContainerCheckBox.IsChecked = true;
         }
+
+        if (SectionList != null && SectionList.SelectedIndex < 0)
+        {
+            SectionList.SelectedIndex = 0;
+        }
+
+        ApplySectionVisibility();
     }
 
     private void PopulateEntityScriptNames()
@@ -150,6 +157,11 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
 
     private void OnSectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        ApplySectionVisibility();
+    }
+
+    private void ApplySectionVisibility()
+    {
         if (ViewModel == null)
         {
             return;
@@ -160,15 +172,7 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
 
         if (string.IsNullOrWhiteSpace(section))
         {
-            // Show all
-            BasicInfoGroup.Visibility = Visibility.Visible;
-            QuestCardGroup.Visibility = Visibility.Visible;
-            RegionsGroup.Visibility = Visibility.Visible;
-            RewardsGroup.Visibility = Visibility.Visible;
-            BoastsGroup.Visibility = Visibility.Visible;
-            StatesGroup.Visibility = Visibility.Visible;
-            ThreadsGroup.Visibility = Visibility.Visible;
-            return;
+            section = "Basic Info";
         }
 
         // Handle advanced mode restrictions

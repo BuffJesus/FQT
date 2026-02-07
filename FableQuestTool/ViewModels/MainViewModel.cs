@@ -629,6 +629,43 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void OpenHelp()
+    {
+        string content = LoadHelpContent();
+        var view = new Views.HelpView
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+            DataContext = new HelpViewModel
+            {
+                Content = content
+            }
+        };
+
+        view.Show();
+    }
+
+    private static string LoadHelpContent()
+    {
+        string[] candidates =
+        {
+            Path.Combine(AppContext.BaseDirectory, "DOCS", "FQT_USER_GUIDE.md"),
+            Path.Combine(Directory.GetCurrentDirectory(), "DOCS", "FQT_USER_GUIDE.md"),
+            Path.Combine(AppContext.BaseDirectory, "FQT_USER_GUIDE.md"),
+            Path.Combine(Directory.GetCurrentDirectory(), "FQT_USER_GUIDE.md")
+        };
+
+        foreach (string path in candidates)
+        {
+            if (File.Exists(path))
+            {
+                return File.ReadAllText(path);
+            }
+        }
+
+        return "FQT user guide not found. Expected DOCS/FQT_USER_GUIDE.md.";
+    }
+
     private void UpdateSetupStatus()
     {
         string? fablePath = fableConfig.FablePath;

@@ -19,6 +19,7 @@
         <KeyBinding Key="E" Modifiers="Control" Command="{Binding ExportProjectCommand}" />
         <KeyBinding Key="V" Modifiers="Control+Shift" Command="{Binding ValidateProjectCommand}" />
         <KeyBinding Key="P" Modifiers="Control" Command="{Binding PreviewLuaCommand}" />
+        <KeyBinding Key="F1" Command="{Binding OpenHelpCommand}" />
         <KeyBinding Key="Q" Modifiers="Control" Command="{Binding ExitCommand}" />
     </Window.InputBindings>
     <Grid>
@@ -50,6 +51,9 @@
                 <MenuItem Header="Show Startup Image"
                           IsCheckable="True"
                           IsChecked="{Binding IsStartupImageEnabled}" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_User Guide" Command="{Binding OpenHelpCommand}" InputGestureText="F1" />
             </MenuItem>
         </Menu>
 

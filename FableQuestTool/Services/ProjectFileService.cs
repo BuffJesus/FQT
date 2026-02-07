@@ -76,7 +76,13 @@ public sealed class ProjectFileService
             throw new InvalidDataException("Project data is invalid.");
         }
 
-        return data.Project ?? new QuestProject();
+        QuestProject project = data.Project ?? new QuestProject();
+        if (ApplyLoadMigrations(project))
+        {
+            Save(path, project);
+        }
+
+        return project;
     }
 
     private static void NormalizeItemNodes(QuestProject project)
@@ -151,5 +157,38 @@ public sealed class ProjectFileService
     {
         return string.IsNullOrWhiteSpace(value) ||
                value.Equals("OBJECT_APPLE", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ApplyLoadMigrations(QuestProject project)
+    {
+        bool changed = false;
+
+        if (project.Regions == null)
+        {
+            project.Regions = new();
+            changed = true;
+        }
+
+        string fallbackRegion = project.ObjectiveRegion1
+            ?? project.ObjectiveRegion2
+            ?? project.Regions.FirstOrDefault()
+            ?? "Oakvale";
+
+        if (string.IsNullOrWhiteSpace(project.ObjectiveRegion1))
+        {
+            project.ObjectiveRegion1 = fallbackRegion;
+            changed = true;
+        }
+
+        foreach (QuestEntity entity in project.Entities)
+        {
+            if (string.IsNullOrWhiteSpace(entity.SpawnRegion))
+            {
+                entity.SpawnRegion = project.ObjectiveRegion1 ?? fallbackRegion;
+                changed = true;
+            }
+        }
+
+        return changed;
     }
 }

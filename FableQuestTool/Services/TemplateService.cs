@@ -179,6 +179,10 @@ public class TemplateService
 
         foreach (QuestEntity entity in project.Entities)
         {
+            if (string.IsNullOrWhiteSpace(entity.SpawnRegion))
+            {
+                entity.SpawnRegion = project.ObjectiveRegion1 ?? project.Regions.FirstOrDefault() ?? "Oakvale";
+            }
             entity.IsQuestTarget = true;
             entity.ShowOnMinimap = true;
         }

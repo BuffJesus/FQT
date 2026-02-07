@@ -175,4 +175,39 @@ public sealed class DeploymentServiceTests
         string masterText = File.ReadAllText(tempInstall.MasterPath);
         Assert.DoesNotContain("quest:ActivateQuest(\"NoMainQuest\")", masterText);
     }
+
+    [Fact]
+    public void DeployQuest_UpdatesExistingQuestEntry()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        string existingQuestsLua = string.Join("\n", new[]
+        {
+            "Quests = {",
+            "    ExistingQuest = {",
+            "        name = \"ExistingQuest\",",
+            "        file = \"ExistingQuest/ExistingQuest\",",
+            "        id = 50000,",
+            "        entity_scripts = {",
+            "        }",
+            "    },",
+            "}",
+            string.Empty
+        });
+        File.WriteAllText(tempInstall.QuestsLuaPath, existingQuestsLua);
+
+        FableConfig config = FableConfig.Load();
+        config.SetFablePath(tempInstall.RootPath);
+
+        DeploymentService service = new DeploymentService(config, new CodeGenerator());
+        QuestProject quest = new QuestProject { Name = "ExistingQuest", Id = 54000 };
+        quest.Entities.Add(new QuestEntity { ScriptName = "UpdatedNpc" });
+
+        bool result = service.DeployQuest(quest, out string message);
+
+        Assert.True(result, message);
+        string questsLua = File.ReadAllText(tempInstall.QuestsLuaPath);
+        Assert.Contains("ExistingQuest = {", questsLua);
+        Assert.Contains("UpdatedNpc", questsLua);
+        Assert.Contains("id = 54000", questsLua);
+    }
 }

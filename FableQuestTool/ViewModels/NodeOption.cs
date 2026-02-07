@@ -1,3 +1,4 @@
+using System.Linq;
 using FableQuestTool.Data;
 
 namespace FableQuestTool.ViewModels;
@@ -30,6 +31,7 @@ public sealed class NodeOption
     /// Gets Icon.
     /// </summary>
     public string Icon { get; }
+    public string IconDisplay => NormalizeIcon(Icon, Category);
     /// <summary>
     /// Gets Description.
     /// </summary>
@@ -62,4 +64,28 @@ public sealed class NodeOption
     /// Gets or sets ExternalVariableDefault.
     /// </summary>
     public string? ExternalVariableDefault { get; init; }
+
+    private static string NormalizeIcon(string icon, string category)
+    {
+        if (!IsPlaceholderIcon(icon))
+        {
+            return icon;
+        }
+
+        return category switch
+        {
+            "trigger" => "TRG",
+            "action" => "ACT",
+            "condition" => "IF",
+            "flow" => "FLW",
+            "custom" => "EVT",
+            "variable" => "VAR",
+            _ => "NOD"
+        };
+    }
+
+    private static bool IsPlaceholderIcon(string icon)
+    {
+        return string.IsNullOrWhiteSpace(icon) || icon.All(ch => ch == '?');
+    }
 }

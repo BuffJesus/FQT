@@ -121,8 +121,8 @@
                     
                     <StackPanel Visibility="{Binding SelectedFunction, Converter={StaticResource NullToVisibilityConverter}}">
                         <!-- Function Name -->
-                        <TextBlock Text="{Binding SelectedFunction.Name}"
-                                 FontWeight="SemiBold"
+                    <TextBlock Text="{Binding SelectedFunction.Name}"
+                                 Style="{StaticResource PanelHeaderText}"
                                  FontSize="16"
                                  Margin="0,0,0,8" />
                         
@@ -133,8 +133,8 @@
                               HorizontalAlignment="Left"
                               Margin="0,0,0,12">
                             <TextBlock Text="{Binding SelectedFunction.Category}"
-                                     FontSize="10"
-                                     FontWeight="SemiBold" />
+                                     Style="{StaticResource SectionHeaderText}"
+                                     FontSize="10" />
                         </Border>
                         
                         <!-- Description -->

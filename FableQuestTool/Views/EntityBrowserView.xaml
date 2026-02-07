@@ -61,8 +61,7 @@
                                                         <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                                             <VisualBrush.Visual>
                                                                 <TextBlock Text="Search by name or type..."
-                                                                           Foreground="{DynamicResource TextSecondary}"
-                                                                           Opacity="0.7"
+                                                                           Style="{StaticResource MutedText}"
                                                                            Margin="4,0,0,0" />
                                                             </VisualBrush.Visual>
                                                         </VisualBrush>
@@ -226,8 +225,7 @@
                                                         <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                                             <VisualBrush.Visual>
                                                                 <TextBlock Text="Search items..."
-                                                                           Foreground="{DynamicResource TextSecondary}"
-                                                                           Opacity="0.7"
+                                                                           Style="{StaticResource MutedText}"
                                                                            Margin="4,0,0,0" />
                                                             </VisualBrush.Visual>
                                                         </VisualBrush>

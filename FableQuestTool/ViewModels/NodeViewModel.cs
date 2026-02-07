@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using FableQuestTool.Data;
 
@@ -48,6 +49,8 @@ public sealed partial class NodeViewModel : ObservableObject
     [ObservableProperty]
     private string icon = string.Empty;
 
+    public string IconDisplay => NormalizeIcon(Icon, Category);
+
     [ObservableProperty]
     private string type = string.Empty;
 
@@ -68,6 +71,16 @@ public sealed partial class NodeViewModel : ObservableObject
 
     [ObservableProperty]
     private NodeDefinition? definition;
+
+    partial void OnIconChanged(string value)
+    {
+        OnPropertyChanged(nameof(IconDisplay));
+    }
+
+    partial void OnCategoryChanged(string value)
+    {
+        OnPropertyChanged(nameof(IconDisplay));
+    }
 
     /// <summary>
     /// Gets the header color based on category (UE5 Blueprint style)
@@ -318,5 +331,29 @@ public sealed partial class NodeViewModel : ObservableObject
             "Object" => ConnectorType.Object,
             _ => ConnectorType.Wildcard
         };
+    }
+
+    private static string NormalizeIcon(string icon, string category)
+    {
+        if (!IsPlaceholderIcon(icon))
+        {
+            return icon;
+        }
+
+        return category switch
+        {
+            "trigger" => "TRG",
+            "action" => "ACT",
+            "condition" => "IF",
+            "flow" => "FLW",
+            "custom" => "EVT",
+            "variable" => "VAR",
+            _ => "NOD"
+        };
+    }
+
+    private static bool IsPlaceholderIcon(string icon)
+    {
+        return string.IsNullOrWhiteSpace(icon) || icon.All(ch => ch == '?');
     }
 }

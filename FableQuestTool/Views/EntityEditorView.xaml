@@ -237,7 +237,7 @@
                         </Button.Template>
                         <TextBlock Text="{Binding UsageCount}"
                                  FontSize="9"
-                                 Foreground="#AAB8C2" />
+                                 Style="{StaticResource MutedText}" />
                     </Button>
 
                     <!-- Delete button -->
@@ -919,12 +919,12 @@
                                                         </Border.Background>
                                                         <StackPanel Orientation="Horizontal">
                                                             <!-- Category Icon -->
-                                                            <Border Width="22" Height="22" CornerRadius="3" Margin="0,0,10,0"
+                                                            <Border Width="30" Height="22" CornerRadius="3" Margin="0,0,10,0"
                                                                     Background="#00000040">
-                                                                <TextBlock Text="{Binding Icon}"
+                                                                <TextBlock Text="{Binding IconDisplay}"
                                                                          HorizontalAlignment="Center"
                                                                          VerticalAlignment="Center"
-                                                                         FontSize="13" />
+                                                                         FontSize="10" />
                                                             </Border>
                                                             <!-- Node Title -->
                                                             <TextBlock Text="{Binding Title}"
@@ -1006,7 +1006,7 @@
                                         Panel.ZIndex="900">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding ElementName=EditorControl, Path=ViewportZoom, StringFormat={}{0:P0}}"
-                                                   Foreground="#AAB8C2"
+                                                   Style="{StaticResource MutedText}"
                                                    FontSize="10"
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,8,0" />
@@ -1096,8 +1096,7 @@
                                             <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3" Margin="0,0,0,4">
                                                 <TextBlock Text="Favorites"
                                                          Style="{StaticResource SectionHeaderText}"
-                                                         FontSize="11"
-                                                         Foreground="#AAB8C2" />
+                                                         FontSize="11" />
                                             </Border>
                                             <ItemsControl ItemsSource="{Binding FavoriteNodes}">
                                                 <ItemsControl.ItemTemplate>
@@ -1137,20 +1136,20 @@
                                                             </Button.Style>
                                                             <Grid Width="270">
                                                                 <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="24" />
+                                                                    <ColumnDefinition Width="32" />
                                                                     <ColumnDefinition Width="*" />
                                                                     <ColumnDefinition Width="Auto" />
                                                                 </Grid.ColumnDefinitions>
 
-                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}"
-                                                                         FontSize="12" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="0" Text="{Binding IconDisplay}"
+                                                                         FontSize="10" VerticalAlignment="Center" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Label}"
                                                                          VerticalAlignment="Center"
                                                                          FontSize="11" />
                                                                 <TextBlock Grid.Column="2"
                                                                          Text="{Binding Type}"
                                                                          VerticalAlignment="Center"
-                                                                         Opacity="0.4"
+                                                                         Style="{StaticResource MutedText}"
                                                                          FontSize="9"
                                                                          Margin="8,0,0,0" />
                                                             </Grid>
@@ -1165,9 +1164,8 @@
                                                     Visibility="{Binding HasRecentNodes, Converter={StaticResource BoolToVisibility}}">
                                             <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3" Margin="0,0,0,4">
                                                 <TextBlock Text="Recent"
-                                                         FontWeight="SemiBold"
-                                                         FontSize="11"
-                                                         Foreground="#AAB8C2" />
+                                                         Style="{StaticResource SectionHeaderText}"
+                                                         FontSize="11" />
                                             </Border>
                                             <ItemsControl ItemsSource="{Binding RecentNodes}">
                                                 <ItemsControl.ItemTemplate>
@@ -1207,20 +1205,20 @@
                                                             </Button.Style>
                                                             <Grid Width="270">
                                                                 <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="24" />
+                                                                    <ColumnDefinition Width="32" />
                                                                     <ColumnDefinition Width="*" />
                                                                     <ColumnDefinition Width="Auto" />
                                                                 </Grid.ColumnDefinitions>
 
-                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}"
-                                                                         FontSize="12" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="0" Text="{Binding IconDisplay}"
+                                                                         FontSize="10" VerticalAlignment="Center" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Label}"
                                                                          VerticalAlignment="Center"
                                                                          FontSize="11" />
                                                                 <TextBlock Grid.Column="2"
                                                                          Text="{Binding Type}"
                                                                          VerticalAlignment="Center"
-                                                                         Opacity="0.4"
+                                                                         Style="{StaticResource MutedText}"
                                                                          FontSize="9"
                                                                          Margin="8,0,0,0" />
                                                             </Grid>
@@ -1237,9 +1235,8 @@
                                             <Expander.Header>
                                                 <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3">
                                                     <TextBlock Text="Internal Variables"
-                                                             FontWeight="SemiBold"
-                                                             FontSize="11"
-                                                             Foreground="#AAB8C2" />
+                                                             Style="{StaticResource SectionHeaderText}"
+                                                             FontSize="11" />
                                                 </Border>
                                             </Expander.Header>
                                             <ItemsControl ItemsSource="{Binding FilteredInternalVariableNodes}" Margin="0,4,0,0">
@@ -1289,20 +1286,20 @@
                                                             </Button.Style>
                                                             <Grid Width="270">
                                                                 <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="24" />
+                                                                    <ColumnDefinition Width="32" />
                                                                     <ColumnDefinition Width="*" />
                                                                     <ColumnDefinition Width="Auto" />
                                                                 </Grid.ColumnDefinitions>
 
-                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}"
-                                                                         FontSize="12" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="0" Text="{Binding IconDisplay}"
+                                                                         FontSize="10" VerticalAlignment="Center" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Label}"
                                                                          VerticalAlignment="Center"
                                                                          FontSize="11" />
                                                                 <TextBlock Grid.Column="2"
                                                                          Text="{Binding Type}"
                                                                          VerticalAlignment="Center"
-                                                                         Opacity="0.4"
+                                                                         Style="{StaticResource MutedText}"
                                                                          FontSize="9"
                                                                          Margin="8,0,0,0" />
                                                             </Grid>
@@ -1319,9 +1316,8 @@
                                             <Expander.Header>
                                                 <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3">
                                                     <TextBlock Text="External Variables"
-                                                             FontWeight="SemiBold"
-                                                             FontSize="11"
-                                                             Foreground="#AAB8C2" />
+                                                             Style="{StaticResource SectionHeaderText}"
+                                                             FontSize="11" />
                                                 </Border>
                                             </Expander.Header>
                                             <ItemsControl ItemsSource="{Binding FilteredExternalVariableNodes}" Margin="0,4,0,0">
@@ -1363,20 +1359,20 @@
                                                             </Button.Style>
                                                             <Grid Width="270">
                                                                 <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="24" />
+                                                                    <ColumnDefinition Width="32" />
                                                                     <ColumnDefinition Width="*" />
                                                                     <ColumnDefinition Width="Auto" />
                                                                 </Grid.ColumnDefinitions>
 
-                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}"
-                                                                         FontSize="12" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="0" Text="{Binding IconDisplay}"
+                                                                         FontSize="10" VerticalAlignment="Center" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Label}"
                                                                          VerticalAlignment="Center"
                                                                          FontSize="11" />
                                                                 <TextBlock Grid.Column="2"
                                                                          Text="{Binding Type}"
                                                                          VerticalAlignment="Center"
-                                                                         Opacity="0.4"
+                                                                         Style="{StaticResource MutedText}"
                                                                          FontSize="9"
                                                                          Margin="8,0,0,0" />
                                                             </Grid>
@@ -1396,9 +1392,8 @@
                                                             <Expander.Header>
                                                                 <Border Background="#1A1F2E" CornerRadius="3" Padding="6,3">
                                                                     <TextBlock Text="{Binding Name}"
-                                                                             FontWeight="SemiBold"
-                                                                             FontSize="11"
-                                                                             Foreground="#AAB8C2" />
+                                                                             Style="{StaticResource SectionHeaderText}"
+                                                                             FontSize="11" />
                                                                 </Border>
                                                             </Expander.Header>
 
@@ -1442,14 +1437,14 @@
                                                                             </Button.Style>
                                                                             <Grid Width="270">
                                                                                 <Grid.ColumnDefinitions>
-                                                                                    <ColumnDefinition Width="24" />
+                                                                <ColumnDefinition Width="32" />
                                                                                     <ColumnDefinition Width="*" />
                                                                                     <ColumnDefinition Width="Auto" />
                                                                                 </Grid.ColumnDefinitions>
 
                                                                                 <!-- Icon -->
-                                                                                <TextBlock Grid.Column="0" Text="{Binding Icon}"
-                                                                                         FontSize="12" VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="0" Text="{Binding IconDisplay}"
+                                                                         FontSize="10" VerticalAlignment="Center" />
 
                                                                                 <!-- Label -->
                                                                                 <TextBlock Grid.Column="1" Text="{Binding Label}"
@@ -1457,12 +1452,12 @@
                                                                                          FontSize="11" />
 
                                                                                 <!-- Type hint -->
-                                                                                <TextBlock Grid.Column="2"
-                                                                                         Text="{Binding Type}"
-                                                                                         VerticalAlignment="Center"
-                                                                                         Opacity="0.4"
-                                                                                         FontSize="9"
-                                                                                         Margin="8,0,0,0" />
+                                                                <TextBlock Grid.Column="2"
+                                                                         Text="{Binding Type}"
+                                                                         VerticalAlignment="Center"
+                                                                         Style="{StaticResource MutedText}"
+                                                                         FontSize="9"
+                                                                         Margin="8,0,0,0" />
                                                                             </Grid>
                                                                         </Button>
                                                                     </DataTemplate>
@@ -1556,7 +1551,7 @@
                                                 Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="{Binding SelectedNode.Title}"
-                                                         FontWeight="SemiBold"
+                                                         Style="{StaticResource PanelHeaderText}"
                                                          Margin="0,0,0,4" />
                                                 <TextBlock Text="{Binding SelectedNode.Type}"
                                                          Style="{StaticResource MutedText}"
@@ -1571,8 +1566,8 @@
                                                     <TextBlock Text="Variable"
                                                              Style="{StaticResource SectionHeaderText}" />
                                                     <TextBlock Text="{Binding SelectedVariableName}"
-                                                             FontSize="11"
-                                                             FontWeight="SemiBold" />
+                                                             Style="{StaticResource SectionHeaderText}"
+                                                             FontSize="11" />
                                                     <TextBlock Text="{Binding SelectedVariableType}"
                                                              Style="{StaticResource MutedText}"
                                                              FontSize="10" />

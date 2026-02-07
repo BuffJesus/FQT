@@ -68,7 +68,7 @@
                                     
                                     <TextBlock Grid.Row="0"
                                              Text="{Binding Name}"
-                                             FontWeight="SemiBold"
+                                             Style="{StaticResource PanelHeaderText}"
                                              FontSize="14"
                                              TextWrapping="Wrap" />
                                     
@@ -78,15 +78,15 @@
                                               CornerRadius="2"
                                               Margin="0,0,4,0">
                                             <TextBlock Text="{Binding Category}"
-                                                     FontSize="10"
-                                                     FontWeight="SemiBold" />
+                                                     Style="{StaticResource SectionHeaderText}"
+                                                     FontSize="10" />
                                         </Border>
                                         <Border Background="{DynamicResource BorderBrush}"
                                               Padding="4,2"
                                               CornerRadius="2">
                                             <TextBlock Text="{Binding Difficulty}"
-                                                     FontSize="10"
-                                                     FontWeight="SemiBold" />
+                                                     Style="{StaticResource SectionHeaderText}"
+                                                     FontSize="10" />
                                         </Border>
                                     </StackPanel>
                                     
@@ -119,7 +119,7 @@
                     <StackPanel Visibility="{Binding SelectedTemplate, Converter={StaticResource NullToVisibilityConverter}}">
                         <!-- Template Name -->
                         <TextBlock Text="{Binding SelectedTemplate.Name}"
-                                 FontWeight="SemiBold"
+                                 Style="{StaticResource PanelHeaderText}"
                                  FontSize="16"
                                  TextWrapping="Wrap"
                                  Margin="0,0,0,8" />
@@ -131,15 +131,15 @@
                                   CornerRadius="3"
                                   Margin="0,0,6,0">
                                 <TextBlock Text="{Binding SelectedTemplate.Category}"
-                                         FontSize="11"
-                                         FontWeight="SemiBold" />
+                                         Style="{StaticResource SectionHeaderText}"
+                                         FontSize="11" />
                             </Border>
                             <Border Background="{DynamicResource SurfaceBackground}"
                                   Padding="6,3"
                                   CornerRadius="3">
                                 <TextBlock Text="{Binding SelectedTemplate.Difficulty}"
-                                         FontSize="11"
-                                         FontWeight="SemiBold" />
+                                         Style="{StaticResource SectionHeaderText}"
+                                         FontSize="11" />
                             </Border>
                         </StackPanel>
                         

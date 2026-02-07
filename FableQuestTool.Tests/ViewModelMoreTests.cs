@@ -86,6 +86,66 @@ public sealed class ViewModelMoreTests
         Assert.All(viewModel.FilteredTemplates, t => Assert.Equal(category, t.Category));
     }
 
+    [Fact]
+    public void QuestManager_ParsesCommentedQuestAndFilePath()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        string questsLua = string.Join("\n", new[]
+        {
+            "Quests = {",
+            "    ActiveQuest = {",
+            "        name = \"ActiveQuest\",",
+            "        file = \"ActiveQuest/ActiveQuest\",",
+            "        id = 51000,",
+            "    },",
+            "    -- DisabledQuest = {",
+            "    --     name = \"DisabledQuest\",",
+            "    --     file = \"DisabledQuest/DisabledQuest\",",
+            "    --     id = 51001,",
+            "    -- },",
+            "}",
+            string.Empty
+        });
+        File.WriteAllText(tempInstall.QuestsLuaPath, questsLua);
+
+        using IniScope ini = IniScope.WithFablePath(tempInstall.RootPath);
+        QuestManagerViewModel viewModel = new QuestManagerViewModel();
+
+        var active = viewModel.Quests.First(q => q.Name == "ActiveQuest");
+        var disabled = viewModel.Quests.First(q => q.Name == "DisabledQuest");
+
+        Assert.True(active.IsEnabled);
+        Assert.False(disabled.IsEnabled);
+        Assert.Equal("ActiveQuest/ActiveQuest", active.FilePath);
+        Assert.Equal("DisabledQuest/DisabledQuest", disabled.FilePath);
+    }
+
+    [Fact]
+    public void QuestManager_ReportsMissingQuestsLua()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        File.Delete(tempInstall.QuestsLuaPath);
+
+        using IniScope ini = IniScope.WithFablePath(tempInstall.RootPath);
+        QuestManagerViewModel viewModel = new QuestManagerViewModel();
+
+        Assert.Empty(viewModel.Quests);
+        Assert.Equal("quests.lua not found", viewModel.StatusText);
+    }
+
+    [Fact]
+    public void QuestManager_ReportsMissingFseFolder()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        Directory.Delete(tempInstall.FseFolder, true);
+
+        using IniScope ini = IniScope.WithFablePath(tempInstall.RootPath);
+        QuestManagerViewModel viewModel = new QuestManagerViewModel();
+
+        Assert.Empty(viewModel.Quests);
+        Assert.Equal("quests.lua not found", viewModel.StatusText);
+    }
+
     private sealed class IniScope : IDisposable
     {
         private readonly string iniPath;

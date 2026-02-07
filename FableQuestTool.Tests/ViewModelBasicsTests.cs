@@ -194,4 +194,20 @@ public sealed class ViewModelBasicsTests
         Assert.Equal("String", info.VariableType);
         Assert.Equal("Default", info.DefaultValue);
     }
+
+    [Fact]
+    public void DeployedQuestInfo_StatusMatchesEnabledState()
+    {
+        DeployedQuestInfo info = new DeployedQuestInfo
+        {
+            Name = "QuestA",
+            IsEnabled = true
+        };
+
+        Assert.Equal("Enabled", info.Status);
+
+        info.IsEnabled = false;
+
+        Assert.Equal("Disabled", info.Status);
+    }
 }

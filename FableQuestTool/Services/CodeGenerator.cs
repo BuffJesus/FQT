@@ -654,13 +654,16 @@ public sealed class CodeGenerator
         }
         if (quest.Rewards.Morality != 0)
         {
-            sb.AppendLine($"            Quest:GiveHeroMorality({quest.Rewards.Morality})");
+            sb.AppendLine("            -- Give morality reward (engine uses 2000-point scale)");
+            sb.AppendLine($"            Quest:GiveHeroMorality({FormatMoralityValue(quest.Rewards.Morality)} / 2000)");
         }
 
-        // Single direct reward item (limited by game engine)
-        if (!string.IsNullOrWhiteSpace(quest.Rewards.DirectRewardItem))
+        if (quest.Rewards.Items.Count > 0)
         {
-            sb.AppendLine($"            Quest:GiveHeroObject(\"{quest.Rewards.DirectRewardItem}\", 1)");
+            foreach (string item in quest.Rewards.Items)
+            {
+                sb.AppendLine($"            Quest:GiveHeroObject(\"{item}\", 1)");
+            }
         }
 
         // Container-based rewards (for multiple items)
@@ -1714,5 +1717,10 @@ public sealed class CodeGenerator
             .Replace("\r", "\\r")
             .Replace("\t", "\\t")
             .Replace("\0", "");     // Remove null characters
+    }
+
+    private static string FormatMoralityValue(float value)
+    {
+        return value.ToString(CultureInfo.InvariantCulture);
     }
 }

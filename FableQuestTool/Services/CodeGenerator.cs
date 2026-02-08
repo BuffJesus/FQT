@@ -370,21 +370,6 @@ public sealed class CodeGenerator
             sb.AppendLine();
         }
 
-        if (quest.UseQuestStartScreen)
-        {
-            string isStory = quest.IsStoryQuest ? "true" : "false";
-            string isGold = quest.IsGoldQuest ? "true" : "false";
-            sb.AppendLine("    -- Show quest start screen once the region is loaded");
-            sb.AppendLine("    while true do");
-            sb.AppendLine($"        if Quest:IsRegionLoaded(\"{primaryRegion}\") then");
-            sb.AppendLine($"            Quest:KickOffQuestStartScreen(\"{quest.Name}\", {isStory}, {isGold})");
-            sb.AppendLine("            break");
-            sb.AppendLine("        end");
-            sb.AppendLine("        if not Quest:NewScriptFrame() then break end");
-            sb.AppendLine("    end");
-            sb.AppendLine();
-        }
-
         // Start threads
         sb.AppendLine("    -- Start quest threads");
 

@@ -88,6 +88,7 @@ public class TemplateService
         foreach (QuestTemplate template in templates)
         {
             ApplyTemplateDefaults(template.Template);
+            InjectStartScreenNode(template.Template);
         }
 
         return templates;
@@ -192,6 +193,92 @@ public class TemplateService
             entity.IsQuestTarget = true;
             entity.ShowOnMinimap = true;
         }
+    }
+
+    private static void InjectStartScreenNode(QuestProject project)
+    {
+        if (project == null || !project.UseQuestStartScreen)
+        {
+            return;
+        }
+
+        if (project.Entities.Count == 0)
+        {
+            return;
+        }
+
+        if (project.Entities.Any(entity =>
+                entity.Nodes.Any(node => string.Equals(node.Type, "showStartScreen", StringComparison.OrdinalIgnoreCase))))
+        {
+            return;
+        }
+
+        QuestEntity? entityWithGraph = project.Entities.FirstOrDefault(entity =>
+            entity.Nodes.Count > 0 && entity.Connections.Count > 0);
+
+        if (entityWithGraph == null)
+        {
+            return;
+        }
+
+        NodeConnection? connection = entityWithGraph.Connections.FirstOrDefault(connectionCandidate =>
+            string.Equals(connectionCandidate.FromPort, "Output", StringComparison.OrdinalIgnoreCase) &&
+            entityWithGraph.Nodes.Any(node =>
+                node.Id == connectionCandidate.FromNodeId &&
+                string.Equals(node.Category, "trigger", StringComparison.OrdinalIgnoreCase)));
+
+        connection ??= entityWithGraph.Connections.FirstOrDefault(connectionCandidate =>
+            string.Equals(connectionCandidate.FromPort, "Output", StringComparison.OrdinalIgnoreCase));
+
+        if (connection == null)
+        {
+            return;
+        }
+
+        BehaviorNode? fromNode = entityWithGraph.Nodes.FirstOrDefault(node => node.Id == connection.FromNodeId);
+        BehaviorNode? toNode = entityWithGraph.Nodes.FirstOrDefault(node => node.Id == connection.ToNodeId);
+
+        if (fromNode == null || toNode == null)
+        {
+            return;
+        }
+
+        string questCard = project.QuestCardObject ?? string.Empty;
+
+        string startScreenNodeId = Guid.NewGuid().ToString();
+        var startScreenNode = new BehaviorNode
+        {
+            Id = startScreenNodeId,
+            Type = "showStartScreen",
+            Category = "action",
+            Label = "Show Start Screen",
+            Icon = "??",
+            X = (fromNode.X + toNode.X) / 2.0,
+            Y = (fromNode.Y + toNode.Y) / 2.0,
+            Config = new Dictionary<string, object>
+            {
+                { "questCard", questCard },
+                { "giveCard", "false" },
+                { "showHeroGuide", "true" },
+                { "isStory", project.IsStoryQuest ? "true" : "false" },
+                { "isGold", project.IsGoldQuest ? "true" : "false" }
+            }
+        };
+
+        entityWithGraph.Nodes.Add(startScreenNode);
+
+        string originalToNodeId = connection.ToNodeId;
+        string originalToPort = connection.ToPort;
+        connection.ToNodeId = startScreenNodeId;
+        connection.ToPort = "Input";
+
+        entityWithGraph.Connections.Add(new NodeConnection
+        {
+            FromNodeId = startScreenNodeId,
+            FromPort = "Output",
+            ToNodeId = originalToNodeId,
+            ToPort = string.IsNullOrWhiteSpace(originalToPort) ? "Input" : originalToPort
+        });
     }
 
     private static IEnumerable<string> GetTemplateFolders()

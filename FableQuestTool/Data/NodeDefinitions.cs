@@ -280,6 +280,17 @@ public static class NodeDefinitions
                 },
                 CodeTemplate = "answer = Quest:GiveHeroYesNoQuestion(\"{question}\", \"{yes}\", \"{no}\", \"{unsure}\")\nQuest:EndMovieSequence()\n{CHILDREN}" },
 
+            new() { Type = "showStartScreen", Label = "Show Start Screen", Category = "action", Icon = "??", IsAdvanced = false,
+                Description = "Display the quest start screen for this quest",
+                Properties = new() {
+                    new NodeProperty { Name = "questCard", Type = "string", Label = "Quest Card", DefaultValue = "OBJECT_QUEST_CARD_GENERIC", Options = new List<string>(GameData.QuestCards) },
+                    new NodeProperty { Name = "giveCard", Type = "bool", Label = "Give Quest Card", DefaultValue = "false" },
+                    new NodeProperty { Name = "showHeroGuide", Type = "bool", Label = "Show Hero Guide", DefaultValue = "true" },
+                    new NodeProperty { Name = "isStory", Type = "bool", Label = "Story Quest", DefaultValue = "false" },
+                    new NodeProperty { Name = "isGold", Type = "bool", Label = "Gold Quest", DefaultValue = "false" }
+                },
+                CodeTemplate = "local questCard = \"{questCard}\"\nif {giveCard} and questCard ~= \"\" then\n    Quest:GiveQuestCardDirectly(questCard, \"{QUEST_NAME}\", true)\nend\nif {showHeroGuide} then\n    Quest:SetHeroGuideShowsQuestCards(true)\nend\nQuest:KickOffQuestStartScreen(\"{QUEST_NAME}\", {isStory}, {isGold})\n{CHILDREN}" },
+
             // ===== QUEST TARGETS =====
             new() { Type = "showMinimapMarker", Label = "Show Minimap Marker", Category = "action", Icon = "?", IsAdvanced = false,
                 Description = "Show a minimap marker on this entity",

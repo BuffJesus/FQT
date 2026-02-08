@@ -303,6 +303,35 @@ public static class NodeDefinitions
                 Properties = new(),
                 CodeTemplate = "Quest:ClearThingHasInformation(Me)\n{CHILDREN}" },
 
+            new() { Type = "highlightQuestTargetByName", Label = "Highlight Quest Target (By Name)", Category = "action", Icon = "??", IsAdvanced = false,
+                Description = "Highlight another entity using its script name",
+                Properties = new() {
+                    new NodeProperty { Name = "targetScriptName", Type = "string", Label = "Target Script Name", DefaultValue = "QuestTarget" }
+                },
+                CodeTemplate = "local target = Quest:GetThingWithScriptName(\"{targetScriptName}\")\nif target ~= nil then\n    Quest:SetThingHasInformation(target, true)\nend\n{CHILDREN}" },
+
+            new() { Type = "clearQuestTargetHighlightByName", Label = "Clear Quest Target (By Name)", Category = "action", Icon = "??", IsAdvanced = false,
+                Description = "Clear highlight on another entity using its script name",
+                Properties = new() {
+                    new NodeProperty { Name = "targetScriptName", Type = "string", Label = "Target Script Name", DefaultValue = "QuestTarget" }
+                },
+                CodeTemplate = "local target = Quest:GetThingWithScriptName(\"{targetScriptName}\")\nif target ~= nil then\n    Quest:ClearThingHasInformation(target)\nend\n{CHILDREN}" },
+
+            new() { Type = "showMinimapMarkerByName", Label = "Show Minimap Marker (By Name)", Category = "action", Icon = "?", IsAdvanced = false,
+                Description = "Show a minimap marker for another entity using its script name",
+                Properties = new() {
+                    new NodeProperty { Name = "targetScriptName", Type = "string", Label = "Target Script Name", DefaultValue = "QuestTarget" },
+                    new NodeProperty { Name = "markerName", Type = "string", Label = "Marker Name", DefaultValue = "QuestTarget" }
+                },
+                CodeTemplate = "local target = Quest:GetThingWithScriptName(\"{targetScriptName}\")\nif target ~= nil then\n    Quest:MiniMapAddMarker(target, \"{markerName}\")\nend\n{CHILDREN}" },
+
+            new() { Type = "hideMinimapMarkerByName", Label = "Hide Minimap Marker (By Name)", Category = "action", Icon = "?", IsAdvanced = false,
+                Description = "Remove a minimap marker for another entity using its script name",
+                Properties = new() {
+                    new NodeProperty { Name = "targetScriptName", Type = "string", Label = "Target Script Name", DefaultValue = "QuestTarget" }
+                },
+                CodeTemplate = "local target = Quest:GetThingWithScriptName(\"{targetScriptName}\")\nif target ~= nil then\n    Quest:MiniMapRemoveMarker(target)\nend\n{CHILDREN}" },
+
             // ===== CINEMATIC - Movie Sequence (No frame checks during movie mode!) =====
             new() { Type = "startMovieSequence", Label = "Start Movie Sequence", Category = "action", Icon = "??", IsAdvanced = false,
                 Description = "Begin cinematic mode (prevents interruptions during cutscenes/conversations)",

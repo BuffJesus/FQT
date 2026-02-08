@@ -190,20 +190,6 @@ public sealed class CodeGenerator
 
         sb.AppendLine();
 
-        if (entity.IsQuestTarget || entity.ShowOnMinimap)
-        {
-            sb.AppendLine("    -- Quest target highlighting and minimap marker");
-            if (entity.IsQuestTarget)
-            {
-                sb.AppendLine("    Quest:SetThingHasInformation(Me, true)");
-            }
-            if (entity.ShowOnMinimap)
-            {
-                sb.AppendLine($"    Quest:MiniMapAddMarker(Me, \"{Escape(entity.ScriptName)}\")");
-            }
-            sb.AppendLine();
-        }
-
         // Check if this object entity has rewards configured
         bool hasObjectRewards = entity.EntityType == EntityType.Object &&
                                entity.ObjectReward != null &&
@@ -700,7 +686,7 @@ public sealed class CodeGenerator
         sb.AppendLine();
 
         // Clear quest target highlighting
-        var questTargets = quest.Entities.Where(e => e.IsQuestTarget || e.ShowOnMinimap).ToList();
+        var questTargets = quest.Entities.ToList();
         if (questTargets.Count > 0)
         {
             sb.AppendLine("            -- Clear quest target highlighting and minimap markers");
@@ -709,15 +695,8 @@ public sealed class CodeGenerator
                 sb.AppendLine($"            local {entity.ScriptName} = Quest:GetThingWithScriptName(\"{entity.ScriptName}\")");
                 sb.AppendLine($"            if {entity.ScriptName} ~= nil then");
 
-                if (entity.IsQuestTarget)
-                {
-                    sb.AppendLine($"                Quest:ClearThingHasInformation({entity.ScriptName})");
-                }
-
-                if (entity.ShowOnMinimap)
-                {
-                    sb.AppendLine($"                Quest:MiniMapRemoveMarker({entity.ScriptName})");
-                }
+                sb.AppendLine($"                Quest:ClearThingHasInformation({entity.ScriptName})");
+                sb.AppendLine($"                Quest:MiniMapRemoveMarker({entity.ScriptName})");
 
                 sb.AppendLine("            end");
             }
@@ -1741,23 +1720,13 @@ public sealed class CodeGenerator
     }
 
     private static bool IsExecPort(NodeDefinition nodeDef, string? port)
+{
+    if (nodeDef.Category == "variable")
     {
-        if (nodeDef.Category == "variable")
+        if (!(nodeDef.Type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase) ||
+              nodeDef.Type.StartsWith("var_set_ext", StringComparison.OrdinalIgnoreCase)))
         {
-            if (!(nodeDef.Type.StartsWith("var_set_", StringComparison.OrdinalIgnoreCase) ||
-                  nodeDef.Type.StartsWith("var_set_ext", StringComparison.OrdinalIgnoreCase)))
-            {
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(port))
-            {
-                return true;
-            }
-
-            return string.Equals(port, "▶", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(port, "Exec", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(port, "Output", StringComparison.OrdinalIgnoreCase);
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(port))
@@ -1765,30 +1734,42 @@ public sealed class CodeGenerator
             return true;
         }
 
-        if (string.Equals(port, "▶", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(port, "Exec", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(port, "Output", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (nodeDef.BranchLabels != null &&
-            nodeDef.BranchLabels.Any(label => label.Equals(port, StringComparison.OrdinalIgnoreCase)))
-        {
-            return true;
-        }
-
-        if (nodeDef.HasBranching &&
-            (string.Equals(port, "True", StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(port, "False", StringComparison.OrdinalIgnoreCase)))
-        {
-            return true;
-        }
-
-        return false;
+        return string.Equals(port, "▶", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(port, "Exec", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(port, "Output", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(port, ">", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>
+    if (string.IsNullOrWhiteSpace(port))
+    {
+        return true;
+    }
+
+    if (string.Equals(port, "▶", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(port, "Exec", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(port, "Output", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(port, ">", StringComparison.OrdinalIgnoreCase))
+    {
+        return true;
+    }
+
+    if (nodeDef.BranchLabels != null &&
+        nodeDef.BranchLabels.Any(label => label.Equals(port, StringComparison.OrdinalIgnoreCase)))
+    {
+        return true;
+    }
+
+    if (nodeDef.HasBranching &&
+        (string.Equals(port, "True", StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(port, "False", StringComparison.OrdinalIgnoreCase)))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+/// <summary>
     /// Generates Lua code for a behavior node and its children.
     /// Handles both structured nodes (triggers, conditions) and linear action sequences.
     /// </summary>
@@ -2117,3 +2098,6 @@ public sealed class CodeGenerator
             .Replace("\0", "");     // Remove null characters
     }
 }
+
+
+

@@ -183,6 +183,12 @@ public class TemplateService
             {
                 entity.SpawnRegion = project.ObjectiveRegion1 ?? project.Regions.FirstOrDefault() ?? "Oakvale";
             }
+            if (string.Equals(project.Name, "VarExternalFlowQuest", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(entity.ScriptName, "VarListener", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             entity.IsQuestTarget = true;
             entity.ShowOnMinimap = true;
         }
@@ -1741,7 +1747,8 @@ public class TemplateService
             Regions = new ObservableCollection<string> { "Oakvale" },
             QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
             ObjectiveText = "Give the item, then talk to the listener",
-            ObjectiveRegion1 = "Oakvale"
+            ObjectiveRegion1 = "Oakvale",
+            IsGoldQuest = true
         };
 
         var source = new QuestEntity
@@ -1770,6 +1777,10 @@ public class TemplateService
         string setTrueId = Guid.NewGuid().ToString();
         string confirmId = Guid.NewGuid().ToString();
         string noItemId = Guid.NewGuid().ToString();
+        string clearHighlightId = Guid.NewGuid().ToString();
+        string hideMarkerId = Guid.NewGuid().ToString();
+        string highlightListenerId = Guid.NewGuid().ToString();
+        string showListenerMarkerId = Guid.NewGuid().ToString();
 
         source.Nodes = new List<BehaviorNode>
         {
@@ -1785,7 +1796,13 @@ public class TemplateService
             new BehaviorNode { Id = setTrueId, Type = "var_set_HasToken", Category = "variable", Label = "Set HasToken", Icon = "??", X = 760, Y = 80,
                 Config = new Dictionary<string, object> { { "value", "true" } } },
               new BehaviorNode { Id = confirmId, Type = "showDialogue", Category = "action", Label = "Confirm", Icon = "??", X = 1000, Y = 80,
-                  Config = new Dictionary<string, object> { { "text", "Lovely. The boy gets his bear, the bully gets a bruise, and you get the glory. Go tell the listener." } } }
+                  Config = new Dictionary<string, object> { { "text", "Lovely. The boy gets his bear, the bully gets a bruise, and you get the glory. Go tell the listener." } } },
+              new BehaviorNode { Id = highlightListenerId, Type = "highlightQuestTargetByName", Category = "action", Label = "Highlight Listener", Icon = "??", X = 1200, Y = 80,
+                  Config = new Dictionary<string, object> { { "targetScriptName", "VarListener" } } },
+              new BehaviorNode { Id = showListenerMarkerId, Type = "showMinimapMarkerByName", Category = "action", Label = "Show Listener Marker", Icon = "??", X = 1400, Y = 80,
+                  Config = new Dictionary<string, object> { { "targetScriptName", "VarListener" }, { "markerName", "Listener" } } },
+              new BehaviorNode { Id = clearHighlightId, Type = "clearQuestTargetHighlight", Category = "action", Label = "Clear Quest Target", Icon = "??", X = 1600, Y = 80 },
+              new BehaviorNode { Id = hideMarkerId, Type = "hideMinimapMarker", Category = "action", Label = "Hide Minimap Marker", Icon = "??", X = 1800, Y = 80 }
         };
 
         source.Connections = new List<NodeConnection>
@@ -1795,7 +1812,11 @@ public class TemplateService
             new NodeConnection { FromNodeId = hasItemId, FromPort = "False", ToNodeId = noItemId, ToPort = "Input" },
             new NodeConnection { FromNodeId = presentedId, FromPort = "Output", ToNodeId = takeItemId, ToPort = "Input" },
             new NodeConnection { FromNodeId = takeItemId, FromPort = "Output", ToNodeId = setTrueId, ToPort = "Input" },
-            new NodeConnection { FromNodeId = setTrueId, FromPort = "Output", ToNodeId = confirmId, ToPort = "Input" }
+            new NodeConnection { FromNodeId = setTrueId, FromPort = "Output", ToNodeId = confirmId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = confirmId, FromPort = "Output", ToNodeId = highlightListenerId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = highlightListenerId, FromPort = "Output", ToNodeId = showListenerMarkerId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = showListenerMarkerId, FromPort = "Output", ToNodeId = clearHighlightId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = clearHighlightId, FromPort = "Output", ToNodeId = hideMarkerId, ToPort = "Input" }
         };
 
         var listener = new QuestEntity
@@ -1805,7 +1826,9 @@ public class TemplateService
             DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
             EntityType = EntityType.Creature,
             MakeBehavioral = true,
-            ExclusiveControl = true
+            ExclusiveControl = true,
+            IsQuestTarget = false,
+            ShowOnMinimap = false
         };
 
         string listenerTalkId = Guid.NewGuid().ToString();
@@ -1819,12 +1842,12 @@ public class TemplateService
             new BehaviorNode { Id = listenerTalkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 80, Y = 320 },
             new BehaviorNode { Id = branchId, Type = "branch", Category = "flow", Label = "Branch", Icon = "??", X = 260, Y = 320,
                 Config = new Dictionary<string, object> { { "condition", "$@VarSource.HasToken" } } },
-            new BehaviorNode { Id = yesId, Type = "showDialogue", Category = "action", Label = "Has Token", Icon = "??", X = 440, Y = 280,
+            new BehaviorNode { Id = yesId, Type = "showDialogue", Category = "action", Label = "Has Token", Icon = "??", X = 760, Y = 280,
                 Config = new Dictionary<string, object> { { "text", "Ah, the bear! The boy will be chuffed. The girl can make do with a stick and her imagination." } } },
             new BehaviorNode { Id = noId, Type = "showDialogue", Category = "action", Label = "No Token", Icon = "??", X = 440, Y = 360,
                 Config = new Dictionary<string, object> { { "text", "No bear, no peace. Go give that bully a lesson and bring the bear to VarSource." } } }
             ,
-            new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete Quest", Icon = "??", X = 640, Y = 280,
+            new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete Quest", Icon = "??", X = 920, Y = 280,
                 Config = new Dictionary<string, object> { { "showScreen", "true" } } }
         };
 

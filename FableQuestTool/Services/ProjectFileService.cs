@@ -189,6 +189,14 @@ public sealed class ProjectFileService
             }
         }
 
+        if (!project.UseQuestStartScreen &&
+            project.UseQuestEndScreen &&
+            !string.IsNullOrWhiteSpace(project.QuestCardObject))
+        {
+            project.UseQuestStartScreen = true;
+            changed = true;
+        }
+
         return changed;
     }
 }

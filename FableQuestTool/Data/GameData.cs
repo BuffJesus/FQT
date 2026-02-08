@@ -13,6 +13,7 @@ public static class GameData
     {
         // Common regions (matching TemplateService and RegionTngMapping)
         "Oakvale",
+        "StartOakVale",
         "BarrowFields",
         "LookoutPoint",
         "HeroGuild",

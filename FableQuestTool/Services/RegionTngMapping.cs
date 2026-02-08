@@ -16,6 +16,7 @@ public static class RegionTngMapping
         { "BarrowFields", new[] { "Barrowfields_3.tng" } },
         { "Greatwood", new[] { "Greatwood_3.tng" } },
         { "Oakvale", new[] { "StartOakValeWest.tng", "OakValeEast_v2.tng" } },
+        { "StartOakVale", new[] { "StartOakValeWest.tng", "OakValeEast_v2.tng" } },
         { "Lookout", new[] { "LookoutPoint_3.tng" } },
         { "HeroesGuild", new[] { "GuildInt.tng", "Guild_Exterior.tng" } },
         { "Bowerstone", new[] { "Bowerstone_North.tng", "Bowerstone_South.tng", "Bowerstone_Quay.tng" } },

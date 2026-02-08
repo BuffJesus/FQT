@@ -96,6 +96,7 @@ public static class WorldMapCoordinateService
         
         // Oakvale area
         { "Oakvale", new RegionMapData { MapCenterX = 380, MapCenterY = 340, WorldCenterX = 0, WorldCenterZ = 0, ScaleX = 0.01f, ScaleZ = 0.01f, WorldRadius = 80 } },
+        { "StartOakVale", new RegionMapData { MapCenterX = 380, MapCenterY = 340, WorldCenterX = 0, WorldCenterZ = 0, ScaleX = 0.01f, ScaleZ = 0.01f, WorldRadius = 80 } },
         { "CliffCottage", new RegionMapData { MapCenterX = 420, MapCenterY = 360, WorldCenterX = 0, WorldCenterZ = 0, ScaleX = 0.01f, ScaleZ = 0.01f, WorldRadius = 40 } },
         { "FishingChallenge", new RegionMapData { MapCenterX = 350, MapCenterY = 370, WorldCenterX = 0, WorldCenterZ = 0, ScaleX = 0.01f, ScaleZ = 0.01f, WorldRadius = 30 } },
         { "MemorialGarden", new RegionMapData { MapCenterX = 400, MapCenterY = 350, WorldCenterX = 0, WorldCenterZ = 0, ScaleX = 0.01f, ScaleZ = 0.01f, WorldRadius = 30 } },

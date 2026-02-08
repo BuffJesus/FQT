@@ -312,6 +312,8 @@ public sealed class CodeGenerator
                                     quest.Rewards.Container.Items.Count > 0 &&
                                     !quest.Rewards.Container.AutoGiveOnComplete;
 
+        string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
+
         // Bind entity scripts
         if (quest.Entities.Count > 0 || needsContainerEntity)
         {
@@ -368,21 +370,24 @@ public sealed class CodeGenerator
             sb.AppendLine();
         }
 
-        // Show quest start screen
         if (quest.UseQuestStartScreen)
         {
             string isStory = quest.IsStoryQuest ? "true" : "false";
             string isGold = quest.IsGoldQuest ? "true" : "false";
-            sb.AppendLine("    -- Show quest start screen");
-            sb.AppendLine($"    Quest:KickOffQuestStartScreen(\"{quest.Name}\", {isStory}, {isGold})");
+            sb.AppendLine("    -- Show quest start screen once the region is loaded");
+            sb.AppendLine("    while true do");
+            sb.AppendLine($"        if Quest:IsRegionLoaded(\"{primaryRegion}\") then");
+            sb.AppendLine($"            Quest:KickOffQuestStartScreen(\"{quest.Name}\", {isStory}, {isGold})");
+            sb.AppendLine("            break");
+            sb.AppendLine("        end");
+            sb.AppendLine("        if not Quest:NewScriptFrame() then break end");
+            sb.AppendLine("    end");
             sb.AppendLine();
         }
 
         // Start threads
         sb.AppendLine("    -- Start quest threads");
-        
-        string primaryRegion = quest.Regions.FirstOrDefault() ?? "Oakvale";
-        
+
         if (quest.Entities.Any(e => e.SpawnMethod != SpawnMethod.BindExisting) ||
             quest.Entities.Any(e => e.IsQuestTarget || e.ShowOnMinimap))
         {

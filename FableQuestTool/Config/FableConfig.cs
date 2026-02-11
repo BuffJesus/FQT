@@ -160,6 +160,28 @@ public sealed class FableConfig
     }
 
     /// <summary>
+    /// Gets whether quest start screen debug logging is enabled.
+    /// </summary>
+    public bool GetStartScreenDebug()
+    {
+        string? raw = ini?.Get("Debug", "StartScreen");
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        return bool.TryParse(raw, out bool value) && value;
+    }
+
+    /// <summary>
+    /// Stores the quest start screen debug logging preference.
+    /// </summary>
+    public void SetStartScreenDebug(bool value)
+    {
+        ini?.Set("Debug", "StartScreen", value.ToString());
+    }
+
+    /// <summary>
     /// Gets the FSE folder path based on the configured install path.
     /// </summary>
     public string? GetFseFolder()

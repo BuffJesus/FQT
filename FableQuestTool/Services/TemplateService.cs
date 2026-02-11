@@ -88,7 +88,6 @@ public class TemplateService
         foreach (QuestTemplate template in templates)
         {
             ApplyTemplateDefaults(template.Template);
-            InjectStartScreenNode(template.Template);
         }
 
         return templates;
@@ -244,6 +243,7 @@ public class TemplateService
         }
 
         string questCard = project.QuestCardObject ?? string.Empty;
+        bool shouldGiveCard = project.GiveCardDirectly || !project.IsGuildQuest;
 
         string startScreenNodeId = Guid.NewGuid().ToString();
         var startScreenNode = new BehaviorNode
@@ -258,7 +258,7 @@ public class TemplateService
             Config = new Dictionary<string, object>
             {
                 { "questCard", questCard },
-                { "giveCard", "false" },
+                { "giveCard", shouldGiveCard ? "true" : "false" },
                 { "showHeroGuide", "true" },
                 { "isStory", project.IsStoryQuest ? "true" : "false" },
                 { "isGold", project.IsGoldQuest ? "true" : "false" }

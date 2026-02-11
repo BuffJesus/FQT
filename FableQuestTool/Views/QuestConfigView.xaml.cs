@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
@@ -40,6 +42,8 @@ public sealed class NullToBoolConverter : IValueConverter
 public partial class QuestConfigView : System.Windows.Controls.UserControl
 {
     private MainViewModel? ViewModel => DataContext as MainViewModel;
+    private QuestProject? previewProject;
+    private MainViewModel? previewViewModel;
 
     /// <summary>
     /// Creates a new instance of QuestConfigView.
@@ -48,10 +52,12 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        HookPreviewNotifications();
         UpdatePreview();
         PopulateEntityScriptNames();
 
@@ -67,6 +73,89 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
         }
 
         ApplySectionVisibility();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        UnhookPreviewNotifications();
+    }
+
+    private void HookPreviewNotifications()
+    {
+        if (ViewModel == null)
+        {
+            return;
+        }
+
+        if (previewViewModel != null)
+        {
+            previewViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        previewViewModel = ViewModel;
+        previewViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        AttachProjectHandlers(previewViewModel.Project);
+    }
+
+    private void UnhookPreviewNotifications()
+    {
+        if (previewViewModel != null)
+        {
+            previewViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            previewViewModel = null;
+        }
+
+        DetachProjectHandlers();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.Project) && previewViewModel != null)
+        {
+            AttachProjectHandlers(previewViewModel.Project);
+            UpdatePreview();
+        }
+    }
+
+    private void AttachProjectHandlers(QuestProject? project)
+    {
+        if (ReferenceEquals(project, previewProject))
+        {
+            return;
+        }
+
+        DetachProjectHandlers();
+        previewProject = project;
+
+        if (previewProject == null)
+        {
+            return;
+        }
+
+        previewProject.PropertyChanged += OnProjectPropertyChanged;
+        previewProject.Regions.CollectionChanged += OnProjectRegionsChanged;
+    }
+
+    private void DetachProjectHandlers()
+    {
+        if (previewProject == null)
+        {
+            return;
+        }
+
+        previewProject.PropertyChanged -= OnProjectPropertyChanged;
+        previewProject.Regions.CollectionChanged -= OnProjectRegionsChanged;
+        previewProject = null;
+    }
+
+    private void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        UpdatePreview();
+    }
+
+    private void OnProjectRegionsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        UpdatePreview();
     }
 
     private void PopulateEntityScriptNames()
@@ -783,7 +872,10 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
 
         try
         {
-            var generator = new CodeGenerator();
+            var generator = new CodeGenerator
+            {
+                StartScreenDebug = Config.FableConfig.Load().GetStartScreenDebug()
+            };
             string code = generator.GenerateQuestScript(ViewModel.Project);
             PreviewText.Text = code;
         }

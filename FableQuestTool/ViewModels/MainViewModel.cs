@@ -172,7 +172,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"Failed to load project: {ex.Message}", "Load Project", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            System.Windows.MessageBox.Show($"[FQT-IO-101] Failed to load project: {ex.Message}", "Load Project", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
 
@@ -197,9 +197,9 @@ public sealed partial class MainViewModel : ObservableObject
             fileService.Save(ProjectPath, Project);
             if (!File.Exists(ProjectPath))
             {
-                StatusText = "Save failed: file not found after write.";
+                StatusText = "[FQT-IO-102] Save failed: file not found after write.";
                 System.Windows.MessageBox.Show(
-                    $"Save completed without errors, but the file was not found at:\n{ProjectPath}",
+                    $"[FQT-IO-102] Save completed without errors, but the file was not found at:\n{ProjectPath}",
                     "Save Project",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Warning);
@@ -210,7 +210,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"Failed to save project: {ex.Message}", "Save Project", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            System.Windows.MessageBox.Show($"[FQT-IO-103] Failed to save project: {ex.Message}", "Save Project", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
 
@@ -293,8 +293,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusText = "Deletion error";
-            System.Windows.MessageBox.Show($"Failed to delete quest: {ex.Message}", "Deletion Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            StatusText = "[FQT-IO-104] Deletion error";
+            System.Windows.MessageBox.Show($"[FQT-IO-104] Failed to delete quest: {ex.Message}", "Deletion Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
 
@@ -332,8 +332,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusText = "Deployment error";
-            System.Windows.MessageBox.Show($"Failed to deploy quest: {ex.Message}", "Deployment Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            StatusText = "[FQT-IO-105] Deployment error";
+            System.Windows.MessageBox.Show($"[FQT-IO-105] Failed to deploy quest: {ex.Message}", "Deployment Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
 
@@ -354,7 +354,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Windows.MessageBox.Show($"Failed to launch FSE: {ex.Message}", "Launch Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            System.Windows.MessageBox.Show($"[FQT-IO-106] Failed to launch FSE: {ex.Message}", "Launch Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }
 
@@ -442,9 +442,9 @@ public sealed partial class MainViewModel : ObservableObject
             }
             catch (Exception ex)
             {
-                StatusText = "Export failed";
+                StatusText = "[FQT-IO-107] Export failed";
                 System.Windows.MessageBox.Show(
-                    $"Failed to export catalog: {ex.Message}",
+                    $"[FQT-IO-107] Failed to export catalog: {ex.Message}",
                     "Export Error",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
@@ -624,7 +624,7 @@ public sealed partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             System.Windows.MessageBox.Show(
-                $"Failed to open sample quests folder: {ex.Message}",
+                $"[FQT-IO-108] Failed to open sample quests folder: {ex.Message}",
                 "Open Samples",
                 System.Windows.MessageBoxButton.OK,
                 System.Windows.MessageBoxImage.Error);

@@ -73,7 +73,7 @@ public sealed class ProjectFileService
         ProjectFileData? data = JsonSerializer.Deserialize<ProjectFileData>(json, options);
         if (data == null)
         {
-            throw new InvalidDataException("Project data is invalid.");
+            throw new InvalidDataException("[FQT-IO-001] Project data is invalid.");
         }
 
         QuestProject project = data.Project ?? new QuestProject();

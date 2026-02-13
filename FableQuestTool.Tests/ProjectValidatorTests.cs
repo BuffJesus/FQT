@@ -45,6 +45,7 @@ public sealed class ProjectValidatorTests
         var issues = validator.Validate(project);
 
         Assert.Contains(issues, i => i.Severity == ValidationSeverity.Error);
+        Assert.Contains(issues, i => i.Code != null && i.Code.StartsWith("FQT-VAL-", System.StringComparison.Ordinal));
         Assert.Contains(issues, i => i.Message.Contains("valid Lua identifier", System.StringComparison.OrdinalIgnoreCase));
         Assert.Contains(issues, i => i.Message.Contains("unknown node type", System.StringComparison.OrdinalIgnoreCase));
         Assert.Contains(issues, i => i.Message.Contains("connection to a missing node", System.StringComparison.OrdinalIgnoreCase));
@@ -63,6 +64,7 @@ public sealed class ProjectValidatorTests
         var issues = validator.Validate(project);
 
         Assert.Contains(issues, i => i.Message.Contains("no behavior nodes", System.StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(issues, i => i.Message.Contains("[FQT-VAL-", System.StringComparison.Ordinal));
     }
 
     [Fact]

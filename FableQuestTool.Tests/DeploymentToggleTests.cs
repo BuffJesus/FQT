@@ -194,6 +194,7 @@ public sealed class DeploymentToggleTests
         DeploymentService service = new DeploymentService(config, new CodeGenerator());
 
         Assert.False(service.DeleteQuest("MissingQuest", out string message));
+        Assert.Contains("[FQT-IO-024]", message, System.StringComparison.Ordinal);
         Assert.Contains("not found", message, System.StringComparison.OrdinalIgnoreCase);
     }
 }

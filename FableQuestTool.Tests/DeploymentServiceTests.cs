@@ -73,6 +73,7 @@ public sealed class DeploymentServiceTests
         bool result = service.DeployQuest(quest, out string message);
 
         Assert.False(result);
+        Assert.Contains("[FQT-IO-003]", message, StringComparison.Ordinal);
         Assert.Contains("FSE installation check failed", message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -92,6 +93,7 @@ public sealed class DeploymentServiceTests
         bool result = service.DeployQuest(quest, out string message);
 
         Assert.False(result);
+        Assert.Contains("[FQT-IO-006]", message, StringComparison.Ordinal);
         Assert.Contains("FinalAlbion.qst", message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -107,6 +109,7 @@ public sealed class DeploymentServiceTests
         bool result = service.DeleteQuest("Bad Name", out string message);
 
         Assert.False(result);
+        Assert.Contains("[FQT-IO-022]", message, StringComparison.Ordinal);
         Assert.Contains("invalid", message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -125,6 +128,7 @@ public sealed class DeploymentServiceTests
         bool result = service.LaunchFse(out string message);
 
         Assert.False(result);
+        Assert.Contains("[FQT-IO-010]", message, StringComparison.Ordinal);
         Assert.Contains("Cannot launch FSE", message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Mods.ini", message, StringComparison.OrdinalIgnoreCase);
     }

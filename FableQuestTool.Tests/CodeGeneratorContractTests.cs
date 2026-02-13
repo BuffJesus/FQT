@@ -178,4 +178,44 @@ public sealed class CodeGeneratorContractTests
         Assert.Contains("Quest:CreateThread(\"ProcessQuestActions\", {region=\"Oakvale\"})", script);
         Assert.Contains("Quest:MiniMapAddMarker(target, markerName)", script);
     }
+
+    [Fact]
+    public void GenerateEntityScript_EmitsDiagnosticComment_ForUnknownNodeType()
+    {
+        QuestProject quest = new QuestProject { Name = "UnknownNodeQuest" };
+        QuestEntity entity = new QuestEntity
+        {
+            ScriptName = "UnknownNodeNpc",
+            Nodes =
+            {
+                new BehaviorNode
+                {
+                    Id = "t",
+                    Type = "onHeroTalks",
+                    Category = "trigger"
+                },
+                new BehaviorNode
+                {
+                    Id = "u",
+                    Type = "notARealNodeType",
+                    Category = "action"
+                }
+            },
+            Connections =
+            {
+                new NodeConnection
+                {
+                    FromNodeId = "t",
+                    FromPort = "Output",
+                    ToNodeId = "u",
+                    ToPort = "Input"
+                }
+            }
+        };
+
+        CodeGenerator generator = new CodeGenerator();
+        string script = generator.GenerateEntityScript(quest, entity);
+
+        Assert.Contains("-- [FQT-CG-001] Unknown node type: notARealNodeType", script);
+    }
 }

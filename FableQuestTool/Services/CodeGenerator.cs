@@ -1129,7 +1129,7 @@ public sealed class CodeGenerator
     {
         if (entity.Nodes.Count == 0)
         {
-            return GenerateIndent(indent) + "-- No behavior nodes defined\n";
+            return GenerateIndent(indent) + "-- [FQT-CG-002] No behavior nodes defined\n";
         }
 
         StringBuilder sb = new StringBuilder();
@@ -1139,7 +1139,7 @@ public sealed class CodeGenerator
 
         if (triggerNodes.Count == 0)
         {
-            sb.AppendLine(GenerateIndent(indent) + "-- No trigger nodes found");
+            sb.AppendLine(GenerateIndent(indent) + "-- [FQT-CG-003] No trigger nodes found");
             return sb.ToString();
         }
 
@@ -1167,7 +1167,7 @@ public sealed class CodeGenerator
                       TryBuildVariableNodeDefinition(node, entity);
         if (nodeDef == null)
         {
-            return GenerateIndent(indent) + $"-- Unknown node type: {node.Type}\n";
+            return GenerateIndent(indent) + $"-- [FQT-CG-001] Unknown node type: {node.Type}\n";
         }
 
         StringBuilder sb = new StringBuilder();

@@ -83,27 +83,27 @@ public sealed class DeploymentService
         var nameErrors = NameValidation.ValidateProject(quest);
         if (nameErrors.Count > 0)
         {
-            message = "Quest contains invalid names:\n" + string.Join("\n", nameErrors);
+            message = "[FQT-VAL-010] Quest contains invalid names:\n" + string.Join("\n", nameErrors);
             return false;
         }
 
         if (!config.EnsureFablePath())
         {
-            message = "Fable installation path not configured.";
+            message = "[FQT-IO-002] Fable installation path not configured.";
             return false;
         }
 
         // Check and install FSE if needed
         if (!EnsureFseInstalled(out string? fseError))
         {
-            message = $"FSE installation check failed: {fseError}";
+            message = $"[FQT-IO-003] FSE installation check failed: {fseError}";
             return false;
         }
 
         string? fseFolder = config.GetFseFolder();
         if (string.IsNullOrWhiteSpace(fseFolder))
         {
-            message = "Could not determine FSE folder path.";
+            message = "[FQT-IO-004] Could not determine FSE folder path.";
             return false;
         }
 
@@ -144,21 +144,21 @@ public sealed class DeploymentService
             // Register quest in quests.lua
             if (!RegisterInQuestsLua(fseFolder, quest, out string? questsError))
             {
-                message = $"Quest files deployed but failed to register in quests.lua: {questsError}";
+                message = $"[FQT-IO-005] Quest files deployed but failed to register in quests.lua: {questsError}";
                 return false;
             }
 
             // Register quest in FinalAlbion.qst
             if (!RegisterInFinalAlbion(quest.Name, quest.IsEnabled, out string? qstError))
             {
-                message = $"Quest files deployed but failed to register in FinalAlbion.qst: {qstError}";
+                message = $"[FQT-IO-006] Quest files deployed but failed to register in FinalAlbion.qst: {qstError}";
                 return false;
             }
 
             // Add quest activation to FSE_Master.lua
             if (!AddQuestActivationToMaster(fseFolder, quest.Name, out string? masterError))
             {
-                message = $"Quest deployed but failed to add activation to FSE_Master.lua: {masterError}\n\n" +
+                message = $"[FQT-IO-007] Quest deployed but failed to add activation to FSE_Master.lua: {masterError}\n\n" +
                          "You may need to manually add:\n" +
                          $"quest:ActivateQuest(\"{quest.Name}\")\n" +
                          "to FSE_Master.lua Main() function.";
@@ -170,7 +170,7 @@ public sealed class DeploymentService
         }
         catch (Exception ex)
         {
-            message = $"Deployment failed: {ex.Message}";
+            message = $"[FQT-IO-008] Deployment failed: {ex.Message}";
             return false;
         }
     }
@@ -285,7 +285,7 @@ public sealed class DeploymentService
 
                 if (currentPos == -1)
                 {
-                    error = "Failed to parse quest entry in quests.lua";
+                    error = "[FQT-IO-014] Failed to parse quest entry in quests.lua";
                     return false;
                 }
 
@@ -336,7 +336,7 @@ public sealed class DeploymentService
         }
         catch (Exception ex)
         {
-            error = ex.Message;
+            error = $"[FQT-IO-015] {ex.Message}";
             return false;
         }
     }
@@ -381,7 +381,7 @@ public sealed class DeploymentService
 
         if (!File.Exists(masterPath))
         {
-            error = "FSE_Master.lua not found. Quest will not auto-activate.";
+            error = "[FQT-IO-016] FSE_Master.lua not found. Quest will not auto-activate.";
             return false;
         }
 
@@ -401,14 +401,14 @@ public sealed class DeploymentService
             int mainFuncStart = FindLuaFunctionStart(content, "Main");
             if (mainFuncStart == -1)
             {
-                error = "Could not find Main function in FSE_Master.lua";
+                error = "[FQT-IO-017] Could not find Main function in FSE_Master.lua";
                 return false;
             }
 
             int mainFuncEnd = FindLuaFunctionEnd(content, mainFuncStart);
             if (mainFuncEnd == -1)
             {
-                error = "Could not find end of Main function in FSE_Master.lua";
+                error = "[FQT-IO-018] Could not find end of Main function in FSE_Master.lua";
                 return false;
             }
 
@@ -424,7 +424,7 @@ public sealed class DeploymentService
         }
         catch (Exception ex)
         {
-            error = ex.Message;
+            error = $"[FQT-IO-019] {ex.Message}";
             return false;
         }
     }
@@ -435,14 +435,14 @@ public sealed class DeploymentService
 
         if (string.IsNullOrWhiteSpace(config.FablePath))
         {
-            error = "Fable path not configured.";
+            error = "[FQT-IO-013] Fable path not configured.";
             return false;
         }
 
         string qstPath = Path.Combine(config.FablePath, "data", "Levels", "FinalAlbion.qst");
         if (!File.Exists(qstPath))
         {
-            error = $"FinalAlbion.qst not found at: {qstPath}";
+            error = $"[FQT-IO-020] FinalAlbion.qst not found at: {qstPath}";
             return false;
         }
 
@@ -471,7 +471,7 @@ public sealed class DeploymentService
         }
         catch (Exception ex)
         {
-            error = $"Failed to register in FinalAlbion.qst: {ex.Message}";
+            error = $"[FQT-IO-021] Failed to register in FinalAlbion.qst: {ex.Message}";
             return false;
         }
     }
@@ -495,20 +495,20 @@ public sealed class DeploymentService
         var nameErrors = NameValidation.ValidateProject(new QuestProject { Name = questName });
         if (nameErrors.Count > 0)
         {
-            message = "Quest name is invalid for file operations.";
+            message = "[FQT-IO-022] Quest name is invalid for file operations.";
             return false;
         }
 
         if (!config.EnsureFablePath())
         {
-            message = "Fable installation path not configured.";
+            message = "[FQT-IO-009] Fable installation path not configured.";
             return false;
         }
 
         string? fseFolder = config.GetFseFolder();
         if (string.IsNullOrWhiteSpace(fseFolder))
         {
-            message = "Could not determine FSE folder path.";
+            message = "[FQT-IO-023] Could not determine FSE folder path.";
             return false;
         }
 
@@ -621,7 +621,7 @@ public sealed class DeploymentService
 
             if (!filesDeleted && !questsLuaUpdated && !qstFileUpdated && !masterUpdated)
             {
-                message = $"Quest '{questName}' was not found in Fable installation.";
+                message = $"[FQT-IO-024] Quest '{questName}' was not found in Fable installation.";
                 return false;
             }
 
@@ -634,7 +634,7 @@ public sealed class DeploymentService
         }
         catch (Exception ex)
         {
-            message = $"Deletion failed: {ex.Message}";
+            message = $"[FQT-IO-025] Deletion failed: {ex.Message}";
             return false;
         }
     }
@@ -660,14 +660,14 @@ public sealed class DeploymentService
 
         if (!config.EnsureFablePath())
         {
-            message = "Fable installation path not configured.";
+            message = "[FQT-IO-026] Fable installation path not configured.";
             return false;
         }
 
         string? fseFolder = config.GetFseFolder();
         if (string.IsNullOrWhiteSpace(fseFolder))
         {
-            message = "Could not determine FSE folder path.";
+            message = "[FQT-IO-027] Could not determine FSE folder path.";
             return false;
         }
 
@@ -726,7 +726,7 @@ public sealed class DeploymentService
         }
         catch (Exception ex)
         {
-            message = $"Toggle failed: {ex.Message}";
+            message = $"[FQT-IO-028] Toggle failed: {ex.Message}";
             return false;
         }
     }
@@ -885,7 +885,7 @@ public sealed class DeploymentService
 
         if (string.IsNullOrWhiteSpace(config.FablePath))
         {
-            error = "Fable path not configured.";
+            error = "[FQT-IO-013] Fable path not configured.";
             return false;
         }
 
@@ -934,21 +934,21 @@ After installing FSE, try deploying your quest again.";
 
         if (!config.EnsureFablePath())
         {
-            message = "Fable installation path not configured.";
+            message = "[FQT-IO-009] Fable installation path not configured.";
             return false;
         }
 
         // Ensure FSE is installed before launching
         if (!EnsureFseInstalled(out string? fseError))
         {
-            message = $"Cannot launch FSE: {fseError}";
+            message = $"[FQT-IO-010] Cannot launch FSE: {fseError}";
             return false;
         }
 
         string? launcherPath = config.GetFseLauncherPath();
         if (string.IsNullOrWhiteSpace(launcherPath))
         {
-            message = "FSE_Launcher.exe not found in Fable installation folder.";
+            message = "[FQT-IO-011] FSE_Launcher.exe not found in Fable installation folder.";
             return false;
         }
 
@@ -967,7 +967,7 @@ After installing FSE, try deploying your quest again.";
         }
         catch (Exception ex)
         {
-            message = $"Failed to launch FSE: {ex.Message}";
+            message = $"[FQT-IO-012] Failed to launch FSE: {ex.Message}";
             return false;
         }
     }

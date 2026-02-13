@@ -128,6 +128,19 @@ public sealed class ProjectFileServiceTests
     }
 
     [Fact]
+    public void Load_NullPayload_ThrowsInvalidDataWithDiagnosticCode()
+    {
+        ProjectFileService service = new ProjectFileService();
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = System.IO.Path.Combine(temp.Path, "NullPayload.fqtproj");
+
+        File.WriteAllText(path, "null");
+
+        InvalidDataException ex = Assert.Throws<InvalidDataException>(() => service.Load(path));
+        Assert.Contains("[FQT-IO-001]", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Save_CreatesDirectory()
     {
         ProjectFileService service = new ProjectFileService();

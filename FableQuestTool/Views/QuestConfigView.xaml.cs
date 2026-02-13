@@ -872,9 +872,11 @@ public partial class QuestConfigView : System.Windows.Controls.UserControl
 
         try
         {
+            var config = Config.FableConfig.Load();
             var generator = new CodeGenerator
             {
-                StartScreenDebug = Config.FableConfig.Load().GetStartScreenDebug()
+                StartScreenDebug = config.GetStartScreenDebug(),
+                StartScreenDebugBanner = config.GetStartScreenDebugBanner()
             };
             string code = generator.GenerateQuestScript(ViewModel.Project);
             PreviewText.Text = code;

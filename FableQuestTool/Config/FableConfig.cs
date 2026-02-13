@@ -182,6 +182,28 @@ public sealed class FableConfig
     }
 
     /// <summary>
+    /// Gets whether a start screen debug banner should be shown in-game.
+    /// </summary>
+    public bool GetStartScreenDebugBanner()
+    {
+        string? raw = ini?.Get("Debug", "StartScreenBanner");
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        return bool.TryParse(raw, out bool value) && value;
+    }
+
+    /// <summary>
+    /// Stores the start screen debug banner preference.
+    /// </summary>
+    public void SetStartScreenDebugBanner(bool value)
+    {
+        ini?.Set("Debug", "StartScreenBanner", value.ToString());
+    }
+
+    /// <summary>
     /// Gets the FSE folder path based on the configured install path.
     /// </summary>
     public string? GetFseFolder()

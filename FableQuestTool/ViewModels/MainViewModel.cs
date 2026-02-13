@@ -101,6 +101,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         fableConfig = FableConfig.Load();
         codeGenerator.StartScreenDebug = fableConfig.GetStartScreenDebug();
+        codeGenerator.StartScreenDebugBanner = fableConfig.GetStartScreenDebugBanner();
         exportService = new ExportService(codeGenerator);
         deploymentService = new DeploymentService(fableConfig, codeGenerator);
         UpdateSetupStatus();

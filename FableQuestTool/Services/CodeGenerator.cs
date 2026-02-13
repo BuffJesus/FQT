@@ -12,6 +12,7 @@ public sealed class CodeGenerator
 {
     private const string GeneratorStamp = "FQT-StartScreenFix-2026-02-10";
     public bool StartScreenDebug { get; set; }
+    public bool StartScreenDebugBanner { get; set; }
     private Dictionary<string, string> exposedVariableTypes = new(StringComparer.OrdinalIgnoreCase);
     private bool needsActionQueue;
     private static readonly HashSet<string> ActionQueueNodeTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -334,6 +335,7 @@ public sealed class CodeGenerator
         sb.AppendLine("    Quest:SetStateBool(\"QuestCompleted\", false)");
         sb.AppendLine("    Quest:SetStateBool(\"FQT_StartScreenShown\", false)");
         sb.AppendLine($"    Quest:SetStateBool(\"FQT_DebugStartScreen\", {(StartScreenDebug ? "true" : "false")})");
+        sb.AppendLine($"    Quest:SetStateBool(\"FQT_DebugStartScreenBanner\", {(StartScreenDebugBanner ? "true" : "false")})");
 
         // Initialize user-defined states
         foreach (QuestState state in quest.States)
@@ -580,7 +582,10 @@ public sealed class CodeGenerator
             sb.AppendLine("    if debugStart then Quest:Log(\"FQT: gave quest card directly\") end");
         }
         sb.AppendLine("    Quest:Log(\"FQT: KickOffQuestStartScreen called\")");
-        sb.AppendLine($"    Quest:KickOffQuestStartScreen(questName, {(quest.IsStoryQuest ? "true" : "false")}, {(quest.IsGoldQuest ? "true" : "false")})");
+        sb.AppendLine("    Quest:KickOffQuestStartScreen(questName, true, true)");
+        sb.AppendLine("    if Quest:GetStateBool(\"FQT_DebugStartScreenBanner\") then");
+        sb.AppendLine("        Quest:AddScreenTitleMessage(\"FQT: Start screen invoked\", 3.0, true)");
+        sb.AppendLine("    end");
         sb.AppendLine("    Quest:SetStateBool(\"FQT_StartScreenShown\", true)");
         sb.AppendLine("    if debugStart then Quest:Log(\"FQT: start screen kicked off\") end");
         sb.AppendLine("end");

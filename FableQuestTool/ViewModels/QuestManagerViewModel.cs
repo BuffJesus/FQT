@@ -32,6 +32,7 @@ public sealed partial class QuestManagerViewModel : ObservableObject
         config = FableConfig.Load();
         var codeGenerator = new CodeGenerator();
         codeGenerator.StartScreenDebug = config.GetStartScreenDebug();
+        codeGenerator.StartScreenDebugBanner = config.GetStartScreenDebugBanner();
         deploymentService = new DeploymentService(config, codeGenerator);
         LoadQuests();
     }

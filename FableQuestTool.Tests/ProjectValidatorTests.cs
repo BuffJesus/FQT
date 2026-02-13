@@ -135,4 +135,38 @@ public sealed class ProjectValidatorTests
 
         Assert.Contains(issues, i => i.Severity == ValidationSeverity.Error && i.Message.Contains("missing node", System.StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void Validate_AllErrorIssues_HaveStructuredDiagnosticCode()
+    {
+        QuestProject project = new QuestProject
+        {
+            Name = "Bad Name",
+            Id = 100
+        };
+
+        QuestEntity entity = new QuestEntity
+        {
+            ScriptName = "EntityA"
+        };
+        entity.Nodes.Add(new BehaviorNode
+        {
+            Id = "n1",
+            Type = "unknownNodeType",
+            Category = "action"
+        });
+        project.Entities.Add(entity);
+
+        ProjectValidator validator = new ProjectValidator();
+        var issues = validator.Validate(project);
+        var errors = issues.Where(i => i.Severity == ValidationSeverity.Error).ToList();
+
+        Assert.NotEmpty(errors);
+        Assert.All(errors, issue =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(issue.Code));
+            Assert.StartsWith("FQT-VAL-", issue.Code!, System.StringComparison.Ordinal);
+            Assert.Contains($"[{issue.Code}]", issue.Message, System.StringComparison.Ordinal);
+        });
+    }
 }

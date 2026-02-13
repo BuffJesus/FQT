@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore FQT.sln
+
+      - name: Diagnostics Guard
+        run: dotnet test FableQuestTool.Tests/FableQuestTool.Tests.csproj --filter "FullyQualifiedName~DiagnosticsCatalogTests" -v minimal
+
+      - name: Full Test Suite
+        run: dotnet test FQT.sln -v minimal

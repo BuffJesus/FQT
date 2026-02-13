@@ -150,6 +150,18 @@ Phase 4: In-game validation
 - Run unit tests: `dotnet test FableQuestTool.Tests/FableQuestTool.Tests.csproj`
 - Run all tests: `dotnet test`
 
+### Guarded Snapshot Refresh
+
+Use the helper script to intentionally rewrite snapshot fixtures.
+
+- Codegen snapshots only:
+`powershell -ExecutionPolicy Bypass -File .\scripts\update-snapshots.ps1 -ConfirmToken I_UNDERSTAND_SNAPSHOT_UPDATE`
+
+- Codegen + template snapshots:
+`powershell -ExecutionPolicy Bypass -File .\scripts\update-snapshots.ps1 -IncludeTemplateSnapshots -ConfirmToken I_UNDERSTAND_SNAPSHOT_UPDATE`
+
+The script exits without changing files unless the exact confirmation token is supplied.
+
 ---
 
 ## Open Questions
@@ -157,4 +169,3 @@ Phase 4: In-game validation
 - Should we split tests into fast and slow categories (xUnit Traits) for CI?
 - Do we want golden Lua snapshots or assertion-based checks only?
 - Is there a stable, redistributable test QST file for format tests?
-

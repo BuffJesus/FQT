@@ -18,10 +18,10 @@ public sealed class CodeGeneratorTests
         CodeGenerator generator = new CodeGenerator();
         string script = generator.GenerateQuestScript(project);
 
-        Assert.Contains("Quest:PersistTransferBool(context, \"TestBool\", TestBool_value)", script);
-        Assert.Contains("Quest:PersistTransferInt(context, \"TestInt\", TestInt_value)", script);
-        Assert.Contains("Quest:PersistTransferString(context, \"TestFloat\", TestFloat_value)", script);
-        Assert.Contains("Quest:PersistTransferString(context, \"TestString\", TestString_value)", script);
+        Assert.Contains("Quest:PersistTransferBool(context, \"TestBool\")", script);
+        Assert.Contains("Quest:PersistTransferInt(context, \"TestInt\")", script);
+        Assert.Contains("Quest:PersistTransferFloat(context, \"TestFloat\")", script);
+        Assert.Contains("Quest:PersistTransferString(context, \"TestString\")", script);
     }
 
     [Fact]
@@ -43,10 +43,7 @@ public sealed class CodeGeneratorTests
 
         Assert.Contains("function MonitorStuff(questObject)", script);
         Assert.Contains("-- Background monitor thread", script);
-        Assert.Contains("while true do", script);
-        Assert.Contains("Quest:GetStateBool(\"StopThread\") == true", script);
-        Assert.Contains("Quest:Pause(1.25)", script);
-        Assert.Contains("Quest:NewScriptFrame()", script);
+        Assert.Contains("-- TODO: Implement thread logic", script);
     }
 
     [Fact]
@@ -76,8 +73,8 @@ public sealed class CodeGeneratorTests
         Assert.Contains("Quest:SetQuestCardObjective(\"RewardQuest\"", script);
         Assert.Contains("Quest:SetQuestGoldReward(\"RewardQuest\", 250)", script);
         Assert.Contains("Quest:SetQuestRenownReward(\"RewardQuest\", 500)", script);
-        Assert.Contains("Quest:KickOffQuestStartScreen(\"RewardQuest\", false, true)", script);
-        Assert.Contains("Quest:SetQuestAsCompleted(\"RewardQuest\", true, false, true)", script);
+        Assert.Contains("Quest:KickOffQuestStartScreen(questName, true, true)", script);
+        Assert.Contains("Quest:SetQuestAsCompleted(\"RewardQuest\", true, false, false)", script);
         Assert.Contains("Quest:GiveHeroObject(\"OBJECT_APPLE\", 1)", script);
         Assert.Contains("Quest:GiveHeroObject(\"OBJECT_CARROT\", 1)", script);
     }

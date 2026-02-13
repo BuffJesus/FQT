@@ -155,6 +155,72 @@ public sealed class ProjectFileServiceTests
         Assert.Equal("NewQuest", loaded.Name);
     }
 
+    [Fact]
+    public void Load_AppliesMigrationsAndPersistsUpdatedFile()
+    {
+        ProjectFileService service = new ProjectFileService();
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = System.IO.Path.Combine(temp.Path, "Legacy.fqtproj");
+
+        string legacyJson = """
+{
+  "version": "0.1",
+  "project": {
+    "Name": "LegacyQuest",
+    "Id": 55000,
+    "QuestCardObject": "OBJECT_QUEST_CARD_GENERIC",
+    "UseQuestStartScreen": false,
+    "UseQuestEndScreen": true,
+    "ObjectiveRegion1": null,
+    "ObjectiveRegion2": null,
+    "Regions": null,
+    "Entities": [
+      {
+        "ScriptName": "LegacyNpc",
+        "SpawnRegion": ""
+      }
+    ]
+  }
+}
+""";
+
+        File.WriteAllText(path, legacyJson);
+
+        QuestProject loaded = service.Load(path);
+
+        Assert.True(loaded.UseQuestStartScreen);
+        Assert.Equal("Oakvale", loaded.ObjectiveRegion1);
+        Assert.NotNull(loaded.Regions);
+        Assert.Empty(loaded.Regions);
+        Assert.Single(loaded.Entities);
+        Assert.Equal("Oakvale", loaded.Entities[0].SpawnRegion);
+
+        string migratedText = File.ReadAllText(path);
+        Assert.Contains("\"UseQuestStartScreen\": true", migratedText, StringComparison.Ordinal);
+        Assert.Contains("\"ObjectiveRegion1\": \"Oakvale\"", migratedText, StringComparison.Ordinal);
+        Assert.Contains("\"SpawnRegion\": \"Oakvale\"", migratedText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Load_DoesNotRewriteWhenNoMigrationIsRequired()
+    {
+        ProjectFileService service = new ProjectFileService();
+        using TestTempDirectory temp = new TestTempDirectory();
+        string path = System.IO.Path.Combine(temp.Path, "NoMigration.fqtproj");
+
+        string stableJson = """
+{"version":"0.1","project":{"Name":"StableQuest","Id":56000,"UseQuestStartScreen":true,"UseQuestEndScreen":true,"ObjectiveRegion1":"Oakvale","ObjectiveRegion2":"","Regions":["Oakvale"],"Entities":[{"ScriptName":"StableNpc","SpawnRegion":"Oakvale"}]}}
+""";
+
+        File.WriteAllText(path, stableJson);
+
+        QuestProject loaded = service.Load(path);
+        string afterText = File.ReadAllText(path);
+
+        Assert.Equal("StableQuest", loaded.Name);
+        Assert.Equal(stableJson, afterText);
+    }
+
     private static QuestProject BuildProject()
     {
         QuestProject quest = new QuestProject

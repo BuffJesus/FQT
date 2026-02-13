@@ -463,4 +463,88 @@ public sealed class ViewModelEntityTabTests
 
         Assert.DoesNotContain(viewModel.FilteredNodes, n => n.Category == "trigger");
     }
+
+    [Fact]
+    public void EntityTab_FinishConnection_RejectsExecToDataTypeMismatch()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel source = new NodeViewModel();
+        NodeViewModel target = new NodeViewModel();
+        target.Input.First().ConnectorType = ConnectorType.String;
+        viewModel.Nodes.Add(source);
+        viewModel.Nodes.Add(target);
+
+        viewModel.StartConnectionCommand.Execute(source.Output.First());
+        viewModel.FinishConnectionCommand.Execute(target.Input.First());
+
+        Assert.Empty(viewModel.Connections);
+    }
+
+    [Fact]
+    public void EntityTab_FinishConnection_AllowsWildcardDataConnection()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel source = new NodeViewModel();
+        source.Output.First().ConnectorType = ConnectorType.Wildcard;
+        NodeViewModel target = new NodeViewModel();
+        target.Input.First().ConnectorType = ConnectorType.String;
+        viewModel.Nodes.Add(source);
+        viewModel.Nodes.Add(target);
+
+        viewModel.StartConnectionCommand.Execute(source.Output.First());
+        viewModel.FinishConnectionCommand.Execute(target.Input.First());
+
+        Assert.Single(viewModel.Connections);
+    }
+
+    [Fact]
+    public void EntityTab_FinishConnection_EnforcesSingleIncomingConnectionPerInput()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel sourceA = new NodeViewModel();
+        NodeViewModel sourceB = new NodeViewModel();
+        NodeViewModel target = new NodeViewModel();
+        viewModel.Nodes.Add(sourceA);
+        viewModel.Nodes.Add(sourceB);
+        viewModel.Nodes.Add(target);
+
+        ConnectorViewModel targetInput = target.Input.First();
+
+        viewModel.StartConnectionCommand.Execute(sourceA.Output.First());
+        viewModel.FinishConnectionCommand.Execute(targetInput);
+        Assert.Single(viewModel.Connections);
+        Assert.Equal(sourceA.Output.First(), viewModel.Connections[0].Source);
+
+        viewModel.StartConnectionCommand.Execute(sourceB.Output.First());
+        viewModel.FinishConnectionCommand.Execute(targetInput);
+        Assert.Single(viewModel.Connections);
+        Assert.Equal(sourceB.Output.First(), viewModel.Connections[0].Source);
+    }
+
+    [Fact]
+    public void EntityTab_FinishConnection_RejectsConnectingIntoTriggerNode()
+    {
+        QuestEntity entity = new QuestEntity();
+        EntityTabViewModel viewModel = new EntityTabViewModel(entity);
+
+        NodeViewModel source = new NodeViewModel();
+        NodeViewModel triggerTarget = new NodeViewModel
+        {
+            Type = "onHeroTalks",
+            Category = "trigger"
+        };
+        viewModel.Nodes.Add(source);
+        viewModel.Nodes.Add(triggerTarget);
+
+        viewModel.StartConnectionCommand.Execute(source.Output.First());
+        viewModel.FinishConnectionCommand.Execute(triggerTarget.Input.First());
+
+        Assert.Empty(viewModel.Connections);
+    }
 }

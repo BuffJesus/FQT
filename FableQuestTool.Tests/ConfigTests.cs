@@ -62,6 +62,22 @@ public sealed class ConfigTests
         Assert.False(reloaded.GetShowStartupImage());
     }
 
+    [Fact]
+    public void FableConfig_GetFseLauncherPath_ReturnsNullWhenLauncherMissing()
+    {
+        using FakeFableInstall tempInstall = FakeFableInstall.Create();
+        File.Delete(Path.Combine(tempInstall.RootPath, "FSE_Launcher.exe"));
+
+        string contents = $"[Settings]{Environment.NewLine}FablePath = {tempInstall.RootPath}{Environment.NewLine}";
+        using IniScope ini = IniScope.WithContents(contents);
+
+        FableConfig config = FableConfig.Load();
+
+        Assert.Equal(tempInstall.RootPath, config.FablePath);
+        Assert.Equal(Path.Combine(tempInstall.RootPath, "FSE"), config.GetFseFolder());
+        Assert.Null(config.GetFseLauncherPath());
+    }
+
     private sealed class IniScope : IDisposable
     {
         private readonly string iniPath;

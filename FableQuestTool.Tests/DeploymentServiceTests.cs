@@ -126,6 +126,7 @@ public sealed class DeploymentServiceTests
 
         Assert.False(result);
         Assert.Contains("Cannot launch FSE", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Mods.ini", message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

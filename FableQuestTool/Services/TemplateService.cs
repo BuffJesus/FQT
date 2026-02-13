@@ -72,6 +72,7 @@ public class TemplateService
             CreateFetchTemplate(),
             CreateEscortTemplate(),
             CreateDeliveryTemplate(),
+            CreatePilgrimageTemplate(),
             CreateInvestigationTemplate(),
             CreateQuestBoardTemplate(),
             CreateDemonDoorTemplate(),
@@ -801,6 +802,148 @@ public class TemplateService
             new NodeConnection { FromNodeId = checkItemId, FromPort = "False", ToNodeId = noItemId, ToPort = "Input" },
             new NodeConnection { FromNodeId = takeItemId, FromPort = "Output", ToNodeId = setStateId, ToPort = "Input" },
             new NodeConnection { FromNodeId = setStateId, FromPort = "Output", ToNodeId = thanksId, ToPort = "Input" }
+        };
+
+        return npc;
+    }
+
+    private QuestTemplate CreatePilgrimageTemplate()
+    {
+        var project = new QuestProject
+        {
+            Name = "MyPilgrimageQuest",
+            Id = 50018,
+            DisplayName = "Pilgrimage to the Guild",
+            Description = "Travel from Oakvale through two waypoints and report to the Heroes Guild.",
+            Regions = new ObservableCollection<string> { "Oakvale", "BarrowFields", "LookoutPoint", "HeroesGuild" },
+            QuestCardObject = "OBJECT_QUEST_CARD_GENERIC",
+            ObjectiveText = "Visit Barrow Fields and Lookout Point, then report to the Heroes Guild.",
+            ObjectiveRegion1 = "Oakvale",
+            ObjectiveRegion2 = "HeroesGuild",
+            UseQuestStartScreen = true,
+            UseQuestEndScreen = true
+        };
+
+        project.Rewards = new QuestRewards
+        {
+            Gold = 1800,
+            Renown = 180,
+            Experience = 320
+        };
+
+        project.States.Add(new QuestState { Id = "visitedBarrowFields", Name = "Visited Barrow Fields", Type = "bool", Persist = true, DefaultValue = false });
+        project.States.Add(new QuestState { Id = "visitedLookoutPoint", Name = "Visited Lookout Point", Type = "bool", Persist = true, DefaultValue = false });
+
+        project.Entities.Add(CreatePilgrimageWaypointNpc(
+            id: "pilgrimage_barrow",
+            scriptName: "PilgrimageBarrow",
+            stateName: "visitedBarrowFields",
+            lineText: "The first waypoint is marked. Continue to Lookout Point.",
+            spawnRegion: "BarrowFields",
+            x: 80,
+            y: 180));
+
+        project.Entities.Add(CreatePilgrimageWaypointNpc(
+            id: "pilgrimage_lookout",
+            scriptName: "PilgrimageLookout",
+            stateName: "visitedLookoutPoint",
+            lineText: "Second waypoint complete. Return to the Heroes Guild.",
+            spawnRegion: "LookoutPoint",
+            x: 80,
+            y: 360));
+
+        var guildMaster = new QuestEntity
+        {
+            Id = "pilgrimage_guild_master",
+            ScriptName = "PilgrimageGuildMaster",
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_MALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true,
+            SpawnRegion = "HeroesGuild"
+        };
+
+        string talkId = Guid.NewGuid().ToString();
+        string checkBarrowId = Guid.NewGuid().ToString();
+        string checkLookoutId = Guid.NewGuid().ToString();
+        string readyLineId = Guid.NewGuid().ToString();
+        string notReadyLineId = Guid.NewGuid().ToString();
+        string completeId = Guid.NewGuid().ToString();
+
+        guildMaster.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = 100, Y = 560 },
+            new BehaviorNode { Id = checkBarrowId, Type = "checkStateBool", Category = "condition", Label = "Visited Barrow?", Icon = "?", X = 300, Y = 560,
+                Config = new Dictionary<string, object> { { "name", "visitedBarrowFields" }, { "value", "true" } } },
+            new BehaviorNode { Id = checkLookoutId, Type = "checkStateBool", Category = "condition", Label = "Visited Lookout?", Icon = "?", X = 500, Y = 560,
+                Config = new Dictionary<string, object> { { "name", "visitedLookoutPoint" }, { "value", "true" } } },
+            new BehaviorNode { Id = readyLineId, Type = "showDialogue", Category = "action", Label = "Ready", Icon = "??", X = 700, Y = 500,
+                Config = new Dictionary<string, object> { { "text", "Well done. Your pilgrimage is complete." } } },
+            new BehaviorNode { Id = notReadyLineId, Type = "showDialogue", Category = "action", Label = "Not Ready", Icon = "??", X = 500, Y = 700,
+                Config = new Dictionary<string, object> { { "text", "You still have waypoints to visit before the Guild can certify you." } } },
+            new BehaviorNode { Id = completeId, Type = "completeQuest", Category = "action", Label = "Complete Quest", Icon = "?", X = 900, Y = 500,
+                Config = new Dictionary<string, object> { { "showScreen", "true" } } }
+        };
+
+        guildMaster.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = checkBarrowId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = checkBarrowId, FromPort = "True", ToNodeId = checkLookoutId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = checkBarrowId, FromPort = "False", ToNodeId = notReadyLineId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = checkLookoutId, FromPort = "True", ToNodeId = readyLineId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = checkLookoutId, FromPort = "False", ToNodeId = notReadyLineId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = readyLineId, FromPort = "Output", ToNodeId = completeId, ToPort = "Input" }
+        };
+
+        project.Entities.Add(guildMaster);
+
+        return new QuestTemplate
+        {
+            Name = "Pilgrimage Route",
+            Description = "A multi-location route that starts in Oakvale and ends at the Heroes Guild.",
+            Category = "Travel",
+            Difficulty = "Intermediate",
+            Template = project
+        };
+    }
+
+    private QuestEntity CreatePilgrimageWaypointNpc(
+        string id,
+        string scriptName,
+        string stateName,
+        string lineText,
+        string spawnRegion,
+        double x,
+        double y)
+    {
+        var npc = new QuestEntity
+        {
+            Id = id,
+            ScriptName = scriptName,
+            DefName = "CREATURE_BOWERSTONE_POSH_VILLAGER_FEMALE_UNEMPLOYED",
+            EntityType = EntityType.Creature,
+            MakeBehavioral = true,
+            ExclusiveControl = true,
+            SpawnRegion = spawnRegion
+        };
+
+        string talkId = Guid.NewGuid().ToString();
+        string markVisitedId = Guid.NewGuid().ToString();
+        string lineId = Guid.NewGuid().ToString();
+
+        npc.Nodes = new List<BehaviorNode>
+        {
+            new BehaviorNode { Id = talkId, Type = "onHeroTalks", Category = "trigger", Label = "Hero Talks", Icon = "??", X = x, Y = y },
+            new BehaviorNode { Id = markVisitedId, Type = "setStateBool", Category = "action", Label = "Mark Visited", Icon = "??", X = x + 200, Y = y,
+                Config = new Dictionary<string, object> { { "name", stateName }, { "value", "true" } } },
+            new BehaviorNode { Id = lineId, Type = "showDialogue", Category = "action", Label = "Waypoint Line", Icon = "??", X = x + 400, Y = y,
+                Config = new Dictionary<string, object> { { "text", lineText } } }
+        };
+
+        npc.Connections = new List<NodeConnection>
+        {
+            new NodeConnection { FromNodeId = talkId, FromPort = "Output", ToNodeId = markVisitedId, ToPort = "Input" },
+            new NodeConnection { FromNodeId = markVisitedId, FromPort = "Output", ToNodeId = lineId, ToPort = "Input" }
         };
 
         return npc;
